@@ -145,7 +145,7 @@ MERMAID_FIGURES = {
     UC5 -.->|"include"| UC10
     UC4 -.->|"include"| UC6""",
     },
-    "fig-3-5-plan-state": {
+    "fig-3-9-plan-state": {
         "window": (1600, 2400),
         "src": """stateDiagram-v2
     direction TB
@@ -199,7 +199,7 @@ MERMAID_FIGURES = {
     B-->>W: 确认成功
     W-->>S: 计划进入执行中""",
     },
-    "fig-3-9-er": {
+    "fig-3-8-er": {
         "window": (2800, 2100),
         "src": """erDiagram
     USER ||--o{ STUDY_PLAN : "拥有"
@@ -632,9 +632,9 @@ def draw_context():
 WIREFRAMES = {
     "fig-2-1-context": draw_context,
     "fig-3-1-function-tree": draw_function_tree,
-    "fig-3-6-wizard": wire_wizard,
-    "fig-3-7-board": wire_board,
-    "fig-3-8-admin": wire_admin,
+    "fig-3-5-wizard": wire_wizard,
+    "fig-3-6-board": wire_board,
+    "fig-3-7-admin": wire_admin,
 }
 
 
