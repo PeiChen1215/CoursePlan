@@ -1,0 +1,17 @@
+stateDiagram-v2
+    direction TB
+    state "草稿" as Draft
+    state "待确认" as Pending
+    state "执行中" as Active
+    state "已完成" as Done
+    state "已归档" as Archived
+
+    [*] --> Draft: 生成计划草案
+    Draft --> Pending: 校验通过 / 存在冲突
+    Pending --> Draft: 修改约束后重新生成
+    Pending --> Active: 学生确认（生成 v1）
+    Active --> Active: 打卡记录进度
+    Active --> Done: 任务全部完成或超过截止日期
+    Active --> Archived: 调整生效（旧版本归档）
+    Archived --> [*]
+    Done --> [*]
