@@ -719,6 +719,346 @@ def trim_and_save(src_png, dst_png):
     return out.size, clipped
 
 
+# ======================================================================
+# v2.1 修订：覆盖同名条目，修正语义并新增 3 张图
+#   图 3-2  四泳道重排，去掉跨区虚线以减少交叉
+#   图 3-3  删去两条方向错误的 include
+#   图 3-8  降为概念级，去掉字段类型与 PK/FK
+#   图 3-9  修正“超过截止日期即完成”的旧规则，补逾期说明
+#   图 3-10 校验判定顺序与阻断（F-09）
+#   图 3-11 计划调整流程（F-11）
+#   图 3-12 课程内容数据层次（层次方框图）
+# ======================================================================
+MERMAID_FIGURES.update({
+    "fig-3-2-swimlane": {
+        "window": (3000, 1800),
+        "src": """flowchart LR
+    subgraph L1["① 课程管理员"]
+        direction TB
+        A1["维护知识点、先修、资源与参考时长"] --> A2["先修图检查<br/>（成环 / 孤立点）"]
+    end
+
+    subgraph L2["② 学生"]
+        direction TB
+        S1["填写目标、截止日期<br/>可用时间、已掌握"] --> S2["确认计划"]
+        S2 --> S3["逐任务打卡"]
+    end
+
+    subgraph L3["③ 智能体（大模型）"]
+        direction TB
+        G1["追问缺失信息"] --> G2["生成冲突说明<br/>与调整建议"]
+    end
+
+    subgraph L4["④ 系统（排程与校验引擎）"]
+        direction TB
+        E5["检测延期 / 目标变更"] --> E1["先修闭包 + 任务分解"]
+        E1 --> E2["按可用时段装箱排程"]
+        E2 --> E3["四项校验"]
+        E3 --> E4["生成计划版本"]
+    end
+
+    S1 --> G1
+    G1 --> E1
+    E3 -->|"存在冲突"| G2
+    G2 --> S2
+    E4 --> S2
+    S3 --> E5""",
+    },
+    "fig-3-3-usecase": {
+        "window": (2600, 1900),
+        "src": """flowchart LR
+    ST(("学生"))
+    AD(("课程管理员"))
+
+    ST --> UC1(["设定学习约束"])
+    ST --> UC2(["与智能体对话补全信息"])
+    ST --> UC3(["查看计划草案与冲突"])
+    ST --> UC4(["确认计划并打卡"])
+    ST --> UC5(["发起计划调整"])
+    ST --> UC6(["查看计划版本与差异"])
+
+    AD --> UC7(["维护课程与知识点"])
+    AD --> UC8(["维护先修关系"])
+    AD --> UC9(["维护课程资源"])
+
+    UC2 -.->|"extend"| UC1
+    UC3 -.->|"include"| UC10(["校验计划（容量/重叠/先修/截止）"])
+    UC5 -.->|"include"| UC10""",
+    },
+    "fig-3-8-er": {
+        "window": (2400, 1600),
+        "src": """erDiagram
+    USER ||--o{ STUDY_PLAN : 拥有
+    USER ||--o{ COURSE : 维护
+    COURSE ||--o{ CONCEPT : 包含
+    COURSE ||--o{ RESOURCE : 包含
+    CONCEPT ||--o{ CONCEPT_RESOURCE : 关联
+    RESOURCE ||--o{ CONCEPT_RESOURCE : 关联
+    CONCEPT ||--o{ PREREQUISITE : 作为先修
+    CONCEPT ||--o{ PREREQUISITE : 作为后继
+    CONCEPT ||--o{ PLAN_TASK : 被安排
+    STUDY_PLAN ||--|{ PLAN_TASK : 拆分为
+    STUDY_PLAN ||--o{ PLAN_VERSION : 形成版本
+    STUDY_PLAN ||--|| CONSTRAINT : 由约束确定
+    PLAN_VERSION ||--o| PLAN_VALIDATION : 记录校验""",
+    },
+    "fig-3-9-plan-state": {
+        "window": (1500, 2300),
+        "src": """stateDiagram-v2
+    direction TB
+    state "草稿" as Draft
+    state "待确认" as Pending
+    state "执行中" as Active
+    state "已完成" as Done
+    state "已归档" as Archived
+
+    [*] --> Draft: 生成草案
+    Draft --> Pending: 校验完成
+    Pending --> Draft: 改约束后重生成
+    Pending --> Active: 学生确认（生成 v1）
+    Active --> Active: 打卡
+    Active --> Done: 当前目标全部必做任务完成
+    Active --> Archived: 调整生效（旧版转历史）
+    note right of Active
+        逾期与冲突为派生标记
+        不改变执行状态
+    end note
+    Archived --> [*]
+    Done --> [*]""",
+    },
+    "fig-3-10-validation": {
+        "window": (2200, 2600),
+        "src": """flowchart TD
+    A(["输入：任务与时间片、约束、先修、基准时刻"]) --> B{"时段是否合法？"}
+    B -- 否 --> B1["SLOT_INVALID：越出可排时段、过去时间、非正时长"]
+    B -- 是 --> C{"任务总时长 T 不超过可排容量 C′？"}
+    C -- 否 --> C1["CAP_EXCEEDED：显示 T、原始容量 C、缓冲、可排容量 C′、缺口"]
+    C -- 是 --> D{"任意两个时间片是否相交？"}
+    D -- 是 --> D1["TIME_OVERLAP：指出两任务及交集区间"]
+    D -- 否 --> E{"先修满足且学习片先于练习片？"}
+    E -- 否 --> E1["PREREQ_VIOLATED：定位到具体任务"]
+    E -- 是 --> F{"全部可在截止边界前完成？"}
+    F -- 否 --> F1["DEADLINE_UNREACHABLE"]
+    F -- 是 --> G{"T 与 C 之比是否大于 0.8？"}
+    G -- 是 --> G1["CAP_TIGHT（WARN）：余量紧张，不阻止确认"]
+    G -- 否 --> H(["passed = true"])
+    G1 --> H
+    B1 --> I(["passed = false，禁止确认"])
+    C1 --> I
+    D1 --> I
+    E1 --> I
+    F1 --> I""",
+    },
+    "fig-3-11-adjust": {
+        "window": (2200, 2800),
+        "src": """flowchart TD
+    A(["触发：手动、延期达 48 小时、目标变更、时间变更、时长覆盖"]) --> B["读取现行版本与学习事件"]
+    B --> C["冻结已完成任务：不移动、不删除"]
+    C --> D["重算未完成目标的先修闭包"]
+    D --> E["从基准时刻重新排程"]
+    E --> F["执行四项校验"]
+    F --> G{"是否存在 ERROR？"}
+    G -- 是 --> H["返回问题码与建议：草案可查看，不可确认"]
+    G -- 否 --> I["计算差异：新增、移除、移动、时长变化"]
+    H --> I
+    I --> J["生成调整说明与原因"]
+    J --> K{"学生确认？"}
+    K -- 否 --> L(["保留原计划，草案作废"])
+    K -- 是 --> M{"版本与进度是否已变化？"}
+    M -- 是 --> N(["返回 E2004，要求重新计算"])
+    M -- 否 --> O(["原子写入新版本，旧版转历史只读"])""",
+    },
+    "fig-3-12-hierarchy": {
+        "window": (2400, 1500),
+        "src": """flowchart LR
+    C["课程<br/>Python 程序设计"]
+    C --> S1["章节<br/>基础语法"]
+    C --> S2["章节<br/>控制流"]
+    C --> S3["……共 9 个章节"]
+    S2 --> K1["知识点<br/>循环结构"]
+    K1 --> P1["学习目标（0–5 条）"]
+    K1 --> P2["常见错误（0–5 条）"]
+    K1 --> P3["课程资源（0–n 份）"]
+    K1 --> P4["难度、参考时长<br/>排序号、状态"]""",
+    },
+})
+
+
+# 第二轮：ER 改中文语义类型（避免物理 DDL 观感），压缩 3-10 / 3-11 高度
+MERMAID_FIGURES.update({
+    "fig-3-8-er": {
+        "window": (2600, 1800),
+        "src": """erDiagram
+    USER ||--o{ STUDY_PLAN : "拥有"
+    USER ||--o{ COURSE : "维护"
+    COURSE ||--o{ CONCEPT : "包含"
+    COURSE ||--o{ RESOURCE : "包含"
+    CONCEPT ||--o{ PREREQUISITE : "作为先修"
+    CONCEPT ||--o{ PREREQUISITE : "作为后继"
+    CONCEPT ||--o{ PLAN_TASK : "被安排"
+    STUDY_PLAN ||--|{ PLAN_TASK : "拆分为"
+    STUDY_PLAN ||--o{ PLAN_VERSION : "形成版本"
+    STUDY_PLAN ||--|| CONSTRAINT : "由约束确定"
+    PLAN_VERSION ||--o| PLAN_VALIDATION : "记录校验"
+
+    USER {
+        标识 账号
+        文本 密码散列
+        文本 角色
+    }
+    COURSE {
+        标识 课程
+        文本 名称
+        文本 学期
+    }
+    CONCEPT {
+        标识 知识点
+        标识 所属课程
+        文本 名称
+        整数 难度
+        分钟 参考时长
+    }
+    STUDY_PLAN {
+        标识 计划
+        标识 学生
+        文本 状态
+        整数 当前版本
+    }
+    PLAN_TASK {
+        标识 任务
+        标识 所属计划
+        文本 类型
+        分钟 预计时长
+        日期 安排日期
+    }
+    PLAN_VERSION {
+        标识 版本
+        标识 所属计划
+        整数 版本号
+        文本 变更原因
+    }""",
+    },
+    "fig-3-10-validation": {
+        "window": (2000, 2200),
+        "src": """flowchart TD
+    A(["草案：任务与时间片、约束、先修、基准时刻"]) --> B["① 时段合法<br/>SLOT_INVALID"]
+    B --> C["② 容量满足 T 不超过 C′<br/>CAP_EXCEEDED"]
+    C --> D["③ 时间片互不重叠<br/>TIME_OVERLAP"]
+    D --> E["④ 先修顺序，学习片先于练习片<br/>PREREQ_VIOLATED"]
+    E --> F["⑤ 可全部在截止前完成<br/>DEADLINE_UNREACHABLE"]
+    F --> G{"任一项为 ERROR？"}
+    G -- 是 --> H(["passed = false<br/>可查看、禁止确认"])
+    G -- 否 --> I{"T 与 C 之比超过 0.8？"}
+    I -- 是 --> J(["passed = true<br/>附 CAP_TIGHT 警告"])
+    I -- 否 --> K(["passed = true"])""",
+    },
+    "fig-3-11-adjust": {
+        "window": (2000, 2200),
+        "src": """flowchart TD
+    A(["触发：手动、延期达 48 小时、目标或时间变更、时长覆盖"]) --> B["冻结已完成任务<br/>不移动、不删除"]
+    B --> C["重算未完成目标的先修闭包"]
+    C --> D["从基准时刻重新排程"]
+    D --> E["执行四项校验"]
+    E --> F{"存在 ERROR？"}
+    F -- 是 --> G(["草案可查看、不可确认"])
+    F -- 否 --> H["计算差异并生成调整说明"]
+    H --> I{"学生确认？"}
+    I -- 否 --> J(["保留原计划，草案作废"])
+    I -- 是 --> K(["原子写入新版本<br/>旧版转历史只读"])""",
+    },
+})
+
+
+# 第三轮：ER 恢复关键属性（类型仅为示意，物理结构归 D05）；
+# 校验判定改为表格不再画图；调整流程改用横向；
+MERMAID_FIGURES.pop("fig-3-10-validation", None)
+MERMAID_FIGURES.pop("fig-3-11-adjust", None)
+MERMAID_FIGURES.pop("fig-3-12-hierarchy", None)
+
+MERMAID_FIGURES.update({
+    "fig-3-8-er": {
+        "window": (2800, 2200),
+        "src": """erDiagram
+    USER ||--o{ STUDY_PLAN : "拥有"
+    USER ||--o{ COURSE : "维护"
+    COURSE ||--o{ CONCEPT : "包含"
+    COURSE ||--o{ RESOURCE : "包含"
+    CONCEPT ||--o{ CONCEPT_RESOURCE : "关联"
+    RESOURCE ||--o{ CONCEPT_RESOURCE : "关联"
+    CONCEPT ||--o{ PREREQUISITE : "作为先修"
+    CONCEPT ||--o{ PREREQUISITE : "作为后继"
+    CONCEPT ||--o{ PLAN_TASK : "被安排"
+    STUDY_PLAN ||--|{ PLAN_TASK : "拆分为"
+    STUDY_PLAN ||--o{ PLAN_VERSION : "形成版本"
+    STUDY_PLAN ||--|| CONSTRAINT : "由约束确定"
+    PLAN_VERSION ||--o| PLAN_VALIDATION : "记录校验"
+
+    USER {
+        int id PK
+        string username
+        string role
+    }
+    COURSE {
+        int id PK
+        string name
+        string semester
+    }
+    CONCEPT {
+        int id PK
+        int course_id FK
+        string name
+        int difficulty
+        int reference_minutes
+    }
+    STUDY_PLAN {
+        int id PK
+        int student_id FK
+        string status
+        int current_version
+    }
+    PLAN_TASK {
+        int id PK
+        int plan_id FK
+        string type
+        int estimated_minutes
+        string scheduled_date
+    }
+    PLAN_VERSION {
+        int id PK
+        int plan_id FK
+        int version
+        string change_reason
+    }""",
+    },
+    "fig-3-10-adjust": {
+        "window": (2600, 1600),
+        "src": """flowchart LR
+    A(["触发调整"]) --> B["冻结已完成<br/>不移动不删除"]
+    B --> C["重算闭包<br/>重新排程"]
+    C --> D["四项校验"]
+    D --> E{"有 ERROR？"}
+    E -- 是 --> F(["草案可看<br/>禁止确认"])
+    E -- 否 --> G["算差异<br/>生成说明"]
+    G --> H{"学生确认？"}
+    H -- 否 --> I(["保留原计划"])
+    H -- 是 --> J(["写新版本<br/>旧版只读"])""",
+    },
+    "fig-3-11-hierarchy": {
+        "window": (2400, 1500),
+        "src": """flowchart LR
+    C["课程<br/>Python 程序设计"]
+    C --> S1["章节<br/>基础语法"]
+    C --> S2["章节<br/>控制流"]
+    C --> S3["……共 9 个章节"]
+    S2 --> K1["知识点<br/>循环结构"]
+    K1 --> P1["学习目标<br/>0–5 条"]
+    K1 --> P2["常见错误<br/>0–5 条"]
+    K1 --> P3["课程资源<br/>0–n 份"]
+    K1 --> P4["难度 / 参考时长<br/>排序号 / 状态"]""",
+    },
+})
+
+
 def main():
     FIG_DIR.mkdir(parents=True, exist_ok=True)
     SRC_DIR.mkdir(parents=True, exist_ok=True)

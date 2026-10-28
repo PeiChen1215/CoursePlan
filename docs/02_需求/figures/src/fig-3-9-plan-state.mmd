@@ -6,12 +6,16 @@ stateDiagram-v2
     state "已完成" as Done
     state "已归档" as Archived
 
-    [*] --> Draft: 生成计划草案
-    Draft --> Pending: 校验通过 / 存在冲突
-    Pending --> Draft: 修改约束后重新生成
+    [*] --> Draft: 生成草案
+    Draft --> Pending: 校验完成
+    Pending --> Draft: 改约束后重生成
     Pending --> Active: 学生确认（生成 v1）
-    Active --> Active: 打卡记录进度
-    Active --> Done: 任务全部完成或超过截止日期
-    Active --> Archived: 调整生效（旧版本归档）
+    Active --> Active: 打卡
+    Active --> Done: 当前目标全部必做任务完成
+    Active --> Archived: 调整生效（旧版转历史）
+    note right of Active
+        逾期与冲突为派生标记
+        不改变执行状态
+    end note
     Archived --> [*]
     Done --> [*]
