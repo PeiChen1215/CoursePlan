@@ -18,6 +18,7 @@ from pathlib import Path
 
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -43,6 +44,8 @@ COVER = {
 }
 
 CAPTION_RE = re.compile(r"^表\s*\d+\.\d+")
+FIG_CAP_RE = re.compile(r"^图\s*\d+-\d+\s")
+IMG_RE = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)$")
 CHAPTER_RE = re.compile(r"^##\s+\d+\s")
 SEP_RE = re.compile(r"^\|[\s:|-]+\|$")
 
@@ -170,10 +173,10 @@ def build_cover(doc, doc_title):
         p.paragraph_format.space_after = Pt(12)
         set_font(p.add_run("%s：%s" % (label, value)), cn=CN_BODY, size=15)
 
-    doc.add_page_break()
+    doc.add_section(WD_SECTION.NEW_PAGE)
 
 
-def setup_document(doc, header_text):
+def setup_document(doc):
     sec = doc.sections[0]
     sec.page_width = Cm(21)
     sec.page_height = Cm(29.7)
@@ -189,17 +192,37 @@ def setup_document(doc, header_text):
     normal.font.size = Pt(12)
     normal.element.rPr.rFonts.set(qn("w:eastAsia"), CN_BODY)
 
-    # 页眉
+
+
+def setup_document_for(doc, sec):
+    sec.page_width = Cm(21)
+    sec.page_height = Cm(29.7)
+    sec.top_margin = Cm(2.54)
+    sec.bottom_margin = Cm(2.54)
+    sec.left_margin = Cm(2.8)
+    sec.right_margin = Cm(2.8)
+    sec.header_distance = Cm(1.5)
+    sec.footer_distance = Cm(1.75)
+
+
+def add_header_footer(sec, header_text):
+    """在指定节上加页眉与页码，并把页码重新从 1 开始（封面节不加）。"""
+    sec.header.is_linked_to_previous = False
+    sec.footer.is_linked_to_previous = False
+
     hp = sec.header.paragraphs[0]
     hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
     set_font(hp.add_run(header_text), cn=CN_BODY, size=9)
 
-    # 页脚页码
     fp = sec.footer.paragraphs[0]
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
     set_font(fp.add_run("— "), cn=CN_BODY, size=9)
     add_page_number(fp)
     set_font(fp.add_run(" —"), cn=CN_BODY, size=9)
+
+    pgnum = OxmlElement("w:pgNumType")
+    pgnum.set(qn("w:start"), "1")
+    sec._sectPr.append(pgnum)
 
 
 def add_heading(doc, text, level):
@@ -233,7 +256,9 @@ def add_body(doc, text):
     pf.first_line_indent = Pt(24)
     pf.line_spacing = 1.5
     pf.space_after = Pt(0)
-    p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    p.alignment = (
+        WD_ALIGN_PARAGRAPH.LEFT if "://" in text else WD_ALIGN_PARAGRAPH.JUSTIFY
+    )
     add_inline(p, text, size=12)
 
 
@@ -258,6 +283,7 @@ def add_caption(doc, text):
 
 def add_action(doc, ordered, text, number=None):
     p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.LEFT
     pf = p.paragraph_format
     pf.left_indent = Cm(0.95)
     pf.first_line_indent = Cm(-0.35)
@@ -305,6 +331,11 @@ def add_table(doc, rows):
     for j, width in enumerate(widths):
         table.columns[j].width = width
 
+    tblw = OxmlElement("w:tblW")
+    tblw.set(qn("w:type"), "dxa")
+    tblw.set(qn("w:w"), str(int(usable / 635)))
+    table._tbl.tblPr.append(tblw)
+
     for i, row in enumerate(rows):
         no_split(table.rows[i])
         for j, value in enumerate(row):
@@ -329,6 +360,35 @@ def add_table(doc, rows):
     gap.paragraph_format.line_spacing = 0.6
 
 
+def add_figure(doc, src):
+    """插入图片，宽度优先撑满版心，超高时按高度约束缩放。"""
+    from PIL import Image
+
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(8)
+    p.paragraph_format.space_after = Pt(3)
+    p.paragraph_format.keep_with_next = True
+
+    sec = doc.sections[0]
+    usable = sec.page_width - sec.left_margin - sec.right_margin
+    with Image.open(src) as im:
+        w_px, h_px = im.size
+    max_h = Cm(17.5)
+    width = usable
+    if int(width * h_px / w_px) > max_h:
+        width = int(max_h * w_px / h_px)
+    p.add_run().add_picture(str(src), width=width)
+
+
+def add_fig_caption(doc, text):
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after = Pt(10)
+    add_inline(p, text, cn=CN_HEAD, size=10.5, base_bold=True)
+
+
 # ----------------------------------------------------------------------
 # 主流程
 # ----------------------------------------------------------------------
@@ -337,17 +397,35 @@ def convert(md_path, docx_path, doc_title):
     start = next((i for i, l in enumerate(lines) if CHAPTER_RE.match(l)), 0)
 
     doc = Document()
-    setup_document(doc, "软件工程综合实训 · 第 6 组 · 学径 StudyPath")
+    setup_document(doc)
     build_cover(doc, doc_title)
+    body_sec = doc.sections[-1]
+    setup_document_for(doc, body_sec)
+    add_header_footer(body_sec, "软件工程综合实训 · 第 6 组 · 学径 StudyPath")
 
     i = start
     n = len(lines)
     ordered_no = 0
+    expect_cap = False
     while i < n:
         raw = lines[i]
         line = raw.strip()
 
         if not line:
+            i += 1
+            continue
+
+        m = IMG_RE.match(line)
+        if m:
+            rel = m.group(2).strip()
+            img = Path(rel)
+            if not img.is_absolute():
+                img = Path(md_path).resolve().parent / rel
+            if img.exists():
+                add_figure(doc, img)
+                expect_cap = True
+            else:
+                add_body(doc, "【缺图：%s】" % rel)
             i += 1
             continue
 
@@ -380,10 +458,13 @@ def convert(md_path, docx_path, doc_title):
         elif re.match(r"^\d+\.\s", line):
             num = line.split(".", 1)[0]
             add_action(doc, True, line.split(".", 1)[1].strip(), number=num)
+        elif expect_cap and FIG_CAP_RE.match(line):
+            add_fig_caption(doc, line)
         elif CAPTION_RE.match(line):
             add_caption(doc, line)
         else:
             add_body(doc, line)
+        expect_cap = False
         i += 1
 
     doc.save(docx_path)
