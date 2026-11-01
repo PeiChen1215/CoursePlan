@@ -1,0 +1,6 @@
+flowchart LR
+    BROWSER["浏览器<br/>Chrome / Edge"] --> FE["静态前端<br/>React 构建产物"]
+    FE -->|"HTTP /api"| API["后端服务<br/>FastAPI + Uvicorn :8000"]
+    API --> DB[("SQLite<br/>studyplan.db")]
+    API -.->|"可选，可关闭"| LLM["大模型服务<br/>（可切换本地 Mock）"]
+    DB -.-> BAK["每日备份<br/>保留 7 份"]

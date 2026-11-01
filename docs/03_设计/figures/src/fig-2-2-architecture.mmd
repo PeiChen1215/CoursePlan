@@ -1,0 +1,23 @@
+flowchart TB
+    subgraph L1["表现层"]
+        direction LR
+        UI1["学生端工作台<br/>约束向导 / 计划看板 / 打卡"]
+        UI2["管理端<br/>课程 / 知识点 / 先修 / 资源"]
+    end
+    subgraph L2["接口层"]
+        direction LR
+        R1["认证与权限"] --> R2["课程内容"] --> R3["约束"] --> R4["计划与版本"] --> R5["看板查询"]
+    end
+    subgraph L3["领域层"]
+        direction LR
+        E1["排程引擎"] --> E2["校验引擎"]
+        E3["智能体编排"]
+        E4["版本与差异"]
+    end
+    subgraph L4["基础层"]
+        direction LR
+        B1["数据访问"] --> B2["课程内容仓储"] --> B3["LLM Provider"] --> B4["配置与日志"]
+    end
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
