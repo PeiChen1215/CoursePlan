@@ -1,0 +1,26 @@
+sequenceDiagram
+    autonumber
+    actor S as 学生
+    participant B as 接口
+    participant V as 版本服务
+    participant D as 事件记录
+
+    S->>B: 点击确认（携带草案修订号）
+    B->>B: 校验归属与会话有效性
+    B->>V: 提交草案修订号
+    V->>V: 服务端重新校验四项检查
+    alt 存在 ERROR
+        V-->>B: 校验报告与问题码
+        B-->>S: 拒绝确认，草案仍可查看
+        S->>B: 改约束后重新生成
+    else 无 ERROR
+        V->>V: 复核版本与进度
+        V->>D: 写版本、版本任务与时间片
+        D-->>V: 版本号 v1
+        V-->>B: 确认成功
+        B-->>S: 计划进入执行中
+        Note over V,S: 重复确认返回同一版本，不产生第二版
+    end
+    S->>D: 逐任务打卡（两步确认）
+    D->>D: 只追加学习事件，不建立新版本
+    D-->>S: 完成率与逾期标记

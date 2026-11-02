@@ -1,0 +1,25 @@
+sequenceDiagram
+    autonumber
+    actor S as 学生
+    participant W as 前端
+    participant C as 约束服务
+    participant E as 排程引擎
+
+    S->>W: 填写目标、截止日期、可用时间、已掌握
+    W->>C: 提交约束
+    C->>C: 规范化、去重、字段校验
+    C->>E: 请求展开可用时段
+    E->>E: 展开区间内实际可用时段
+    E->>E: 计算原始容量 C、缓冲 B、可排容量 C′
+    alt 容量为 0
+        E-->>C: 容量不足
+        C-->>W: 拒绝并说明原因
+        W-->>S: 提示调整时间或截止
+    else 容量不小于 1
+        E-->>C: 原始容量、缓冲、可排容量
+        C-->>W: 容量摘要 C / B / C′
+        W-->>S: 回显摘要
+        S->>W: 确认或调整
+        W->>C: 提交确认
+        C->>C: 保存约束快照、记录基准时刻
+    end
