@@ -12,6 +12,7 @@ erDiagram
     STUDY_PLAN ||--o{ PLAN_VERSION : "形成版本"
     STUDY_PLAN ||--|| CONSTRAINT : "由约束确定"
     PLAN_VERSION ||--o| PLAN_VALIDATION : "记录校验"
+    PLAN_TASK ||--o{ LEARNING_EVENT : "产生事件"
 
     USER {
         int id PK
@@ -48,4 +49,12 @@ erDiagram
         int plan_id FK
         int version
         string change_reason
+    }
+    LEARNING_EVENT {
+        int id PK
+        int plan_id FK
+        int task_id FK
+        string event_type
+        int actual_minutes
+        string occurred_at
     }

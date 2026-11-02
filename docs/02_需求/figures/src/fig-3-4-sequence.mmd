@@ -8,14 +8,14 @@ sequenceDiagram
     participant DB as 数据库
 
     S->>W: 输入目标与时间约束
-    W->>B: POST /api/constraints
+    W->>B: 提交约束
     B->>DB: 保存约束
     B->>AG: 补全缺失字段
     AG-->>B: 抽取结果 + 追问问题
-    B-->>W: SSE 推送追问
+    B-->>W: 推送追问
     W-->>S: 展示追问
     S->>W: 补充"每周一三五 19:00-21:00"
-    W->>B: POST /api/plans/preview
+    W->>B: 请求生成草案
     B->>EN: 先修闭包 + 任务分解
     EN-->>B: 任务列表
     B->>EN: 四项校验
@@ -23,9 +23,9 @@ sequenceDiagram
     B->>AG: 生成冲突说明
     AG-->>B: 说明文本
     B-->>W: 计划草案 + 校验报告
-    W-->>S: 看板展示（冲突任务标红）
+    W-->>S: 看板展示（冲突任务标注问题码）
     S->>W: 确认计划
-    W->>B: POST /api/plans/{id}/confirm
+    W->>B: 提交确认
     B->>DB: 写入版本 v1
     B-->>W: 确认成功
     W-->>S: 计划进入执行中

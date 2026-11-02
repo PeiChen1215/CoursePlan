@@ -205,6 +205,27 @@ def setup_document_for(doc, sec):
     sec.footer_distance = Cm(1.75)
 
 
+def add_toc(doc):
+    """插入目录域；在 Word 中按 F9（更新整个目录）即可生成带页码的目录。"""
+    add_heading(doc, "目录", 1)
+    p = doc.add_paragraph()
+    run = p.add_run()
+    fld_begin = OxmlElement("w:fldChar")
+    fld_begin.set(qn("w:fldCharType"), "begin")
+    instr = OxmlElement("w:instrText")
+    instr.set(qn("xml:space"), "preserve")
+    instr.text = 'TOC \\o "1-3" \\h \\z \\u'
+    fld_sep = OxmlElement("w:fldChar")
+    fld_sep.set(qn("w:fldCharType"), "separate")
+    txt = OxmlElement("w:t")
+    txt.text = "在 Word 中右键选择“更新域”生成目录与页码"
+    fld_end = OxmlElement("w:fldChar")
+    fld_end.set(qn("w:fldCharType"), "end")
+    for el in (fld_begin, instr, fld_sep, txt, fld_end):
+        run._r.append(el)
+    doc.add_page_break()
+
+
 def add_header_footer(sec, header_text):
     """在指定节上加页眉与页码，并把页码重新从 1 开始（封面节不加）。"""
     sec.header.is_linked_to_previous = False
@@ -294,6 +315,10 @@ def add_action(doc, ordered, text, number=None):
     add_inline(p, text, size=11)
 
 
+def total_guard(weights):
+    return sum(weights)
+
+
 def add_table(doc, rows):
     cols = max(len(r) for r in rows)
     rows = [r + [""] * (cols - len(r)) for r in rows]
@@ -310,6 +335,9 @@ def add_table(doc, rows):
     for j in range(cols):
         longest = max((display_width(r[j]) for r in rows), default=4)
         weights.append(max(6.0, min(float(longest), 34.0)))
+    # 两列表（IPO、键值说明）首列内容短但需容纳“触发者”等词，给足 1/5 宽
+    if cols == 2 and weights[0] < 12:
+        weights[0] = max(weights[0], total_guard(weights) * 0.20)
     total = sum(weights)
     widths = [usable * w / total for w in weights]
 
@@ -402,6 +430,17 @@ def convert(md_path, docx_path, doc_title):
     body_sec = doc.sections[-1]
     setup_document_for(doc, body_sec)
     add_header_footer(body_sec, "软件工程综合实训 · 第 6 组 · 学径 StudyPath")
+
+    # 元信息表：标题与第一章之间的表格，导出时不再丢弃
+    meta_rows = []
+    for line in lines[:start]:
+        s = line.strip()
+        if s.startswith("|") and not SEP_RE.match(s):
+            meta_rows.append([c.strip() for c in s.strip("|").split("|")])
+    if meta_rows:
+        add_heading(doc, "文档信息", 1)
+        add_table(doc, meta_rows)
+    add_toc(doc)
 
     i = start
     n = len(lines)
