@@ -1,4 +1,4 @@
-"""把项目文档的 Markdown 主稿转换为 Word（.docx）。
+﻿"""把项目文档的 Markdown 主稿转换为 Word（.docx）。
 
 用法：
     python scripts/md2docx.py <输入.md> <输出.docx> --doc-title "项目开发计划书"
@@ -335,11 +335,23 @@ def add_table(doc, rows):
     for j in range(cols):
         longest = max((display_width(r[j]) for r in rows), default=4)
         weights.append(max(6.0, min(float(longest), 34.0)))
+    # 短英文列（如类型列 INTEGER/TEXT）给足宽度，避免单词被拆行
+    for j in range(cols):
+        cells = [r[j] for r in rows]
+        if all(c and c.isascii() for c in cells if c):
+            longest = max((len(c) for c in cells if c), default=0)
+            if longest <= 14:
+                weights[j] = max(weights[j], 13.0)
     # 两列表（IPO、键值说明）首列内容短但需容纳“触发者”等词，给足 1/5 宽
     if cols == 2 and weights[0] < 12:
         weights[0] = max(weights[0], total_guard(weights) * 0.20)
     total = sum(weights)
     widths = [usable * w / total for w in weights]
+
+    # 数据字典的 4 列表固定比例，保证“类型”列放得下 INTEGER
+    if cols == 4 and [c.strip() for c in rows[0]][:4] == ["字段", "类型", "物理约束", "含义与范围"]:
+        ratio = [0.22, 0.15, 0.34, 0.29]
+        widths = [usable * r for r in ratio]
 
     # 最小列宽约束，避免三字姓名被拆行
     minimum = float(Cm(1.9))

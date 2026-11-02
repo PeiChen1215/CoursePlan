@@ -1,0 +1,25 @@
+sequenceDiagram
+    autonumber
+    participant B as 接口与应用层
+    participant C as 约束服务
+    participant P as 排程引擎
+    participant V as 校验引擎
+    participant R as 数据仓储
+
+    B->>C: 提交约束
+    C->>C: 规范化、展开时段、计算 C / B / C′
+    C-->>B: 约束对象与容量摘要
+    B->>R: 写入约束快照
+    B->>P: 请求生成草案
+    R-->>P: 课程内容快照与已掌握集合
+    P->>P: 先修闭包、拆学习与练习、拓扑排序、装箱拆片
+    P-->>B: 任务与时间片、未排入清单
+    B->>V: 请求校验
+    V->>V: 四项检查（时段 → 容量 → 重叠 → 先修）
+    V-->>B: 校验报告与问题码
+    alt 存在 ERROR
+        B-->>B: 草案可查看、禁止确认
+    else 无 ERROR
+        B->>R: 写入草案
+        R-->>B: 草案修订号
+    end

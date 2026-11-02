@@ -1,0 +1,8 @@
+flowchart TD
+    A["plan_draft 草案<br/>可改、可删"] -->|"确认事务 BEGIN IMMEDIATE"| B["plan_version 版本<br/>不可变"]
+    B --> C["version_task 版本任务<br/>不可变"]
+    B --> E["plan_validation 校验报告<br/>每版一份"]
+    C --> D["task_slice 时间片<br/>不可变"]
+    C --> F["learning_event 学习事件<br/>只追加"]
+    F -.->|"不回写快照"| D
+    D -.->|"不改完成状态"| F
