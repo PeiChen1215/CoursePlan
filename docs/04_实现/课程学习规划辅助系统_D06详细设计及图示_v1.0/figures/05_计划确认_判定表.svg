@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720">
+<rect width="100%" height="100%" fill="white"/>
+<text x="700.0" y="35" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="30">图5  计划确认判定表</text>
+<rect x="40" y="85" width="590" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="108.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">条件 / 动作</text>
+<rect x="630" y="85" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="690.0" y="108.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">R1</text>
+<rect x="750" y="85" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="810.0" y="108.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">R2</text>
+<rect x="870" y="85" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="930.0" y="108.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">R3</text>
+<rect x="990" y="85" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="1050.0" y="108.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">R4</text>
+<rect x="1110" y="85" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="1170.0" y="108.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">R5</text>
+<rect x="1230" y="85" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="1290.0" y="108.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">R6</text>
+<rect x="40" y="132" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="155.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">A 当前用户有权确认？</text>
+<rect x="630" y="132" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="690.0" y="155.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="750" y="132" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="810.0" y="155.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="870" y="132" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="930.0" y="155.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="990" y="132" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1050.0" y="155.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="1110" y="132" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1170.0" y="155.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="1230" y="132" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1290.0" y="155.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="40" y="179" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="202.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">B 确认键已有同请求结果？</text>
+<rect x="630" y="179" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="690.0" y="202.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="750" y="179" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="810.0" y="202.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="870" y="179" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="930.0" y="202.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="990" y="179" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1050.0" y="202.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="1110" y="179" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1170.0" y="202.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="1230" y="179" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1290.0" y="202.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="40" y="226" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="249.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">C 版本 / 进度 / 课程基线一致？</text>
+<rect x="630" y="226" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="690.0" y="249.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="750" y="226" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="810.0" y="249.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="870" y="226" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="930.0" y="249.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="990" y="226" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1050.0" y="249.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="1110" y="226" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1170.0" y="249.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="1230" y="226" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1290.0" y="249.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="40" y="273" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="296.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">D 草案状态允许确认？</text>
+<rect x="630" y="273" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="690.0" y="296.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="750" y="273" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="810.0" y="296.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="870" y="273" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="930.0" y="296.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="990" y="273" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1050.0" y="296.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="1110" y="273" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1170.0" y="296.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="1230" y="273" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1290.0" y="296.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="40" y="320" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="343.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">E 重校验无 ERROR 且时段仍有效？</text>
+<rect x="630" y="320" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="690.0" y="343.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="750" y="320" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="810.0" y="343.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="870" y="320" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="930.0" y="343.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="990" y="320" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1050.0" y="343.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">—</text>
+<rect x="1110" y="320" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1170.0" y="343.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">N</text>
+<rect x="1230" y="320" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1290.0" y="343.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">Y</text>
+<rect x="40" y="367" width="590" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="390.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">拒绝访问（不泄露他人记录）</text>
+<rect x="630" y="367" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<text x="690.0" y="390.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">×</text>
+<rect x="750" y="367" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<rect x="870" y="367" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<rect x="990" y="367" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<rect x="1110" y="367" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<rect x="1230" y="367" width="120" height="47" rx="0" fill="#e8edf3" stroke="#273444" stroke-width="2"/>
+<rect x="40" y="414" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="437.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">返回原确认结果</text>
+<rect x="630" y="414" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="750" y="414" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="810.0" y="437.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">×</text>
+<rect x="870" y="414" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="990" y="414" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1110" y="414" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1230" y="414" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="40" y="461" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="484.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">返回 E2004，要求刷新预览</text>
+<rect x="630" y="461" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="750" y="461" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="870" y="461" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="930.0" y="484.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">×</text>
+<rect x="990" y="461" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1110" y="461" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1230" y="461" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="40" y="508" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="531.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">返回 E1003 状态冲突</text>
+<rect x="630" y="508" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="750" y="508" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="870" y="508" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="990" y="508" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1050.0" y="531.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">×</text>
+<rect x="1110" y="508" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1230" y="508" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="40" y="555" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="578.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">返回 E2003，保留草案错误</text>
+<rect x="630" y="555" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="750" y="555" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="870" y="555" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="990" y="555" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1110" y="555" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1170.0" y="578.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">×</text>
+<rect x="1230" y="555" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="40" y="602" width="590" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="335.0" y="625.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">原子保存新版本并移动当前指针</text>
+<rect x="630" y="602" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="750" y="602" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="870" y="602" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="990" y="602" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1110" y="602" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<rect x="1230" y="602" width="120" height="47" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1290.0" y="625.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">×</text>
+<text x="700" y="690" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="22">Y=是；N=否；—=与该规则无关；×=执行。各列按首个失败条件划分，互斥且完备。</text>
+</svg>

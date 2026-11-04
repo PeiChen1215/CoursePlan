@@ -1,0 +1,13 @@
+{
+  "modules": 12,
+  "module_subsections": 156,
+  "figures": 8,
+  "tables": 5,
+  "paragraphs": 446,
+  "characters_md": 22547,
+  "template": "D:\\xwechat_files\\wxid_bnm9r5y4sw4n22_9f6a\\msg\\file\\2026-10\\5.详细设计说明书格式.docx",
+  "status": "结构核对完成；运行性能待实现后实测；Word分页待人工复核",
+  "decision_table_boolean_combinations": 32,
+  "decision_table_mutually_exclusive_and_exhaustive": true,
+  "numeric_examples_checked": true
+}

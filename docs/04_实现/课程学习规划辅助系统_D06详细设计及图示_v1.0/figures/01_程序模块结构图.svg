@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="780" viewBox="0 0 1500 780">
+<rect width="100%" height="100%" fill="white"/>
+<text x="750.0" y="35" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="30">图1  程序模块结构与主要调用关系</text>
+<rect x="460" y="85" width="580" height="75" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="750.0" y="122.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="28">M09 学生 / 管理员界面</text>
+<rect x="460" y="220" width="580" height="75" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="750.0" y="257.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="28">M10 API 路由与 DTO 校验</text>
+<polyline points="750,160 750,220" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="743.4755169883315,206.49329346470984 750,220 756.5244830116685,206.49329346470984" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="750,295 750,330 260,330 1240,330" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="260,330 260,380" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="253.47551698833155,366.49329346470984 260,380 266.52448301166845,366.49329346470984" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="25" y="380" width="470" height="155" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="260.0" y="422.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M01 认证权限</text>
+<text x="260.0" y="457.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M02 课程内容</text>
+<text x="260.0" y="492.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M03 学习约束</text>
+<polyline points="750,330 750,380" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="743.4755169883315,366.49329346470984 750,380 756.5244830116685,366.49329346470984" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="515" y="380" width="470" height="155" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="750.0" y="422.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M04 追问抽取</text>
+<text x="750.0" y="457.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M05 分解排程</text>
+<text x="750.0" y="492.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M06 计划校验</text>
+<polyline points="1240,330 1240,380" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1233.4755169883315,366.49329346470984 1240,380 1246.5244830116685,366.49329346470984" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1005" y="380" width="470" height="155" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1240.0" y="440.0" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M07 确认版本</text>
+<text x="1240.0" y="475.0" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="26">M08 进度事件</text>
+<rect x="60" y="630" width="650" height="80" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="385.0" y="670.0" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="27">M11 仓储 / 事务 → SQLite</text>
+<rect x="790" y="630" width="650" height="80" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1115.0" y="670.0" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="25">M12 时钟 / 配置 / 日志 / LLM适配</text>
+<polyline points="260,535 260,580" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="750,535 750,580" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1240,535 1240,580" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="260,580 1240,580" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="385,580 385,630" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="378.47551698833155,616.4932934647098 385,630 391.52448301166845,616.4932934647098" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1115,580 1115,630" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1108.4755169883315,616.4932934647098 1115,630 1121.5244830116685,616.4932934647098" fill="none" stroke="#273444" stroke-width="2"/>
+<text x="750" y="750" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">连线表示接口调用 / 依赖；领域算法通过端口访问外部能力。</text>
+</svg>

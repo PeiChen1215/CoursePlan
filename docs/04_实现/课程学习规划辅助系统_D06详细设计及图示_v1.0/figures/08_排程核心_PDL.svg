@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1000" viewBox="0 0 1500 1000">
+<rect width="100%" height="100%" fill="white"/>
+<text x="750.0" y="35" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="30">图8  排程核心 PDL（伪代码）</text>
+<text x="80" y="120" font-family="Consolas,monospace" font-size="20">PROCEDURE BuildDraft(snapshot, base_time, config)</text>
+<text x="80" y="170" font-family="Consolas,monospace" font-size="20">  REQUIRE valid snapshot AND acyclic prerequisites</text>
+<text x="80" y="220" font-family="Consolas,monospace" font-size="20">  concepts := Closure(targets) - explicitly_mastered</text>
+<text x="80" y="270" font-family="Consolas,monospace" font-size="20">  tasks := SplitStudyPractice(StableTopological(concepts))</text>
+<text x="80" y="320" font-family="Consolas,monospace" font-size="20">  slots := ExpandAndClip(availability, base_time, deadline)</text>
+<text x="80" y="370" font-family="Consolas,monospace" font-size="20">  usable := ReserveTail(slots, CEIL(slot_minutes * 0.10))</text>
+<text x="80" y="420" font-family="Consolas,monospace" font-size="20">  result := KeepCompletedTasksUnchanged(snapshot)</text>
+<text x="80" y="470" font-family="Consolas,monospace" font-size="20">  FOR EACH task IN dependency_order</text>
+<text x="80" y="520" font-family="Consolas,monospace" font-size="20">    ready := LatestFinishOfAllRequiredPredecessors(task)</text>
+<text x="80" y="570" font-family="Consolas,monospace" font-size="20">    slices, remaining := FillEarliest(usable, ready, max_slice=120)</text>
+<text x="80" y="620" font-family="Consolas,monospace" font-size="20">    ADD task WITH slices AND remaining TO result</text>
+<text x="80" y="670" font-family="Consolas,monospace" font-size="20">    IF remaining &gt; 0 THEN mark task UNSCHEDULED</text>
+<text x="80" y="720" font-family="Consolas,monospace" font-size="20">  END FOR</text>
+<text x="80" y="770" font-family="Consolas,monospace" font-size="20">  report := ValidateAll(result, snapshot, config)</text>
+<text x="80" y="820" font-family="Consolas,monospace" font-size="20">  RETURN Draft(result, report, hash(snapshot, base_time, config))</text>
+<text x="80" y="870" font-family="Consolas,monospace" font-size="20">END PROCEDURE</text>
+<text x="750" y="950" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">说明：先修未完成时不安排后继任务；剩余分钟作为未排任务保留，供校验报告定位。</text>
+</svg>

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900">
+<rect width="100%" height="100%" fill="white"/>
+<text x="720.0" y="35" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="30">图7  草案结果数据结构 Jackson 图</text>
+<rect x="500" y="90" width="440" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="720.0" y="127.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">DraftResult</text>
+<polyline points="720,165 720,210 205,210 1255,210" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="205,210 205,245" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="30" y="245" width="350" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="205.0" y="282.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">草案及基线标识</text>
+<polyline points="555,210 555,245" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="380" y="245" width="350" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="555.0" y="282.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">约束 / 课程快照</text>
+<polyline points="905,210 905,245" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="730" y="245" width="350" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="905.0" y="282.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">任务项</text>
+<text x="1065" y="259" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="25">*</text>
+<polyline points="1255,210 1255,245" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1080" y="245" width="350" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1255.0" y="282.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">校验报告</text>
+<polyline points="905,320 905,380 200,380 1200,380" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="200,380 200,420" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="30" y="420" width="340" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="200.0" y="457.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">切片（开始 / 结束）</text>
+<text x="355" y="434" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="25">*</text>
+<polyline points="560,380 560,420" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="390" y="420" width="340" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="560.0" y="457.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">任务标识 / 类型 / 时长</text>
+<polyline points="1200,380 1200,420" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1030" y="420" width="340" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1200.0" y="457.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">排程结果</text>
+<polyline points="1200,495 1200,550 895,550 1265,550" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="730" y="590" width="330" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="895.0" y="627.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">全部排定</text>
+<text x="1045" y="604" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="25">○</text>
+<rect x="1100" y="590" width="310" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1255.0" y="627.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">尚有未排</text>
+<text x="1395" y="604" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="25">○</text>
+<polyline points="895,550 895,590" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1265,550 1255,590" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="895,665 895,710" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="730" y="710" width="330" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="895.0" y="747.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">剩余分钟 = 0</text>
+<polyline points="1255,665 1255,710" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1100" y="710" width="310" height="75" rx="0" fill="white" stroke="#273444" stroke-width="2"/>
+<text x="1255.0" y="747.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="24">未排分钟 / 原因</text>
+<text x="720" y="850" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">无标记：顺序组成；○：互斥选择；*：重复。切片可为空；部分排定保留已有切片及剩余分钟。</text>
+</svg>

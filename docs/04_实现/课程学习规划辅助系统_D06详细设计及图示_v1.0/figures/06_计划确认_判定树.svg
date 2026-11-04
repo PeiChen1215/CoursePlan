@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1550" height="820" viewBox="0 0 1550 820">
+<rect width="100%" height="100%" fill="white"/>
+<text x="775.0" y="35" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="30">图6  计划确认判定树（与图5规则一致）</text>
+<rect x="40" y="115" width="310" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="195.0" y="147.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">A 有确认权限</text>
+<polyline points="350,147 1270,147" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1256.49329346471,153.52448301166845 1270,147 1256.49329346471,140.47551698833155" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1270" y="115" width="245" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1392.5" y="147.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="22">拒绝访问 R1</text>
+<text x="1120" y="125" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">否</text>
+<polyline points="195,180 195,215 375,215 375,245" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="368.47551698833155,231.49329346470984 375,245 381.52448301166845,231.49329346470984" fill="none" stroke="#273444" stroke-width="2"/>
+<text x="140" y="208" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="20">是</text>
+<rect x="220" y="245" width="310" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="375.0" y="277.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">B 确认键已成功</text>
+<polyline points="530,277 1270,277" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1256.49329346471,283.52448301166845 1270,277 1256.49329346471,270.47551698833155" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1270" y="245" width="245" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1392.5" y="277.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="22">返回原结果 R2</text>
+<text x="1120" y="255" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">是</text>
+<polyline points="375,310 375,345 555,345 555,375" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="548.4755169883315,361.49329346470984 555,375 561.5244830116685,361.49329346470984" fill="none" stroke="#273444" stroke-width="2"/>
+<text x="320" y="338" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="20">否</text>
+<rect x="400" y="375" width="310" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="555.0" y="407.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">C 基线一致</text>
+<polyline points="710,407 1270,407" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1256.49329346471,413.52448301166845 1270,407 1256.49329346471,400.47551698833155" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1270" y="375" width="245" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1392.5" y="407.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="22">刷新预览 R3</text>
+<text x="1120" y="385" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">否</text>
+<polyline points="555,440 555,475 735,475 735,505" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="728.4755169883315,491.49329346470984 735,505 741.5244830116685,491.49329346470984" fill="none" stroke="#273444" stroke-width="2"/>
+<text x="500" y="468" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="20">是</text>
+<rect x="580" y="505" width="310" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="735.0" y="537.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">D 草案可确认</text>
+<polyline points="890,537 1270,537" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1256.49329346471,543.5244830116685 1270,537 1256.49329346471,530.4755169883315" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1270" y="505" width="245" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1392.5" y="537.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="22">状态冲突 R4</text>
+<text x="1120" y="515" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">否</text>
+<polyline points="735,570 735,605 915,605 915,635" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="908.4755169883315,621.4932934647098 915,635 921.5244830116685,621.4932934647098" fill="none" stroke="#273444" stroke-width="2"/>
+<text x="680" y="598" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="20">是</text>
+<rect x="760" y="635" width="310" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="915.0" y="667.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="23">E 重校验通过</text>
+<polyline points="1070,667 1270,667" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1256.49329346471,673.5244830116685 1270,667 1256.49329346471,660.4755169883315" fill="none" stroke="#273444" stroke-width="2"/>
+<rect x="1270" y="635" width="245" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1392.5" y="667.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="22">返回校验错误 R5</text>
+<text x="1120" y="645" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">否</text>
+<polyline points="915,700 915,760 1270,760" fill="none" stroke="#273444" stroke-width="2"/>
+<polyline points="1256.49329346471,766.5244830116685 1270,760 1256.49329346471,753.4755169883315" fill="none" stroke="#273444" stroke-width="2"/>
+<text x="950" y="725" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="21">是</text>
+<rect x="1270" y="727" width="245" height="65" rx="0" fill="#f3f6f9" stroke="#273444" stroke-width="2"/>
+<text x="1392.5" y="759.5" dominant-baseline="middle" text-anchor="middle" font-family="Microsoft YaHei,sans-serif" font-size="22">保存新版本 R6</text>
+</svg>
