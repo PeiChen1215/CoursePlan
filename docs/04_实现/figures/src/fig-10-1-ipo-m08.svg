@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="988" height="242" viewBox="0 0 988 242">
+<rect width="988" height="242" fill="#ffffff"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker></defs>
+<rect x="22" y="20" width="300" height="202" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<rect x="22" y="20" width="300" height="34" rx="6" fill="#f1f5f9" stroke="#334155" stroke-width="1.1"/>
+<text x="172.0" y="43.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="bold">输入</text>
+<text x="34.0" y="78.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 任务 ID 与所属版本</text>
+<text x="34.0" y="102.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 事件类型 done / correction / not</text>
+<text x="34.0" y="126.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">  e</text>
+<text x="34.0" y="150.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 实际用时、备注</text>
+<text x="34.0" y="174.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 幂等键 request_key</text>
+<rect x="344" y="20" width="300" height="202" rx="6" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
+<rect x="344" y="20" width="300" height="34" rx="6" fill="#f1f5f9" stroke="#334155" stroke-width="1.1"/>
+<text x="494.0" y="43.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="bold">处理</text>
+<text x="356.0" y="78.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 两步确认状态校验</text>
+<text x="356.0" y="102.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 幂等检查（键唯一 + 每任务一条 done</text>
+<text x="356.0" y="126.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">  ）</text>
+<text x="356.0" y="150.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 更正链校验（同任务、最新一条）</text>
+<text x="356.0" y="174.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 追加事件并递增进度修订号</text>
+<text x="356.0" y="198.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 重算完成率与逾期标记</text>
+<rect x="666" y="20" width="300" height="202" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<rect x="666" y="20" width="300" height="34" rx="6" fill="#f1f5f9" stroke="#334155" stroke-width="1.1"/>
+<text x="816.0" y="43.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="bold">输出</text>
+<text x="678.0" y="78.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 事件 ID</text>
+<text x="678.0" y="102.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· progress_revision</text>
+<text x="678.0" y="126.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 完成率与逾期标记</text>
+<text x="678.0" y="150.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 幂等回放结果</text>
+<path d="M 322 138.0 L 342 138.0" stroke="#334155" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M 644 138.0 L 664 138.0" stroke="#334155" stroke-width="1.6" marker-end="url(#a)"/>
+</svg>
