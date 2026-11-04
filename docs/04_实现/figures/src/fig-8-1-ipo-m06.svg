@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="988" height="242" viewBox="0 0 988 242">
+<rect width="988" height="242" fill="#ffffff"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker></defs>
+<rect x="22" y="20" width="300" height="202" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<rect x="22" y="20" width="300" height="34" rx="6" fill="#f1f5f9" stroke="#334155" stroke-width="1.1"/>
+<text x="172.0" y="43.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="bold">输入</text>
+<text x="34.0" y="78.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 草案：任务与时间片</text>
+<text x="34.0" y="102.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 约束对象（C、B、C′、截止）</text>
+<text x="34.0" y="126.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 课程先修图</text>
+<text x="34.0" y="150.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 配置：阈值 0.8、单片上限</text>
+<rect x="344" y="20" width="300" height="202" rx="6" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
+<rect x="344" y="20" width="300" height="34" rx="6" fill="#f1f5f9" stroke="#334155" stroke-width="1.1"/>
+<text x="494.0" y="43.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="bold">处理</text>
+<text x="356.0" y="78.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· ① 时段合法性</text>
+<text x="356.0" y="102.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· ② 容量 T ≤ C′</text>
+<text x="356.0" y="126.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· ③ 时间片两两不重叠</text>
+<text x="356.0" y="150.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· ④ 先修与学习先于练习</text>
+<text x="356.0" y="174.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· ⑤ 截止可达</text>
+<text x="356.0" y="198.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 汇总问题码与建议</text>
+<rect x="666" y="20" width="300" height="202" rx="6" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<rect x="666" y="20" width="300" height="34" rx="6" fill="#f1f5f9" stroke="#334155" stroke-width="1.1"/>
+<text x="816.0" y="43.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="14" fill="#1f2937" text-anchor="middle" font-weight="bold">输出</text>
+<text x="678.0" y="78.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· passed 布尔值</text>
+<text x="678.0" y="102.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· issues 列表（码、级别、定位）</text>
+<text x="678.0" y="126.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· metrics：T / C / B / C′ / 缺口 </text>
+<text x="678.0" y="150.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">  / 利用率</text>
+<text x="678.0" y="174.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start">· 建议动作</text>
+<path d="M 322 138.0 L 342 138.0" stroke="#334155" stroke-width="1.6" marker-end="url(#a)"/>
+<path d="M 644 138.0 L 664 138.0" stroke="#334155" stroke-width="1.6" marker-end="url(#a)"/>
+</svg>
