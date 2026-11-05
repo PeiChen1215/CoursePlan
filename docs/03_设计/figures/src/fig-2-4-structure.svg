@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1290" height="736" viewBox="0 0 1290 736">
+<rect width="1290" height="736" fill="#ffffff"/>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker></defs>
+<rect x="495.0" y="28" width="300" height="86" rx="4" fill="#e6f4f1" stroke="#0e7c6b" stroke-width="1.3"/>
+<text x="645.0" y="48.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-10</text>
+<text x="645.0" y="66.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">接口与序列化</text>
+<text x="645.0" y="84.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">HTTP 请求 → 响应</text>
+<path d="M 645.0 114.0 L 645.0 154.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 100.0 154.0 L 1190.0 154.0" fill="none" stroke="#64748b" stroke-width="1.2"/>
+<path d="M 100.0 154.0 L 100.0 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 255.7 154.0 L 255.7 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 411.4 154.0 L 411.4 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 567.1 154.0 L 567.1 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 722.9 154.0 L 722.9 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 878.6 154.0 L 878.6 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 1034.3 154.0 L 1034.3 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<path d="M 1190.0 154.0 L 1190.0 200.0" fill="none" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="30.0" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="100.0" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-01</text>
+<text x="100.0" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">认证与权限</text>
+<text x="100.0" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">令牌 → 角色</text>
+<rect x="185.7" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="255.7" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-03</text>
+<text x="255.7" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">约束与容量</text>
+<text x="255.7" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">约束字段 → C / B / C′</text>
+<rect x="341.4" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="411.4" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-04</text>
+<text x="411.4" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">追问与抽取</text>
+<text x="411.4" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">自然语言 → 字段</text>
+<rect x="497.1" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="567.1" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-05</text>
+<text x="567.1" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">分解与排程</text>
+<text x="567.1" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">约束 → 草案</text>
+<rect x="652.9" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="722.9" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-06</text>
+<text x="722.9" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">计划校验</text>
+<text x="722.9" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">草案 → 校验报告</text>
+<rect x="808.6" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="878.6" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-07</text>
+<text x="878.6" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">确认与版本</text>
+<text x="878.6" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">确认请求 → 版本</text>
+<rect x="964.3" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="1034.3" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-08</text>
+<text x="1034.3" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">进度与事件</text>
+<text x="1034.3" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">事件 → 完成率</text>
+<rect x="1120.0" y="200" width="140" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="1190.0" y="220.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-09</text>
+<text x="1190.0" y="238.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">看板与前端</text>
+<text x="1190.0" y="256.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">计划 → 视图数据</text>
+<rect x="165.7" y="430" width="180" height="86" rx="4" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="255.7" y="450.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-02</text>
+<text x="255.7" y="468.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">课程内容管理</text>
+<text x="255.7" y="486.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">被 M-03 / M-05 读取</text>
+<path d="M 255.7 286.0 L 235.7 430.0" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M 567.1 286.0 L 315.7 430.0" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="239.7" y="358.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="9" fill="#6b7280" text-anchor="middle">内容快照</text>
+<text x="447.4" y="348.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="9" fill="#6b7280" text-anchor="middle">内容快照</text>
+<rect x="30.0" y="590" width="240" height="76" rx="4" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
+<text x="150.0" y="610.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-11</text>
+<text x="150.0" y="628.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">存储访问</text>
+<text x="150.0" y="646.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">SQL / 事务</text>
+<rect x="300.0" y="590" width="240" height="76" rx="4" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
+<text x="420.0" y="610.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">M-12</text>
+<text x="420.0" y="628.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle" font-weight="bold">配置与日志</text>
+<text x="420.0" y="646.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="middle">配置 / 日志</text>
+<text x="586.0" y="616.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="start" font-weight="bold">共用基础：被上述全部程序调用</text>
+<text x="586.0" y="638.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="start">（每个程序的具体调用点见 §3.3 表 3.3）</text>
+<text x="645.0" y="714.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="middle">箭头表示调用（上层调用下层）；框内第三行为主要数据进出；虚线为读取 / 共用关系</text>
+</svg>
