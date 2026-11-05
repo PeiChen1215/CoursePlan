@@ -1,36 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1012" height="666" viewBox="0 0 1012 666">
-<rect width="1012" height="666" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="622" viewBox="0 0 900 622">
+<rect width="900" height="622" fill="#ffffff"/>
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker></defs>
-<ellipse cx="300" cy="46.0" rx="150" ry="24.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
-<text x="300.0" y="51.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">开始</text>
-<path d="M 178.0 96 L 440.0 96 L 422.0 144 L 160.0 144 Z" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="125.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">填写目标、截止、可用时间、已掌握</text>
-<path d="M 300 170.0 L 475.0 201.0 L 300 232.0 L 125.0 201.0 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="206.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">字段合法？</text>
-<path d="M 300 258.0 L 475.0 289.0 L 300 320.0 L 125.0 289.0 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="294.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">截止在次日至 180 天内？</text>
-<rect x="160.0" y="346" width="280" height="46" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="374.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">展开可用时段、扣排除日期</text>
-<path d="M 300 418.0 L 475.0 449.0 L 300 480.0 L 125.0 449.0 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="454.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">原始容量 C &gt; 0？</text>
-<rect x="160.0" y="506" width="280" height="46" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="534.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">计算 B 与 C′，估算目标路径时长</text>
-<ellipse cx="300" cy="602.0" rx="150" ry="24.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
-<text x="300.0" y="607.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">结束</text>
-<path d="M 300 70.0 L 300 94.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 144.0 L 300 168.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 232.0 L 300 256.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 320.0 L 300 344.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 392.0 L 300 416.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 480.0 L 300 504.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 552.0 L 300 576.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="483.0" y="195.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="start">否</text>
-<path d="M 475 201.0 L 620 201.0 L 620 120.0 L 442.0 120.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="628.0" y="160.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="start">返回 E1001，定位到字段</text>
-<text x="483.0" y="283.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="start">否</text>
-<path d="M 475 289.0 L 666 289.0 L 666 120.0 L 442.0 120.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="674.0" y="204.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="start">提示允许范围</text>
-<text x="483.0" y="443.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="start">否</text>
-<path d="M 475 449.0 L 712 449.0 L 712 120.0 L 442.0 120.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="720.0" y="284.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="start">返回 E1003 与原因</text>
+<ellipse cx="330" cy="49.0" rx="160" ry="25.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
+<text x="330.0" y="54.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">开始</text>
+<path d="M 200.0 104 L 480.0 104 L 460.0 154 L 180.0 154 Z" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="134.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">填写目标、截止、可用时间、已掌握</text>
+<path d="M 330 184.0 L 520.0 216.0 L 330 248.0 L 140.0 216.0 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="221.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">字段合法且截止在 2–180 天内？</text>
+<rect x="180.0" y="278" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="307.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">展开可用时段、扣排除日期</text>
+<path d="M 330 356.0 L 520.0 390.0 L 330 424.0 L 140.0 390.0 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="386.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">原始容量 C &gt; 0？</text>
+<text x="330.0" y="403.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">（为零则返回 E1003 与原因）</text>
+<rect x="180.0" y="454" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="483.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">计算 B 与 C′，估算目标路径时长</text>
+<ellipse cx="330" cy="557.0" rx="160" ry="25.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
+<text x="330.0" y="562.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">结束</text>
+<path d="M 330 74.0 L 330 102.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 154.0 L 330 182.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 248.0 L 330 276.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 326.0 L 330 354.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 424.0 L 330 452.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 502.0 L 330 530.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<text x="130.0" y="206.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="end">否</text>
+<path d="M 140.0 216.0 L 78 216.0 L 78 122.0 L 178.0 122.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<text x="130.0" y="380.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="end">否</text>
+<path d="M 140.0 390.0 L 48 390.0 L 48 136.0 L 178.0 136.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
 </svg>

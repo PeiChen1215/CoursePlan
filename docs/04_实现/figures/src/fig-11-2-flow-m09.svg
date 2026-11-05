@@ -1,33 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="920" height="706" viewBox="0 0 920 706">
-<rect width="920" height="706" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="606" viewBox="0 0 900 606">
+<rect width="900" height="606" fill="#ffffff"/>
 <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker></defs>
-<ellipse cx="300" cy="46.0" rx="150" ry="24.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
-<text x="300.0" y="51.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">开始</text>
-<path d="M 178.0 96 L 440.0 96 L 422.0 144 L 160.0 144 Z" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="125.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">打开看板或周视图</text>
-<rect x="160.0" y="170" width="280" height="46" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="198.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">读取版本任务与时间片（不扫快照）</text>
-<rect x="160.0" y="242" width="280" height="46" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="270.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">按日或周分组、按时间排序</text>
-<rect x="160.0" y="314" width="280" height="46" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="342.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">合并学习事件，得出完成 / 逾期 / 冲突</text>
-<path d="M 300 386.0 L 475.0 417.0 L 300 448.0 L 125.0 417.0 Z" fill="#f8fafc" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="422.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">是历史版本？</text>
-<rect x="160.0" y="474" width="280" height="46" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="502.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">隐藏打卡入口、显示差异高亮</text>
-<rect x="160.0" y="546" width="280" height="46" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="300.0" y="574.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">渲染卡片：文字 + 底色双通道</text>
-<ellipse cx="300" cy="642.0" rx="150" ry="24.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
-<text x="300.0" y="647.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">结束</text>
-<path d="M 300 70.0 L 300 94.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 144.0 L 300 168.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 216.0 L 300 240.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 288.0 L 300 312.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 360.0 L 300 384.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 448.0 L 300 472.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 520.0 L 300 544.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 300 592.0 L 300 616.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="483.0" y="411.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="11" fill="#6b7280" text-anchor="start">否</text>
-<path d="M 475 417.0 L 620 417.0 L 620 569.0 L 442.0 569.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<text x="628.0" y="493.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="10" fill="#6b7280" text-anchor="start">否：允许打卡</text>
+<ellipse cx="330" cy="49.0" rx="160" ry="25.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
+<text x="330.0" y="54.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">开始</text>
+<path d="M 200.0 104 L 480.0 104 L 460.0 154 L 180.0 154 Z" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="134.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">打开看板或周视图</text>
+<rect x="180.0" y="184" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="213.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">读取版本任务与时间片（不扫快照）</text>
+<rect x="180.0" y="262" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="291.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">按日或周分组、按时间排序</text>
+<rect x="180.0" y="340" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="369.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">合并学习事件，得出完成 / 逾期 / 冲突</text>
+<rect x="180.0" y="418" width="300" height="68" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
+<text x="330.0" y="448.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">渲染卡片：文字 + 底色双通道</text>
+<text x="330.0" y="465.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">历史版本隐藏打卡入口、差异高亮</text>
+<ellipse cx="330" cy="541.0" rx="160" ry="25.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
+<text x="330.0" y="546.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">结束</text>
+<path d="M 330 74.0 L 330 102.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 154.0 L 330 182.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 232.0 L 330 260.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 310.0 L 330 338.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 388.0 L 330 416.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<path d="M 330 486.0 L 330 514.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
 </svg>
