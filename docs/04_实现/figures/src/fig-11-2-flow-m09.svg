@@ -1,25 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="606" viewBox="0 0 900 606">
-<rect width="900" height="606" fill="#ffffff"/>
-<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker></defs>
-<ellipse cx="330" cy="49.0" rx="160" ry="25.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
-<text x="330.0" y="54.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">开始</text>
-<path d="M 200.0 104 L 480.0 104 L 460.0 154 L 180.0 154 Z" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="330.0" y="134.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">打开看板或周视图</text>
-<rect x="180.0" y="184" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="330.0" y="213.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">读取版本任务与时间片（不扫快照）</text>
-<rect x="180.0" y="262" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="330.0" y="291.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">按日或周分组、按时间排序</text>
-<rect x="180.0" y="340" width="300" height="48" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="330.0" y="369.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">合并学习事件，得出完成 / 逾期 / 冲突</text>
-<rect x="180.0" y="418" width="300" height="68" rx="2" fill="#ffffff" stroke="#334155" stroke-width="1.3"/>
-<text x="330.0" y="448.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">渲染卡片：文字 + 底色双通道</text>
-<text x="330.0" y="465.5" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">历史版本隐藏打卡入口、差异高亮</text>
-<ellipse cx="330" cy="541.0" rx="160" ry="25.0" fill="#f1f5f9" stroke="#334155" stroke-width="1.4"/>
-<text x="330.0" y="546.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="12" fill="#1f2937" text-anchor="middle">结束</text>
-<path d="M 330 74.0 L 330 102.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 330 154.0 L 330 182.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 330 232.0 L 330 260.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 330 310.0 L 330 338.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 330 388.0 L 330 416.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
-<path d="M 330 486.0 L 330 514.0" fill="none" stroke="#334155" stroke-width="1.3" marker-end="url(#a)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="2120" height="1604" viewBox="0 0 2120 1604">
+<rect width="2120" height="1604" fill="#ffffff"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/></marker></defs>
+<rect x="520.0" y="60" width="360" height="90" rx="45" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="117.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="36" fill="#000000" text-anchor="middle">开始</text>
+<path d="M 466.0 228 L 980.0 228 L 934.0 318 L 420.0 318 Z" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="285.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="34" fill="#000000" text-anchor="middle">打开看板或周视图</text>
+<path d="M 700 396 L 980 501 L 700 606 L 420 501 Z" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="492.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="34" fill="#000000" text-anchor="middle">计划已确认</text>
+<text x="700.0" y="534.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="34" fill="#000000" text-anchor="middle">（存在生效版本）？</text>
+<rect x="420.0" y="684" width="560" height="100" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="725.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="32" fill="#000000" text-anchor="middle">读取版本任务与时间片</text>
+<text x="700.0" y="767.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="32" fill="#000000" text-anchor="middle">（不扫快照 JSON）</text>
+<rect x="420.0" y="862" width="560" height="90" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="919.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="32" fill="#000000" text-anchor="middle">按日或周分组、按时间排序</text>
+<rect x="420.0" y="1030" width="560" height="100" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="1071.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="32" fill="#000000" text-anchor="middle">合并学习事件</text>
+<text x="700.0" y="1113.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="32" fill="#000000" text-anchor="middle">得出完成 / 逾期 / 冲突</text>
+<rect x="420.0" y="1208" width="560" height="110" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="1254.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="32" fill="#000000" text-anchor="middle">渲染卡片：文字 + 底色双通道</text>
+<text x="700.0" y="1296.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="32" fill="#000000" text-anchor="middle">历史版本隐藏打卡入口、差异高亮</text>
+<rect x="520.0" y="1396" width="360" height="90" rx="45" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="700.0" y="1453.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="36" fill="#000000" text-anchor="middle">结束</text>
+<path d="M 700.0 150.0 L 700.0 226.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 700.0 318.0 L 700.0 394.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 700.0 606.0 L 700.0 682.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 700.0 784.0 L 700.0 860.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 700.0 952.0 L 700.0 1028.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 700.0 1130.0 L 700.0 1206.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M 700.0 1318.0 L 700.0 1394.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="718.0" y="487.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="30" fill="#000000" text-anchor="start">是</text>
+<text x="1020.0" y="487.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="30" fill="#000000" text-anchor="start">否</text>
+<path d="M 980.0 501.0 L 1560.0 501.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="1580" y="436" width="420" height="130" fill="none" stroke="#000000" stroke-width="3"/>
+<text x="1790.0" y="495.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="30" fill="#000000" text-anchor="middle">提示“计划尚未确认”</text>
+<text x="1790.0" y="545.0" font-family="Microsoft YaHei, SimHei, sans-serif" font-size="30" fill="#000000" text-anchor="middle">引导先完成确认</text>
+<path d="M 1790.0 566.0 L 1790.0 1441.0 L 890.0 1441.0" fill="none" stroke="#000000" stroke-width="3" marker-end="url(#arrow)"/>
 </svg>
