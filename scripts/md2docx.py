@@ -20,7 +20,7 @@ from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml import OxmlElement
+from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
@@ -29,6 +29,9 @@ CN_HEAD = "黑体"
 CN_NOTE = "楷体"
 EN_FONT = "Times New Roman"
 EN_MONO = "Consolas"
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from latex_omml import LatexError, latex_to_omml  # noqa: E402
 
 COVER = {
     "course": "软件工程综合实训",
@@ -69,8 +72,8 @@ def set_font(run, cn=CN_BODY, en=EN_FONT, size=12, bold=False, italic=False):
 
 
 def add_inline(paragraph, text, cn=CN_BODY, en=EN_FONT, size=12, base_bold=False):
-    """解析 **加粗** 与 `代码` 行内标记。"""
-    pattern = re.compile(r"\*\*(.+?)\*\*|`([^`]+)`")
+    """解析 **加粗**、`代码` 与 $行内公式$。"""
+    pattern = re.compile(r"\*\*(.+?)\*\*|`([^`]+)`|\$([^$]+)\$")
     pos = 0
     for m in pattern.finditer(text):
         if m.start() > pos:
@@ -79,6 +82,8 @@ def add_inline(paragraph, text, cn=CN_BODY, en=EN_FONT, size=12, base_bold=False
         if m.group(1) is not None:
             r = paragraph.add_run(m.group(1))
             set_font(r, cn=cn, en=en, size=size, bold=True)
+        elif m.group(3) is not None:
+            append_math(paragraph, m.group(3).strip(), inline=True)
         else:
             r = paragraph.add_run(m.group(2))
             set_font(r, cn=CN_BODY, en=EN_MONO, size=size - 1, bold=base_bold)
@@ -86,6 +91,30 @@ def add_inline(paragraph, text, cn=CN_BODY, en=EN_FONT, size=12, base_bold=False
     if pos < len(text):
         r = paragraph.add_run(text[pos:])
         set_font(r, cn=cn, en=en, size=size, bold=base_bold)
+
+
+M_NS = "http://schemas.openxmlformats.org/officeDocument/2006/math"
+
+
+def append_math(paragraph, latex, inline=False):
+    """把 LaTeX 公式插入段落；失败时退化为原文，避免丢内容。"""
+    try:
+        xml = latex_to_omml(latex)
+    except LatexError:
+        r = paragraph.add_run("$%s$" % latex)
+        set_font(r, cn=CN_BODY, en=EN_FONT, size=11)
+        return False
+    paragraph._p.append(parse_xml(xml))
+    return True
+
+
+def add_math_block(doc, latex):
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    pf = p.paragraph_format
+    pf.space_before = Pt(6)
+    pf.space_after = Pt(6)
+    append_math(p, latex)
 
 
 def shade(cell, color="F2F2F2"):
@@ -514,6 +543,17 @@ def convert(md_path, docx_path, doc_title):
             else:
                 add_body(doc, "【缺图：%s】" % rel)
             i += 1
+            continue
+
+        if line == "$$":
+            buf = []
+            i += 1
+            while i < n and lines[i].strip() != "$$":
+                buf.append(lines[i].strip())
+                i += 1
+            i += 1
+            add_math_block(doc, " ".join(b for b in buf if b))
+            expect_cap = False
             continue
 
         if line.startswith("```"):
