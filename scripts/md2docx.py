@@ -319,6 +319,42 @@ def total_guard(weights):
     return sum(weights)
 
 
+def add_code_block(doc, lines):
+    """把围栏代码块渲染为等宽、带底纹与边框的整段，保留缩进与空行。"""
+    p = doc.add_paragraph()
+    pf = p.paragraph_format
+    pf.left_indent = Cm(0.4)
+    pf.right_indent = Cm(0.2)
+    pf.first_line_indent = Cm(0)
+    pf.space_before = Pt(6)
+    pf.space_after = Pt(6)
+    pf.line_spacing = 1.1
+
+    pPr = p._p.get_or_add_pPr()
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:color"), "auto")
+    shd.set(qn("w:fill"), "F5F5F5")
+    pPr.append(shd)
+    bdr = OxmlElement("w:pBdr")
+    for edge in ("top", "left", "bottom", "right"):
+        e = OxmlElement("w:" + edge)
+        e.set(qn("w:val"), "single")
+        e.set(qn("w:sz"), "4")
+        e.set(qn("w:space"), "4")
+        e.set(qn("w:color"), "BFBFBF")
+        bdr.append(e)
+    pPr.append(bdr)
+
+    for k, ln in enumerate(lines):
+        run = p.add_run(ln)
+        set_font(run, cn=CN_BODY, en=EN_MONO, size=9)
+        for el in run._element.findall(qn("w:t")):
+            el.set(qn("xml:space"), "preserve")
+        if k < len(lines) - 1:
+            run.add_break()
+
+
 def add_table(doc, rows):
     cols = max(len(r) for r in rows)
     rows = [r + [""] * (cols - len(r)) for r in rows]
@@ -478,6 +514,17 @@ def convert(md_path, docx_path, doc_title):
             else:
                 add_body(doc, "【缺图：%s】" % rel)
             i += 1
+            continue
+
+        if line.startswith("```"):
+            i += 1
+            buf = []
+            while i < n and not lines[i].strip().startswith("```"):
+                buf.append(lines[i].rstrip())
+                i += 1
+            i += 1
+            add_code_block(doc, buf)
+            expect_cap = False
             continue
 
         if line.startswith("|"):
