@@ -10,11 +10,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from .core import config as config_mod
+from .core.config import PROJECT_ROOT
 from .core.errors import AppError, envelope
 from .core.logging import log_event, setup_logging
 from .db.uow import Database
+from .api.auth import router as auth_router
+from .api.content import router as content_router
 
-SCHEMA_FILE = Path(__file__).resolve().parents[3] / "scripts" / "schema.sql"
+SCHEMA_FILE = PROJECT_ROOT / "scripts" / "schema.sql"
 
 
 def create_app(overrides: Dict[str, Any] | None = None) -> FastAPI:
@@ -63,6 +66,8 @@ def create_app(overrides: Dict[str, Any] | None = None) -> FastAPI:
                             content=envelope("E9000", "内部错误", None, None, None, rid))
 
     register_routes(app)
+    app.include_router(auth_router)
+    app.include_router(content_router)
     return app
 
 
@@ -97,7 +102,7 @@ def register_routes(app: FastAPI) -> None:
 
 
 def _backup_age_hours(root: Path | None = None):
-    root = root or (Path(__file__).resolve().parents[3] / "backups")
+    root = root or (PROJECT_ROOT / "backups")
     if not root.exists():
         return None
     files = sorted(root.glob("*.db"), key=lambda p: p.stat().st_mtime)
