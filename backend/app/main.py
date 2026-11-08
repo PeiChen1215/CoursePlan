@@ -96,8 +96,10 @@ def register_routes(app: FastAPI) -> None:
         }, request_id=getattr(request.state, "request_id", ""))
 
 
-def _backup_age_hours():
-    root = Path(__file__).resolve().parents[3] / "backups"
+def _backup_age_hours(root: Path | None = None):
+    root = root or (Path(__file__).resolve().parents[3] / "backups")
+    if not root.exists():
+        return None
     files = sorted(root.glob("*.db"), key=lambda p: p.stat().st_mtime)
     if not files:
         return None

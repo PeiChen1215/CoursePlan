@@ -13,9 +13,10 @@ from ..core.errors import Busy, StateError, ValidationError
 
 
 class Database:
-    def __init__(self, path: Path, timeout: float = 3.0):
+    def __init__(self, path: Path, timeout: float = 3.0, busy_timeout_ms: int = 3000):
         self.path = path
         self.timeout = timeout
+        self.busy_timeout_ms = busy_timeout_ms
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def connect(self) -> sqlite3.Connection:
@@ -23,7 +24,7 @@ class Database:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         conn.execute("PRAGMA journal_mode = WAL")
-        conn.execute("PRAGMA busy_timeout = 3000")
+        conn.execute("PRAGMA busy_timeout = %d" % self.busy_timeout_ms)
         return conn
 
     def init_schema(self, schema_sql: str) -> None:
