@@ -58,7 +58,9 @@ class VersionService:
 
     # ---------------------------------------------------------------- 确认
     def confirm(self, plan_id: int, revision: int, confirm_key: str,
-                actor_id: int, now: datetime) -> ConfirmResult:
+                actor_id: int, now: datetime,
+                change_reason: Optional[str] = None,
+                change_note: Optional[str] = None) -> ConfirmResult:
         if not confirm_key:
             raise ValidationError("E1001", "缺少幂等键", field="confirm_key")
 
@@ -93,7 +95,8 @@ class VersionService:
 
             version_id = self._write_version(uow, plan, draft, payload, report.metrics,
                                              actor_id, now,
-                                             [i.as_dict() for i in report.issues])
+                                             [i.as_dict() for i in report.issues],
+                                             change_reason, change_note)
             prev_no = int(plan["current_version"] or 0)
             version_no = int(uow.fetch_one("SELECT version_no FROM plan_version"
                                            " WHERE version_id = ?", (version_id,))["version_no"])
@@ -163,7 +166,9 @@ class VersionService:
     # ---------------------------------------------------------------- 写版本
     def _write_version(self, uow, plan, draft, payload: dict, metrics: dict,
                        actor_id: int, now: datetime,
-                       issues: Optional[List[dict]] = None) -> int:
+                       issues: Optional[List[dict]] = None,
+                       change_reason: Optional[str] = None,
+                       change_note: Optional[str] = None) -> int:
         plan_id = int(plan["plan_id"])
         course_id = int(plan["course_id"])
         stamp = _now_iso(now)
@@ -185,8 +190,16 @@ class VersionService:
         version_no = int(uow.fetch_one(
             "SELECT COALESCE(MAX(version_no), 0) + 1 AS n FROM plan_version"
             " WHERE plan_id = ?", (plan_id,))["n"])
-        reason = "initial" if int(plan["current_version"] or 0) == 0 else "manual"
-        note = "首次确认" if reason == "initial" else "第 %d 次调整确认" % version_no
+        allowed = {"initial", "delay", "goal_change", "availability_change",
+                   "duration_change", "manual"}
+        first = int(plan["current_version"] or 0) == 0
+        if first:
+            reason = "initial"
+        elif change_reason in allowed - {"initial"}:
+            reason = change_reason
+        else:
+            reason = "manual"
+        note = (change_note or ("首次确认" if first else "第 %d 次调整确认" % version_no))[:500]
 
         cur = uow.execute(
             "INSERT INTO plan_version(plan_id,version_no,change_reason,change_note,"

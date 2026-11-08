@@ -6,6 +6,8 @@ import { ConstraintPage } from "./pages/ConstraintPage";
 import { DraftPage } from "./pages/DraftPage";
 import { VersionsPage } from "./pages/VersionsPage";
 import { AdminPage } from "./pages/AdminPage";
+import { AdjustPage } from "./pages/AdjustPage";
+import { TimelinePage } from "./pages/TimelinePage";
 
 function Guard({ children }: { children: React.ReactNode }) {
   const { me, loading } = useAuth();
@@ -21,6 +23,8 @@ export function App() {
       <Route path="/board" element={<Guard><BoardPage /></Guard>} />
       <Route path="/constraint" element={<Guard><ConstraintPage /></Guard>} />
       <Route path="/draft" element={<Guard><DraftPage /></Guard>} />
+      <Route path="/adjust" element={<Guard><AdjustPage /></Guard>} />
+      <Route path="/timeline" element={<Guard><TimelinePage /></Guard>} />
       <Route path="/versions" element={<Guard><VersionsPage /></Guard>} />
       <Route path="/admin" element={<Guard><AdminPage /></Guard>} />
       <Route path="*" element={<Navigate to="/board" replace />} />

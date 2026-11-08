@@ -223,3 +223,78 @@ def test_http_agent_extract(client):
     assert d["fields"]["target_concept_id"] == 3
     assert d["fields"]["deadline"] == "2026-11-19"
     assert d["mode"] in ("local", "mock")
+
+# ---------------- 事件时间线（D06 §10.7）
+def test_timeline_lists_events_with_names(client):
+    h, uid, pid, tasks = confirmed_plan(client)
+    s = svc(client)
+    s.submit(pid, uid, tasks[0], "done", "k1", BASE, actual_minutes=40)
+    from app.services.timeline import TimelineService
+    items = TimelineService(client.app.state.db, client.app.state.config).events(pid, uid)
+    assert len(items) == 1
+    row = items[0]
+    assert row["event_type"] == "done" and row["label"] == "完成"
+    assert row["concept_name"] and row["actual_minutes"] == 40
+    assert row["is_current_version"] is True
+
+def test_timeline_marks_correction_chain(client):
+    h, uid, pid, tasks = confirmed_plan(client)
+    s = svc(client)
+    first = s.submit(pid, uid, tasks[0], "done", "k1", BASE, actual_minutes=40)
+    s.submit(pid, uid, tasks[0], "correction", "k2", BASE, actual_minutes=30,
+             corrects_event_id=first.event_id)
+    from app.services.timeline import TimelineService
+    items = TimelineService(client.app.state.db, client.app.state.config).events(pid, uid)
+    correction = [i for i in items if i["event_type"] == "correction"][0]
+    assert correction["corrects_event_id"] == first.event_id
+
+def test_timeline_other_student_404(client):
+    from app.core.errors import NotFound
+    from app.services.timeline import TimelineService
+    h, uid, pid, tasks = confirmed_plan(client)
+    _, admin_id = login(client, "admin", "Admin123!")
+    with pytest.raises(NotFound):
+        TimelineService(client.app.state.db, client.app.state.config).events(pid, admin_id)
+
+def test_explain_maps_codes_to_plain_language(client):
+    from app.services.timeline import TimelineService
+    svc2 = TimelineService(client.app.state.db, client.app.state.config)
+    out = svc2.explain(["CAP_EXCEEDED", "UNKNOWN_CODE"])
+    assert out[0]["title"] and out[0]["action"]
+    assert out[1]["code"] == "UNKNOWN_CODE" and out[1]["action"] == "暂无建议"
+
+def test_http_events_and_explain(client):
+    h, uid, pid, tasks = confirmed_plan(client)
+    client.post("/api/plans/%d/events" % pid, headers={**h, "Idempotency-Key": "e1"},
+                json={"task_id": tasks[0], "event_type": "done", "actual_minutes": 30})
+    items = client.get("/api/plans/%d/events" % pid, headers=h).json()["data"]["items"]
+    assert items and items[0]["label"] == "完成"
+    exp = client.post("/api/plans/%d/explain" % pid, headers=h,
+                      json={"codes": ["CAP_TIGHT"]}).json()["data"]["items"]
+    assert exp[0]["code"] == "CAP_TIGHT" and "缓冲" in exp[0]["title"]
+
+def test_confirm_records_change_reason(client):
+    h, uid, pid, tasks = confirmed_plan(client)
+    from app.services.planner import PlannerService
+    from app.services.version import VersionService
+    draft = PlannerService(client.app.state.db, client.app.state.config).generate(pid, uid, BASE)
+    VersionService(client.app.state.db, client.app.state.config).confirm(
+        pid, draft.revision, "adj-1", uid, BASE,
+        change_reason="delay", change_note="截止日期延后到 12-20")
+    row = client.app.state.db.query(
+        "SELECT change_reason, change_note FROM plan_version WHERE plan_id=? ORDER BY version_no DESC",
+        (pid,))[0]
+    assert row["change_reason"] == "delay"
+    assert row["change_note"] == "截止日期延后到 12-20"
+
+def test_confirm_ignores_unknown_reason(client):
+    h, uid, pid, tasks = confirmed_plan(client)
+    from app.services.planner import PlannerService
+    from app.services.version import VersionService
+    draft = PlannerService(client.app.state.db, client.app.state.config).generate(pid, uid, BASE)
+    VersionService(client.app.state.db, client.app.state.config).confirm(
+        pid, draft.revision, "adj-2", uid, BASE, change_reason="whatever")
+    row = client.app.state.db.query(
+        "SELECT change_reason FROM plan_version WHERE plan_id=? ORDER BY version_no DESC",
+        (pid,))[0]
+    assert row["change_reason"] == "manual"

@@ -7,6 +7,8 @@ const NAV = [
   { to: "/board", label: "课表" },
   { to: "/constraint", label: "填写约束" },
   { to: "/draft", label: "草案" },
+  { to: "/adjust", label: "调整" },
+  { to: "/timeline", label: "记录" },
   { to: "/versions", label: "版本" },
 ];
 

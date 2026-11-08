@@ -275,3 +275,19 @@ def test_http_draft_tasks_carry_concept_names(client):
     data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
     assert data["tasks"] and all(task["name"] for task in data["tasks"])
     assert all(slice_["name"] for slice_ in data["slices"])
+
+def test_http_draft_returns_diff_against_current(client):
+    """生成草案时附带与当前版本的差异，供调整预览使用。"""
+    h, uid, pid = confirmed(client)
+    first = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    assert set(first["diff"]) == {"added", "removed", "moved", "resized"}
+    # 同一约束再生成一次：本来应该没有变化
+    second = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    assert second["diff"]["added"] == [] and second["diff"]["removed"] == []
+
+def test_http_draft_diff_without_current_version(client):
+    h, uid = login(client)
+    pid = make_plan(client, h)
+    set_constraint(client, h, pid)
+    data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    assert data["diff"] == {"added": [], "removed": [], "moved": [], "resized": []}

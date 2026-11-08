@@ -75,6 +75,7 @@ def generate_draft(plan_id: int, request: Request,
     report = validate(draft.tasks, draft.slices, slots, raw - buffer, raw, deadline,
                       edges, [by_id[c] for c in selected], selected, cfg)
     names = {c.concept_id: c.name for c in concepts}
+    proposal_diff = _diff_against_current(db, plan_id, draft)
 
     return envelope("OK", "ok", {
         "revision": draft.revision,
@@ -98,7 +99,43 @@ def generate_draft(plan_id: int, request: Request,
         },
         "report": {"passed": report.passed,
                    "issues": [i.as_dict() for i in report.issues]},
+        "diff": proposal_diff,
     }, request_id=_rid(request))
+
+
+def _diff_against_current(db, plan_id: int, draft) -> dict:
+    """把新草案与当前生效版本按 (知识点, 类型) 对比，供调整预览用。"""
+    plan = db.query("SELECT current_version FROM study_plan WHERE plan_id = ?", (plan_id,))[0]
+    current = int(plan["current_version"] or 0)
+    if not current:
+        return {"added": [], "removed": [], "moved": [], "resized": []}
+    old_rows = db.query(
+        "SELECT pt.concept_id, pt.task_type, vt.estimated_minutes,"
+        " (SELECT MIN(ts.start_epoch) FROM task_slice ts WHERE ts.version_id = vt.version_id"
+        "  AND ts.task_id = vt.task_id) AS first_start"
+        " FROM version_task vt JOIN plan_task pt ON pt.task_id = vt.task_id"
+        " JOIN plan_version v ON v.version_id = vt.version_id"
+        " WHERE v.plan_id = ? AND v.version_no = ?", (plan_id, current))
+    old = {(int(r["concept_id"]), r["task_type"]): (int(r["estimated_minutes"]),
+                                                    (r["first_start"] or 0) // 86400)
+           for r in old_rows}
+    new = {(t.concept_id, t.kind): t.minutes for t in draft.tasks}
+    first_days = {}
+    for s in draft.slices:
+        key = (s.concept_id, s.kind)
+        day = int(s.start.timestamp()) // 86400
+        first_days[key] = min(first_days.get(key, day), day)
+    added = sorted("%d-%s" % key for key in new if key not in old)
+    removed = sorted("%d-%s" % key for key in old if key not in new)
+    moved, resized = [], []
+    for key in new.keys() & old.keys():
+        old_minutes, old_day = old[key]
+        if key in first_days and first_days[key] != old_day:
+            moved.append("%d-%s" % key)
+        if new[key] != old_minutes:
+            resized.append("%d-%s" % key)
+    return {"added": added, "removed": removed,
+            "moved": sorted(moved), "resized": sorted(resized)}
 
 
 @router.get("/{plan_id}/drafts/{revision}")

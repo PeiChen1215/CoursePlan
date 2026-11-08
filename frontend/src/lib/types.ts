@@ -93,6 +93,7 @@ export interface DraftDetail {
     slices: number;
   };
   report: { passed: boolean; issues: Issue[] };
+  diff?: { added: string[]; removed: string[]; moved: string[]; resized: string[] };
 }
 
 export interface VersionRow {

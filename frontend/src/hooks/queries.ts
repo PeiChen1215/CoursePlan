@@ -135,10 +135,13 @@ export function useDraft(planId: number | null, revision: number | null) {
 export function useConfirmDraft(planId: number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (args: { revision: number; confirmKey: string }) =>
+    mutationFn: (args: {
+      revision: number; confirmKey: string; reason?: string; note?: string;
+    }) =>
       api.post<{ version_no: number; replayed: boolean; diff: VersionDiff | null }>(
         "/api/plans/" + planId + "/drafts/" + args.revision + "/confirm",
-        { revision: args.revision },
+        { revision: args.revision, change_reason: args.reason ?? null,
+          change_note: args.note ?? null },
         { "Idempotency-Key": args.confirmKey },
       ),
     onSuccess: () => {
@@ -191,6 +194,37 @@ export function useSubmitEvent(planId: number) {
       qc.invalidateQueries({ queryKey: ["board", planId] });
       qc.invalidateQueries({ queryKey: qk.progress(planId) });
     },
+  });
+}
+
+export interface TimelineRow {
+  event_id: number;
+  task_id: number;
+  concept_name: string;
+  task_type: string;
+  event_type: "done" | "correction" | "note";
+  label: string;
+  actual_minutes: number | null;
+  note: string | null;
+  corrects_event_id: number | null;
+  occurred_at: string;
+  version_no: number | null;
+  is_current_version: boolean;
+}
+
+export function useEvents(planId: number | null) {
+  return useQuery({
+    queryKey: ["events", planId ?? 0],
+    enabled: planId != null,
+    queryFn: () => api.get<{ items: TimelineRow[] }>("/api/plans/" + planId + "/events"),
+  });
+}
+
+export function useExplain(planId: number) {
+  return useMutation({
+    mutationFn: (codes: string[]) =>
+      api.post<{ items: { code: string; title: string; action: string }[] }>(
+        "/api/plans/" + planId + "/explain", { codes }),
   });
 }
 

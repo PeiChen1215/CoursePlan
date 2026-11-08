@@ -11,6 +11,7 @@ from ..core.security import Claims
 from ..services import graph
 from ..services.agent import extract
 from ..services.progress import ProgressService
+from ..services.timeline import TimelineService
 from ..services.provider import MockProvider, build_provider
 from .deps import current_claims, get_db, now_utc
 
@@ -81,6 +82,30 @@ def submit_event(plan_id: int, body: EventIn, request: Request,
         "completion_rate": result.completion_rate,
         "overdue": result.overdue,
     }, request_id=_rid(request))
+
+
+def get_timeline_service(request: Request) -> TimelineService:
+    return TimelineService(get_db(request), request.app.state.config)
+
+
+@router.get("/plans/{plan_id}/events")
+def list_events(plan_id: int, request: Request,
+                claims: Claims = Depends(current_claims),
+                svc: TimelineService = Depends(get_timeline_service)):
+    return envelope("OK", "ok", {"items": svc.events(plan_id, claims.sub)},
+                    request_id=_rid(request))
+
+
+class ExplainIn(BaseModel):
+    codes: List[str] = []
+
+
+@router.post("/plans/{plan_id}/explain")
+def explain(plan_id: int, body: ExplainIn, request: Request,
+            claims: Claims = Depends(current_claims),
+            svc: TimelineService = Depends(get_timeline_service)):
+    return envelope("OK", "ok", {"items": svc.explain(body.codes)},
+                    request_id=_rid(request))
 
 
 @router.get("/plans/{plan_id}/progress")

@@ -59,24 +59,24 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
                 return (
                   <button
                     key={task.task_id + task.start}
-                    className="block"
+                    className="tt-block"
                     data-status={status}
                     data-compact={compact}
                     style={{ top: block.topPct + "%", height: block.heightPct + "%" }}
                     onClick={() => onSelect(task)}
                     title={task.concept_name + " · " + task.start.slice(11) + "–" + task.end.slice(11)}
                   >
-                    <span className="block-title">
+                    <span className="tt-block-title">
                       {task.concept_name}
                       {task.slice_total > 1 ? (
-                        <span className="block-slice"> {task.slice_no}/{task.slice_total}</span>
+                        <span className="tt-block-slice"> {task.slice_no}/{task.slice_total}</span>
                       ) : null}
                       {compact ? (
-                        <span className="block-kind">{task.kind === "study" ? "学" : "练"}</span>
+                        <span className="tt-block-kind">{task.kind === "study" ? "学" : "练"}</span>
                       ) : null}
                     </span>
                     {compact ? null : (
-                      <span className="block-meta">
+                      <span className="tt-block-meta">
                         {task.kind === "study" ? "学" : "练"} {task.start.slice(11)}–{task.end.slice(11)}
                       </span>
                     )}

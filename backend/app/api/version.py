@@ -26,6 +26,8 @@ def _rid(request: Request) -> str:
 
 class ConfirmIn(BaseModel):
     revision: int = Field(ge=1)
+    change_reason: Optional[str] = Field(default=None)
+    change_note: Optional[str] = Field(default=None, max_length=500)
 
 
 @router.post("/{plan_id}/drafts/{revision}/confirm")
@@ -36,7 +38,9 @@ def confirm(plan_id: int, revision: int, request: Request,
             svc: VersionService = Depends(get_service)):
     # 未带幂等键时由服务端生成（D06 §12.6.4）：本次点击视为一次操作
     key = idempotency_key or uuid.uuid4().hex
-    result = svc.confirm(plan_id, revision, key, claims.sub, now_utc())
+    result = svc.confirm(plan_id, revision, key, claims.sub, now_utc(),
+                         change_reason=(body.change_reason if body else None),
+                         change_note=(body.change_note if body else None))
     return envelope("OK", "ok", {
         "version_no": result.version_no,
         "version_id": result.version_id,

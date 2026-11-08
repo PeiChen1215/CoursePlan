@@ -305,7 +305,7 @@ button {
 }
 
 /* 任务块：纸片，不圆角、不阴影 */
-.block {
+.tt-block {
   position: absolute;
   left: 3px;
   right: 3px;
@@ -320,22 +320,22 @@ button {
   transition: transform 90ms ease, box-shadow 90ms ease;
 }
 
-.block:hover {
+.tt-block:hover {
   transform: translateX(1px);
   box-shadow: 2px 2px 0 rgba(23, 37, 31, 0.12);
 }
 
-.block[data-status="done"] {
+.tt-block[data-status="done"] {
   border-left-color: var(--moss);
 }
 
 /* 已完成：荧光笔划过标题 */
-.block[data-status="done"] .block-title {
+.tt-block[data-status="done"] .tt-block-title {
   background: linear-gradient(to top, var(--highlight) 52%, transparent 52%);
   padding: 0 1px;
 }
 
-.block[data-status="overdue"] {
+.tt-block[data-status="overdue"] {
   border-left-color: var(--rust);
   background-image: repeating-linear-gradient(
     45deg,
@@ -346,12 +346,12 @@ button {
   );
 }
 
-.block[data-status="conflict"] {
+.tt-block[data-status="conflict"] {
   border-color: var(--crimson);
   border-left-color: var(--crimson);
 }
 
-.block-title {
+.tt-block-title {
   display: block;
   font-size: 12px;
   font-weight: 600;
@@ -362,7 +362,7 @@ button {
   text-overflow: ellipsis;
 }
 
-.block-kind {
+.tt-block-kind {
   margin-left: 4px;
   font-size: 10px;
   font-weight: 400;
@@ -373,23 +373,23 @@ button {
   vertical-align: 1px;
 }
 
-.block-slice {
+.tt-block-slice {
   font-family: var(--font-num);
   font-weight: 400;
   font-size: 10px;
   color: var(--ink-3);
 }
 
-.block[data-compact="true"] {
+.tt-block[data-compact="true"] {
   padding: 2px 5px;
 }
 
-.block[data-compact="true"] .block-title {
+.tt-block[data-compact="true"] .tt-block-title {
   font-size: 11px;
   line-height: 1.2;
 }
 
-.block-meta {
+.tt-block-meta {
   display: block;
   font-family: var(--font-num);
   font-size: 11px;
