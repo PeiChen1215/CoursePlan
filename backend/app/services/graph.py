@@ -15,8 +15,8 @@ def load_edges(db, course_id: int) -> List[Tuple[int, int]]:
 
 
 def load_concepts(db, course_id: int, only_enabled: bool = True) -> List[sqlite3.Row]:
-    sql = ("SELECT concept_id, name, chapter, difficulty, reference_minutes, status"
-           " FROM concept WHERE course_id = ?")
+    sql = ("SELECT concept_id, name, chapter, difficulty, reference_minutes,"
+           " sort_order, status FROM concept WHERE course_id = ?")
     if only_enabled:
         sql += " AND status = 'enabled'"
     return db.query(sql + " ORDER BY concept_id", (course_id,))
