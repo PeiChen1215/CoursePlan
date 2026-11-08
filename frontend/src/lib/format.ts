@@ -92,7 +92,7 @@ export function utilizationLabel(ratio: number): { text: string; tone: string } 
 }
 
 export function parseClock(value: string): string {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  const m = /^(\d{1,2}):(\d{1,2})$/.exec(value.trim());
   if (!m) return "";
   const hh = Math.min(23, Math.max(0, Number(m[1])));
   const mm = Math.min(59, Math.max(0, Number(m[2])));

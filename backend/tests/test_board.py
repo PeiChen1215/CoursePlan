@@ -219,3 +219,16 @@ def test_http_get_draft_of_other_student_404(client):
     h_admin, _ = login(client, "admin", "Admin123!")
     assert client.get("/api/plans/%d/drafts/1" % pid,
                       headers=h_admin).status_code == 404
+
+def test_http_list_plans(client):
+    h, uid = login(client)
+    pid = make_plan(client, h)
+    items = client.get("/api/plans", headers=h).json()["data"]["items"]
+    assert items and items[0]["plan_id"] == pid
+    assert items[0]["status"] == "draft"
+
+def test_http_list_plans_only_mine(client):
+    h, uid = login(client)
+    make_plan(client, h)
+    h_admin, _ = login(client, "admin", "Admin123!")
+    assert client.get("/api/plans", headers=h_admin).json()["data"]["items"] == []

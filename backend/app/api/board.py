@@ -30,6 +30,18 @@ def _board_service(request: Request) -> BoardService:
     return BoardService(get_db(request), request.app.state.config)
 
 
+@router.get("")
+def list_plans(request: Request, claims: Claims = Depends(current_claims)):
+    db = get_db(request)
+    rows = db.query(
+        "SELECT p.plan_id, p.course_id, p.status, p.current_version, p.progress_revision,"
+        " p.updated_at, c.name AS course_name FROM study_plan p"
+        " JOIN course c ON c.course_id = p.course_id"
+        " WHERE p.student_id = ? ORDER BY p.plan_id", (claims.sub,))
+    return envelope("OK", "ok", {"items": [dict(r) for r in rows]},
+                    request_id=_rid(request))
+
+
 @router.get("/{plan_id}/board")
 def board(plan_id: int, request: Request, version: Optional[int] = None,
           claims: Claims = Depends(current_claims),
