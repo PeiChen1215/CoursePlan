@@ -1,0 +1,135 @@
+"""配置加载与校验（对应 D06 第 14 章 M-12）。
+
+优先级：默认值 < 环境变量（DSH_ 前缀）< 显式传参。
+越界即抛 ConfigError，进程拒绝启动（D06 §14.6.2）。
+"""
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+# D06 表 2.2 全局配置常量
+DEFAULTS: Dict[str, Any] = {
+    "STUDY_RATIO": 0.70,
+    "BUFFER_RATIO": 0.10,
+    "MAX_SLICE_SECONDS": 7200,
+    "MAX_SLICES_PER_TASK": 100,
+    "CAP_TIGHT_THRESHOLD": 0.80,
+    "DELAY_THRESHOLD_HOURS": 48,
+    "MODEL_TIMEOUT_SECONDS": 10,
+    "MIN_TASK_MINUTES": 1,
+    "MAX_DEADLINE_DAYS": 180,
+    "LOCK_FAIL_LIMIT": 5,
+    "LOCK_MINUTES": 5,
+    "TOKEN_TTL_HOURS": 24,
+    # 运行环境
+    "DB_PATH": "data/studypath.db",
+    "LOG_LEVEL": "INFO",
+    "PROVIDER_MODE": "mock",          # mock / real / auto
+    "PROVIDER_KEY": "",
+    "SECRET_KEY": "studypath-dev-secret",
+}
+
+# 数值型配置的允许范围（D06 §14.6.2）
+SPECS = {
+    "STUDY_RATIO": (0.1, 0.9),
+    "BUFFER_RATIO": (0.0, 0.5),
+    "MAX_SLICE_SECONDS": (600, 14400),
+    "MAX_SLICES_PER_TASK": (1, 500),
+    "CAP_TIGHT_THRESHOLD": (0.5, 0.99),
+    "DELAY_THRESHOLD_HOURS": (1, 720),
+    "MODEL_TIMEOUT_SECONDS": (1, 60),
+    "MIN_TASK_MINUTES": (1, 60),
+    "MAX_DEADLINE_DAYS": (7, 365),
+    "LOCK_FAIL_LIMIT": (1, 20),
+    "LOCK_MINUTES": (1, 120),
+    "TOKEN_TTL_HOURS": (1, 72),
+}
+
+CHOICES = {
+    "LOG_LEVEL": {"DEBUG", "INFO", "WARNING", "ERROR"},
+    "PROVIDER_MODE": {"mock", "real", "auto"},
+}
+
+
+class ConfigError(Exception):
+    """配置非法，启动必须中止。"""
+
+
+@dataclass(frozen=True)
+class EngineConfig:
+    STUDY_RATIO: float
+    BUFFER_RATIO: float
+    MAX_SLICE_SECONDS: int
+    MAX_SLICES_PER_TASK: int
+    CAP_TIGHT_THRESHOLD: float
+    DELAY_THRESHOLD_HOURS: int
+    MODEL_TIMEOUT_SECONDS: int
+    MIN_TASK_MINUTES: int
+    MAX_DEADLINE_DAYS: int
+    LOCK_FAIL_LIMIT: int
+    LOCK_MINUTES: int
+    TOKEN_TTL_HOURS: int
+    DB_PATH: str
+    LOG_LEVEL: str
+    PROVIDER_MODE: str
+    PROVIDER_KEY: str
+    SECRET_KEY: str
+
+    @property
+    def db_file(self) -> Path:
+        p = Path(self.DB_PATH)
+        return p if p.is_absolute() else PROJECT_ROOT / p
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "STUDY_RATIO": self.STUDY_RATIO,
+            "BUFFER_RATIO": self.BUFFER_RATIO,
+            "MAX_SLICE_SECONDS": self.MAX_SLICE_SECONDS,
+            "MAX_SLICES_PER_TASK": self.MAX_SLICES_PER_TASK,
+            "CAP_TIGHT_THRESHOLD": self.CAP_TIGHT_THRESHOLD,
+            "DELAY_THRESHOLD_HOURS": self.DELAY_THRESHOLD_HOURS,
+            "MODEL_TIMEOUT_SECONDS": self.MODEL_TIMEOUT_SECONDS,
+            "MIN_TASK_MINUTES": self.MIN_TASK_MINUTES,
+            "MAX_DEADLINE_DAYS": self.MAX_DEADLINE_DAYS,
+            "LOCK_FAIL_LIMIT": self.LOCK_FAIL_LIMIT,
+            "LOCK_MINUTES": self.LOCK_MINUTES,
+            "TOKEN_TTL_HOURS": self.TOKEN_TTL_HOURS,
+            "DB_PATH": str(self.db_file),
+            "LOG_LEVEL": self.LOG_LEVEL,
+            "PROVIDER_MODE": self.PROVIDER_MODE,
+        }
+
+
+def _coerce(key: str, value: Any) -> Any:
+    if key in SPECS:
+        try:
+            return int(value) if isinstance(DEFAULTS[key], int) else float(value)
+        except (TypeError, ValueError):
+            raise ConfigError("%s=%r 不是数字（允许 %s）" % (key, value, SPECS[key]))
+    return str(value)
+
+
+def load(overrides: Optional[Dict[str, Any]] = None) -> EngineConfig:
+    overrides = overrides or {}
+    raw: Dict[str, Any] = {}
+    for key, default in DEFAULTS.items():
+        raw[key] = overrides.get(key, os.getenv("DSH_" + key, default))
+
+    for key, (low, high) in SPECS.items():
+        v = _coerce(key, raw[key])
+        if not low <= v <= high:
+            raise ConfigError("%s=%s 越界（允许 %s–%s）" % (key, v, low, high))
+        raw[key] = v
+
+    for key, choices in CHOICES.items():
+        v = str(raw[key]).upper() if key == "LOG_LEVEL" else str(raw[key]).lower()
+        if v not in choices:
+            raise ConfigError("%s=%s 不在允许取值 %s 内" % (key, raw[key], sorted(choices)))
+        raw[key] = v
+
+    return EngineConfig(**raw)
