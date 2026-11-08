@@ -279,7 +279,8 @@ class PlannerService:
             "unscheduled": [{"concept_id": u.concept_id, "kind": u.kind,
                              "reason": u.reason} for u in unscheduled],
         }
-        digest = input_hash(payload)
+        payload["input_hash"] = input_hash(payload)
+        digest = payload["input_hash"]
 
         revision = self._next_revision(plan_id)
         self._save_draft(plan_id, revision, payload, digest)
@@ -295,16 +296,17 @@ class PlannerService:
 
     def _save_draft(self, plan_id: int, revision: int, payload: dict,
                     digest: str) -> None:
-        row = self.db.query("SELECT course_id, progress_revision FROM study_plan"
-                            " WHERE plan_id = ?", (plan_id,))[0]
+        row = self.db.query("SELECT course_id, progress_revision, current_version"
+                            " FROM study_plan WHERE plan_id = ?", (plan_id,))[0]
         course_rev = self.db.scalar("SELECT content_revision FROM course"
                                     " WHERE course_id = ?", (row["course_id"],)) or 0
         now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         status = "ready" if payload["unscheduled"] == [] else "invalid"
         with UnitOfWork(self.db) as uow:
             uow.execute(
-                "INSERT INTO plan_draft(plan_id,revision,base_progress_revision,"
-                "course_revision,payload_json,status,updated_at)"
-                " VALUES(?,?,?,?,?,?,?)",
-                (plan_id, revision, int(row["progress_revision"]), int(course_rev),
+                "INSERT INTO plan_draft(plan_id,revision,base_version,"
+                "base_progress_revision,course_revision,payload_json,status,updated_at)"
+                " VALUES(?,?,?,?,?,?,?,?)",
+                (plan_id, revision, row["current_version"],
+                 int(row["progress_revision"]), int(course_rev),
                  json.dumps(payload, ensure_ascii=False), status, now))
