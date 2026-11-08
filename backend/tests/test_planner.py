@@ -34,6 +34,19 @@ def test_split_sum_equals_reference():
     assert tasks[0].minutes == int(97 * 0.7)
 
 
+def test_split_avoids_float_error():
+    """90 × 0.7 用浮点算是 62.999…，必须得到 63。"""
+    tasks = split_tasks([concept(1, minutes=90)], set(), CFG)
+    assert [(t.kind, t.minutes) for t in tasks] == [(STUDY, 63), (PRACTICE, 27)]
+
+
+def test_split_multiple_reference_lengths():
+    for minutes, study in [(120, 84), (150, 105), (97, 67), (95, 66), (5, 3)]:
+        tasks = split_tasks([concept(1, minutes=minutes)], set(), CFG)
+        assert tasks[0].minutes == study, minutes
+        assert sum(t.minutes for t in tasks) == minutes
+
+
 def test_split_floor_not_round():
     """70% 向下取整，练习取差值。"""
     tasks = split_tasks([concept(1, minutes=95)], set(), CFG)

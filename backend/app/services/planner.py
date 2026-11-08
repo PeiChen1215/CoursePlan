@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import heapq
 import json
+from fractions import Fraction
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
@@ -93,7 +94,8 @@ def split_tasks(concepts: Iterable[Concept], mastered: Set[int], config) -> List
         if c.concept_id in mastered or c.status != "enabled":
             continue
         total = c.reference_minutes
-        study = int(total * config.STUDY_RATIO)
+        # 用分数运算：int(total * 0.7) 在 total=90 时会得到 62（0.7 的二进制误差）
+        study = int(Fraction(total) * Fraction(str(config.STUDY_RATIO)))
         practice = total - study
         if practice < config.MIN_TASK_MINUTES:
             study, practice = total, 0
