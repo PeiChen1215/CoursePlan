@@ -1,168 +1,168 @@
 import { useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { TaskCard } from "../components/TaskCard";
+import { TimetableGrid } from "../components/TimetableGrid";
+import { IssueList } from "../components/IssueList";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
-import { useAuth } from "../hooks/useAuth";
 import { useBoard, usePlans, useSubmitEvent } from "../hooks/queries";
 import type { BoardTask } from "../hooks/queries";
-import { groupTasks, utilizationLabel } from "../lib/format";
-import type { GroupMode } from "../lib/format";
+import { formatMinutes } from "../lib/format";
+import { addDays, toISODate, weekStartOf } from "../lib/timetable";
 
 export function BoardPage() {
-  const { me } = useAuth();
   const toast = useToast();
   const plans = usePlans();
   const plan = plans.data?.items?.[0] ?? null;
-  const [mode, setMode] = useState<GroupMode>("day");
-  const [version, setVersion] = useState<number | undefined>(undefined);
-
-  const board = useBoard(plan?.plan_id ?? null, version);
+  const board = useBoard(plan?.plan_id ?? null);
   const submit = useSubmitEvent(plan?.plan_id ?? 0);
 
-  const grouped = useMemo(() => {
-    if (!board.data) return new Map<string, BoardTask[]>();
-    return groupTasks(board.data.tasks, mode);
-  }, [board.data, mode]);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selected, setSelected] = useState<BoardTask | null>(null);
 
-  function notifyError(err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    toast.push(message, "error");
-  }
+  const monday = useMemo(() => {
+    const tasks = board.data?.tasks ?? [];
+    const anchor = tasks.length ? tasks[0].start : toISODate(new Date());
+    return addDays(weekStartOf(anchor), weekOffset * 7);
+  }, [board.data, weekOffset]);
 
   const data = board.data;
   const rate = data ? Math.round(data.progress.completion_rate * 100) : 0;
+  const overdue = data?.progress.overdue_tasks.length ?? 0;
+
+  function notifyError(err: unknown) {
+    toast.push(err instanceof Error ? err.message : String(err), "error");
+  }
 
   return (
     <Layout>
-      <div className="space-y-4">
-        <section className="flex flex-wrap items-center justify-between gap-3">
+      <div className="space-y-5">
+        <section className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold">学习看板</h2>
-            <p className="text-xs text-slate-500">
-              {data?.readonly ? "历史版本，只读" : "当前版本"} · 完成率 {rate}%
+            <h2 className="display text-xl">本周课表</h2>
+            <p className="faint mt-1 text-xs">
+              每格是一小时；块的高度就是任务时长。点块可打卡、更正或写备注。
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex rounded border border-slate-300 bg-white p-0.5">
-              {(["day", "week"] as GroupMode[]).map((item) => (
-                <button
-                  key={item}
-                  className={"rounded px-2 py-1 text-xs " + (mode === item ? "bg-slate-900 text-white" : "text-slate-600")}
-                  onClick={() => setMode(item)}
-                >
-                  {item === "day" ? "按日" : "按周"}
-                </button>
-              ))}
-            </div>
-            {data?.readonly ? (
-              <button className="btn-ghost" onClick={() => setVersion(undefined)}>
-                回到当前版本
-              </button>
-            ) : null}
+          <div className="flex items-baseline gap-3">
+            <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v - 1)}>
+              上一周
+            </button>
+            <button className="btn-link text-sm" onClick={() => setWeekOffset(0)}>
+              回到本周
+            </button>
+            <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v + 1)}>
+              下一周
+            </button>
           </div>
         </section>
 
-        {plan == null ? (
-          <p className="text-sm text-slate-500">还没有学习计划，请先到「约束」页创建。</p>
+        {data ? (
+          <section className="flex flex-wrap items-baseline gap-6 text-sm">
+            <span>
+              完成 <span className="num">{data.progress.done_tasks}</span> /{" "}
+              <span className="num">{data.progress.total_tasks}</span>
+            </span>
+            <span className="muted">
+              计划 <span className="num">{formatMinutes(data.progress.planned_minutes)}</span>
+            </span>
+            <span className="muted">
+              实际 <span className="num">{formatMinutes(data.progress.actual_minutes)}</span>
+            </span>
+            {overdue ? (
+              <span style={{ color: "var(--rust)" }}>
+                逾期 <span className="num">{overdue}</span> 个任务
+              </span>
+            ) : null}
+            <span className="ml-auto flex items-center gap-2">
+              <span className="faint text-xs">完成率</span>
+              <span className="num text-lg">{rate}%</span>
+            </span>
+          </section>
         ) : null}
 
         {board.error ? <ErrorBox error={board.error} /> : null}
 
-        {data ? (
-          <>
-            <section className="card">
-              <div className="flex items-center justify-between text-sm">
-                <span>
-                  已完成 {data.progress.done_tasks}/{data.progress.total_tasks} ·
-                  计划 {Math.round(data.progress.planned_minutes / 60)} 小时
-                </span>
-                <span className={utilizationLabel(data.progress.completion_rate).tone}>
-                  {data.progress.completion_rate > 0.9 ? "收尾阶段" : "进行中"}
-                </span>
-              </div>
-              <div className="mt-2 h-2 w-full rounded bg-slate-200">
-                <div className="h-2 rounded bg-emerald-500" style={{ width: rate + "%" }} />
-              </div>
-              {data.progress.overdue_tasks.length ? (
-                <p className="mt-2 text-xs text-amber-700">
-                  有 {data.progress.overdue_tasks.length} 个任务已逾期（逾期不改变计划状态）
-                </p>
-              ) : null}
-            </section>
+        {plan == null ? (
+          <p className="empty">还没有学习计划。先去「填写约束」，填完会自动生成一份草案。</p>
+        ) : null}
 
-            <div className="space-y-5">
-              {[...grouped.entries()].map(([key, tasks]) => (
-                <section key={key}>
-                  <h3 className="mb-2 text-sm font-medium text-slate-600">{key}</h3>
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {tasks.map((task) => (
-                      <TaskCard
-                        key={task.task_id + "-" + task.start}
-                        task={task}
-                        readonly={data.readonly}
-                        busy={submit.isPending}
-                        onDone={(taskId, minutes) =>
-                          submit.mutate(
-                            { taskId, type: "done", minutes },
-                            { onError: notifyError, onSuccess: () => toast.push("已打卡", "success") },
-                          )
-                        }
-                        onCorrection={(taskId, minutes) =>
-                          submit.mutate(
-                            { taskId, type: "correction", minutes },
-                            { onError: notifyError, onSuccess: () => toast.push("已更正用时", "success") },
-                          )
-                        }
-                        onNote={(taskId, text) =>
-                          submit.mutate(
-                            { taskId, type: "note", note: text },
-                            { onError: notifyError, onSuccess: () => toast.push("备注已记录", "success") },
-                          )
-                        }
-                      />
-                    ))}
-                  </div>
-                </section>
+        {data && data.tasks.length === 0 ? (
+          <p className="empty">
+            这个版本还没有排入任何任务。回到「填写约束」检查可用时间与截止日期。
+          </p>
+        ) : null}
+
+        {data && data.tasks.length > 0 ? (
+          <TimetableGrid tasks={data.tasks} monday={monday} onSelect={setSelected} />
+        ) : null}
+
+        {data?.unscheduled.length ? (
+          <section className="sheet sheet-pad">
+            <h3 className="display text-sm">未排入</h3>
+            <p className="faint mt-1 text-xs">
+              这些任务没找到放得下的时段，需要放宽约束或减少目标。
+            </p>
+            <ul className="mt-2">
+              {data.unscheduled.map((row) => (
+                <li key={row.task_id + row.kind} className="issue" data-level="ERROR">
+                  <span className="issue-code">{row.concept_name}</span>
+                  <span>
+                    {row.kind === "study" ? "学习" : "练习"} · {formatMinutes(row.minutes)}
+                    <span className="faint">（{row.reason}）</span>
+                  </span>
+                </li>
               ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {data?.issues.length ? (
+          <section className="sheet sheet-pad">
+            <h3 className="display text-sm">校验提示</h3>
+            <div className="mt-2">
+              <IssueList issues={data.issues} />
             </div>
+          </section>
+        ) : null}
 
-            {data.unscheduled.length ? (
-              <section className="card">
-                <h3 className="text-sm font-semibold text-slate-700">未排入任务</h3>
-                <p className="text-xs text-slate-500">这些任务没排进任何时段，需要调整约束或目标。</p>
-                <ul className="mt-2 space-y-1 text-sm">
-                  {data.unscheduled.map((row) => (
-                    <li key={row.task_id + "-" + row.kind} className="flex justify-between">
-                      <span>
-                        {row.concept_name}（{row.kind === "study" ? "学习" : "练习"}）
-                      </span>
-                      <span className="text-xs text-rose-600">{row.reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {data.issues.length ? (
-              <section className="card">
-                <h3 className="text-sm font-semibold text-slate-700">校验提示</h3>
-                <ul className="mt-2 space-y-1 text-xs text-slate-600">
-                  {data.issues.map((issue, index) => (
-                    <li key={issue.code + index}>
-                      {issue.level} · {issue.code}：{issue.message}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {me?.role === "student" ? (
-              <p className="text-xs text-slate-400">
-                提示：同一任务重复打卡会被拒绝，改用时请用「更正用时」。
-              </p>
-            ) : null}
-          </>
+        {selected ? (
+          <div className="sheet-pop" role="dialog" aria-label="任务操作">
+            <div className="mb-2 flex justify-end">
+              <button className="btn-link text-xs" onClick={() => setSelected(null)}>
+                关闭
+              </button>
+            </div>
+            <TaskCard
+              task={selected}
+              readonly={data?.readonly ?? false}
+              busy={submit.isPending}
+              onDone={(taskId, minutes) =>
+                submit.mutate({ taskId, type: "done", minutes }, {
+                  onSuccess: () => {
+                    toast.push("已打卡", "success");
+                    setSelected(null);
+                  },
+                  onError: notifyError,
+                })
+              }
+              onCorrection={(taskId, minutes) =>
+                submit.mutate({ taskId, type: "correction", minutes }, {
+                  onSuccess: () => {
+                    toast.push("已更正用时", "success");
+                    setSelected(null);
+                  },
+                  onError: notifyError,
+                })
+              }
+              onNote={(taskId, text) =>
+                submit.mutate({ taskId, type: "note", note: text }, {
+                  onSuccess: () => toast.push("备注已记下", "success"),
+                  onError: notifyError,
+                })
+              }
+            />
+          </div>
         ) : null}
       </div>
     </Layout>

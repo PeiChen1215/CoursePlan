@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { BoardTask } from "../hooks/queries";
-import { formatRange, formatMinutes } from "../lib/format";
+import { formatMinutes } from "../lib/format";
 import { StatusBadge } from "./StatusBadge";
 
 interface Props {
@@ -12,108 +12,87 @@ interface Props {
   busy?: boolean;
 }
 
+/** 打卡/更正的抽屉内容（外部用 .sheet-pop 定位）。 */
 export function TaskCard({ task, readonly, onDone, onCorrection, onNote, busy }: Props) {
-  const [editing, setEditing] = useState(false);
-  const [minutes, setMinutes] = useState<string>(String(task.minutes));
+  const [minutes, setMinutes] = useState(String(task.minutes));
   const [note, setNote] = useState("");
-
   const conflict = task.issue_codes.length > 0;
-  const needsCorrection = task.done && !readonly;
 
   return (
-    <article
-      data-testid={"task-" + task.task_id}
-      className="card space-y-2"
-    >
-      <header className="flex items-start justify-between gap-2">
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-slate-800">{task.concept_name}</h4>
-          <p className="text-xs text-slate-500">
-            {task.kind === "study" ? "学习" : "练习"} · {formatMinutes(task.minutes)}
+          <h3 className="display text-base">{task.concept_name}</h3>
+          <p className="faint num text-xs">
+            {task.kind === "study" ? "学习" : "练习"} · {formatMinutes(task.minutes)} ·{" "}
+            {task.start.slice(11)}–{task.end.slice(11)}
           </p>
         </div>
-        <StatusBadge
-          done={task.done}
-          overdue={task.overdue}
-          conflict={conflict}
-          extra={conflict ? task.issue_codes[0] : undefined}
-        />
-      </header>
+        <StatusBadge done={task.done} overdue={task.overdue} conflict={conflict}
+                     extra={conflict ? task.issue_codes[0] : undefined} />
+      </div>
 
-      <p className="text-xs text-slate-500">{formatRange(task.start, task.end)}</p>
-
-      {task.actual_minutes != null ? (
-        <p className="text-xs text-slate-500">实际用时 {formatMinutes(task.actual_minutes)}</p>
-      ) : null}
+      <hr className="hairline" />
 
       {readonly ? (
-        <p className="text-xs italic text-slate-400">历史版本，只读</p>
+        <p className="muted text-xs italic">历史版本，只读</p>
       ) : (
-        <div className="space-y-2">
-          {!task.done ? (
-            <div className="flex items-center gap-2">
+        <div className="space-y-3">
+          <div className="field-row" style={{ gridTemplateColumns: "5rem 1fr" }}>
+            <label htmlFor="actual-minutes">实际用时</label>
+            <div className="flex items-baseline gap-2">
               <input
+                id="actual-minutes"
                 aria-label="实际用时（分钟）"
-                className="input w-24"
+                className="input num"
+                style={{ width: "5rem" }}
                 value={minutes}
                 onChange={(event) => setMinutes(event.target.value)}
                 inputMode="numeric"
               />
-              <button
-                className="btn-primary"
-                disabled={busy}
-                onClick={() => onDone(task.task_id, toMinutes(minutes))}
-              >
-                标记完成
-              </button>
-              <button className="btn-ghost" onClick={() => setEditing((v) => !v)}>
-                {editing ? "收起" : "加备注"}
-              </button>
+              <span className="faint text-xs">分钟</span>
             </div>
+          </div>
+
+          {!task.done ? (
+            <button className="btn w-full" disabled={busy}
+                    onClick={() => onDone(task.task_id, toMinutes(minutes))}>
+              标记完成
+            </button>
           ) : (
-            <div className="flex items-center gap-2">
-              <button
-                className="btn-ghost"
-                disabled={busy}
-                onClick={() => onCorrection(task.task_id, toMinutes(minutes))}
-              >
-                更正用时
-              </button>
-              <button className="btn-ghost" onClick={() => setEditing((v) => !v)}>
-                {editing ? "收起" : "加备注"}
-              </button>
-            </div>
+            <button className="btn w-full" disabled={busy}
+                    onClick={() => onCorrection(task.task_id, toMinutes(minutes))}>
+              更正用时
+            </button>
           )}
-
-          {editing ? (
-            <div className="flex items-center gap-2">
-              <input
-                aria-label="备注"
-                className="input"
-                placeholder="记一句：卡在哪、怎么解决的"
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-              />
-              <button
-                className="btn-ghost"
-                disabled={busy || !note.trim()}
-                onClick={() => {
-                  onNote(task.task_id, note.trim());
-                  setNote("");
-                  setEditing(false);
-                }}
-              >
-                保存备注
-              </button>
-            </div>
+          {task.done ? (
+            <p className="faint text-xs">重复打卡会被拒绝，改用时请用“更正用时”。</p>
           ) : null}
 
-          {needsCorrection ? (
-            <p className="text-xs text-slate-400">重复打卡会被拒绝，请用“更正用时”。</p>
-          ) : null}
+          <div className="field-row" style={{ gridTemplateColumns: "5rem 1fr" }}>
+            <label htmlFor="task-note">备注</label>
+            <input
+              id="task-note"
+              aria-label="备注"
+              className="input"
+              placeholder="卡在哪、怎么解决的"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+            />
+          </div>
+          <button
+            className="btn btn-quiet w-full"
+            disabled={busy || !note.trim()}
+            onClick={() => {
+              onNote(task.task_id, note.trim());
+              setNote("");
+            }}
+          >
+            记下备注
+          </button>
         </div>
       )}
-    </article>
+    </div>
   );
 }
 

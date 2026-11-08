@@ -8,18 +8,15 @@ interface Props {
   extra?: string;
 }
 
-/** 文字 + 底色双通道，黑白打印也能读（D06 §11.6.2）。 */
+/** 文字 + 符号 + 描边颜色三通道，颜色永远不是唯一线索。 */
 export function StatusBadge({ done, overdue, conflict, extra }: Props) {
   const status: TaskStatus = pickStatus({ done, overdue, conflict });
   const style = STATUS_STYLES[status];
   return (
-    <span
-      data-status={status}
-      className={"inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs " + style.text + " " + style.bg}
-    >
+    <span className="badge" data-status={status}>
       <span aria-hidden>{style.icon}</span>
       {style.label}
-      {extra ? <span className="font-normal opacity-80">· {extra}</span> : null}
+      {extra ? <span className="faint">· {extra}</span> : null}
     </span>
   );
 }

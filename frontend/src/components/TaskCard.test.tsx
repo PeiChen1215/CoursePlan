@@ -48,9 +48,8 @@ describe("TaskCard", () => {
   it("可以写备注", async () => {
     const onNote = vi.fn();
     render(<TaskCard task={task} readonly={false} onDone={vi.fn()} onCorrection={vi.fn()} onNote={onNote} />);
-    await userEvent.click(screen.getByText("加备注"));
     await userEvent.type(screen.getByLabelText("备注"), "卡在指针偏移");
-    await userEvent.click(screen.getByText("保存备注"));
+    await userEvent.click(screen.getByText("记下备注"));
     expect(onNote).toHaveBeenCalledWith(1, "卡在指针偏移");
   });
 });

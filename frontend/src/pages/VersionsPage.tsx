@@ -13,39 +13,49 @@ export function VersionsPage() {
   const diff = useDiff(planId, from, to);
 
   const items = versions.data?.items ?? [];
+  const current = plan?.current_version ?? null;
 
   return (
     <Layout>
-      <div className="space-y-4">
+      <div className="space-y-6">
         <section>
-          <h2 className="text-lg font-semibold">版本历史</h2>
-          <p className="text-xs text-slate-500">已确认的版本只读；差异按任务 ID 对比四类变化。</p>
+          <h2 className="display text-xl">版本</h2>
+          <p className="faint mt-1 text-xs">
+            已确认的版本只读。差异按稳定任务 ID 比对，分新增、移除、移动、时长变化四类。
+          </p>
         </section>
 
         {versions.error ? <ErrorBox error={versions.error} /> : null}
 
-        <section className="card">
-          <table className="w-full text-sm">
-            <thead className="text-left text-xs text-slate-500">
+        <section className="sheet sheet-pad">
+          <table className="ledger">
+            <thead>
               <tr>
-                <th className="py-1">版本</th>
+                <th>版本</th>
                 <th>原因</th>
                 <th>任务</th>
-                <th>时间片</th>
-                <th>创建时间</th>
-                <th>对比</th>
+                <th>片</th>
+                <th>确认时间</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {items.map((row) => (
-                <tr key={row.version_no} className="border-t border-slate-100">
-                  <td className="py-1">v{row.version_no}</td>
+                <tr key={row.version_no} data-current={row.version_no === current}>
+                  <td className="num">
+                    v{row.version_no}
+                    {row.version_no === current ? <span className="faint text-xs">（当前）</span> : null}
+                  </td>
                   <td>{row.change_reason}</td>
-                  <td>{row.tasks}</td>
-                  <td>{row.slices}</td>
-                  <td className="text-xs text-slate-500">{row.created_at}</td>
+                  <td className="num">{row.tasks}</td>
+                  <td className="num">{row.slices}</td>
+                  <td className="num faint text-xs">{row.created_at}</td>
                   <td>
-                    <button className="btn-ghost" onClick={() => { setFrom(row.version_no); setTo(plan?.current_version ?? null); }}>
+                    <button className="btn-link text-xs"
+                            onClick={() => {
+                              setFrom(row.version_no);
+                              setTo(current);
+                            }}>
                       与当前对比
                     </button>
                   </td>
@@ -53,8 +63,8 @@ export function VersionsPage() {
               ))}
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-3 text-center text-sm text-slate-500">
-                    还没有已确认的版本。
+                  <td colSpan={6} className="faint py-4 text-center text-sm">
+                    还没有确认过的版本。
                   </td>
                 </tr>
               ) : null}
@@ -63,15 +73,15 @@ export function VersionsPage() {
         </section>
 
         {diff.data ? (
-          <section className="card">
-            <h3 className="text-sm font-semibold text-slate-700">
-              v{from} → v{to} 的差异
+          <section className="sheet sheet-pad">
+            <h3 className="display text-sm">
+              v{from} → v{to}
             </h3>
-            <div className="mt-2 grid gap-3 sm:grid-cols-4 text-sm">
-              <DiffBlock title="新增" tone="text-emerald-700" ids={diff.data.added} />
-              <DiffBlock title="移除" tone="text-rose-700" ids={diff.data.removed} />
-              <DiffBlock title="移动" tone="text-amber-700" ids={diff.data.moved} />
-              <DiffBlock title="时长变化" tone="text-slate-700" ids={diff.data.resized} />
+            <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <DiffCell label="新增" ids={diff.data.added} tone="var(--moss)" />
+              <DiffCell label="移除" ids={diff.data.removed} tone="var(--crimson)" />
+              <DiffCell label="移动" ids={diff.data.moved} tone="var(--rust)" />
+              <DiffCell label="时长变化" ids={diff.data.resized} tone="var(--ink-2)" />
             </div>
           </section>
         ) : null}
@@ -80,11 +90,13 @@ export function VersionsPage() {
   );
 }
 
-function DiffBlock({ title, tone, ids }: { title: string; tone: string; ids: number[] }) {
+function DiffCell({ label, ids, tone }: { label: string; ids: number[]; tone: string }) {
   return (
     <div>
-      <p className={"text-xs font-medium " + tone}>{title}（{ids.length}）</p>
-      <p className="mt-1 text-xs text-slate-500">{ids.length ? ids.join("、") : "无"}</p>
+      <p className="text-xs" style={{ color: tone }}>
+        {label} <span className="num">{ids.length}</span>
+      </p>
+      <p className="faint mt-1 text-xs">{ids.length ? ids.join("、") : "无"}</p>
     </div>
   );
 }
