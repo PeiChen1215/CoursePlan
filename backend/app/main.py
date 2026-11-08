@@ -19,6 +19,7 @@ from .api.content import router as content_router
 from .api.plans import router as plans_router
 from .api.version import router as version_router
 from .api.agent import router as agent_router
+from .api.board import router as board_router
 
 SCHEMA_FILE = PROJECT_ROOT / "scripts" / "schema.sql"
 
@@ -74,6 +75,7 @@ def create_app(overrides: Dict[str, Any] | None = None) -> FastAPI:
     app.include_router(plans_router)
     app.include_router(version_router)
     app.include_router(agent_router)
+    app.include_router(board_router)
     return app
 
 

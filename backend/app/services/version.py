@@ -92,7 +92,8 @@ class VersionService:
                     "issues": [i.as_dict() for i in report.errors()]})
 
             version_id = self._write_version(uow, plan, draft, payload, report.metrics,
-                                             actor_id, now)
+                                             actor_id, now,
+                                             [i.as_dict() for i in report.issues])
             prev_no = int(plan["current_version"] or 0)
             version_no = int(uow.fetch_one("SELECT version_no FROM plan_version"
                                            " WHERE version_id = ?", (version_id,))["version_no"])
@@ -161,7 +162,8 @@ class VersionService:
 
     # ---------------------------------------------------------------- 写版本
     def _write_version(self, uow, plan, draft, payload: dict, metrics: dict,
-                       actor_id: int, now: datetime) -> int:
+                       actor_id: int, now: datetime,
+                       issues: Optional[List[dict]] = None) -> int:
         plan_id = int(plan["plan_id"])
         course_id = int(plan["course_id"])
         stamp = _now_iso(now)
@@ -217,7 +219,8 @@ class VersionService:
         uow.execute(
             "INSERT INTO plan_validation(version_id,passed,issues_json,metrics_json)"
             " VALUES(?,1,?,?)",
-            (version_id, "[]", json.dumps(metrics, ensure_ascii=False)))
+            (version_id, json.dumps(issues or [], ensure_ascii=False),
+             json.dumps(metrics, ensure_ascii=False)))
         return version_id
 
     # ---------------------------------------------------------------- 差异
