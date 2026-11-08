@@ -15,6 +15,32 @@ export interface Block {
   dayIndex: number;
 }
 
+export interface HourWindow {
+  start: number;
+  end: number;
+}
+
+/** 一周实际用到的时间窗：按最早开始、最晚结束收窄，两端各留一小时。 */
+export function hourWindow(slots: Slot[], minHours = 5, pad = 1): HourWindow {
+  if (!slots.length) return { start: HOUR_START, end: HOUR_START + 8 };
+  let earliest = 24;
+  let latest = 0;
+  for (const slot of slots) {
+    const start = parseLocal(slot.start);
+    const end = parseLocal(slot.end);
+    earliest = Math.min(earliest, start.getHours() + start.getMinutes() / 60);
+    const endHour = end.getHours() + end.getMinutes() / 60;
+    latest = Math.max(latest, endHour === 0 ? 24 : endHour);
+  }
+  let start = Math.max(HOUR_START, Math.floor(earliest) - pad);
+  let end = Math.min(HOUR_END, Math.ceil(latest) + pad);
+  if (end - start < minHours) {
+    end = Math.min(HOUR_END, start + minHours);
+    start = Math.max(HOUR_START, end - minHours);
+  }
+  return { start, end };
+}
+
 export function parseLocal(iso: string): Date {
   // 后端给的是本地时间的 "YYYY-MM-DDTHH:MM"，直接交给 Date 解析会被当成 UTC 之外的值，
   // 这里补秒并显式按本地解析，避免时区偏移把块挪到别的格子。
@@ -61,14 +87,16 @@ export function weekDays(monday: Date, today = new Date()): DayHeader[] {
   });
 }
 
-/** 把一个时段换算成课表格里的位置（百分比，0 表示 08:00，1 表示 22:00）。 */
-export function toBlock(slot: Slot, dayIndex: number): Block {
+/** 把一个时段换算成课表格里的位置（百分比相对给定的时间窗，默认 08:00–22:00）。 */
+export function toBlock(slot: Slot, dayIndex: number, win?: HourWindow): Block {
+  const from = win?.start ?? HOUR_START;
+  const span = (win?.end ?? HOUR_END) - from;
   const start = parseLocal(slot.start);
   const end = parseLocal(slot.end);
   const startHour = start.getHours() + start.getMinutes() / 60;
   const endHour = end.getHours() + end.getMinutes() / 60;
-  const top = clamp01((startHour - HOUR_START) / HOUR_SPAN);
-  const bottom = clamp01((endHour - HOUR_START) / HOUR_SPAN);
+  const top = clamp01((startHour - from) / span);
+  const bottom = clamp01((endHour - from) / span);
   // 最小高度是按“百分比”兜底，不是按比例，否则短任务会被放大成整列
   return { topPct: top * 100, heightPct: Math.max((bottom - top) * 100, 2.2), dayIndex };
 }

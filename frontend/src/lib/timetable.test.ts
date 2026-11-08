@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  HOUR_END, HOUR_START, cellId, cellsToRanges, dailyMinutes, maxOf, rangesToCells, toBlock,
-  toISODate, weekDays, weekStartOf,
+  HOUR_END, HOUR_START, cellId, cellsToRanges, dailyMinutes, hourWindow, maxOf,
+  rangesToCells, toBlock, toISODate, weekDays, weekStartOf,
 } from "./timetable";
 
 describe("weekStartOf", () => {
@@ -41,6 +41,45 @@ describe("toBlock", () => {
     const block = toBlock({ start: "2026-11-09T06:00", end: "2026-11-09T07:00" }, 0);
     expect(block.topPct).toBe(0);
     expect(block.heightPct).toBeGreaterThan(0);
+  });
+});
+
+describe("hourWindow", () => {
+  it("按最早最晚收窄，两端各留一小时", () => {
+    const win = hourWindow([
+      { start: "2026-11-09T19:00", end: "2026-11-09T21:00" },
+      { start: "2026-11-14T09:00", end: "2026-11-14T11:30" },
+    ]);
+    expect(win).toEqual({ start: 8, end: 22 });
+  });
+
+  it("只有晚间任务时窗口落在晚上", () => {
+    const win = hourWindow([
+      { start: "2026-11-09T19:00", end: "2026-11-09T21:00" },
+      { start: "2026-11-11T19:00", end: "2026-11-11T21:30" },
+    ]);
+    // 19:00–21:30 收窄到 18–22 只有 4 小时，补足最小 5 小时后往前取到 17
+    expect(win.start).toBe(17);
+    expect(win.end).toBe(22);
+    expect(win.end - win.start).toBe(5);
+  });
+
+  it("窗口过窄时补足最小高度", () => {
+    const win = hourWindow([{ start: "2026-11-09T19:00", end: "2026-11-09T19:30" }]);
+    expect(win.end - win.start).toBeGreaterThanOrEqual(5);
+  });
+
+  it("没有任务时给默认窗口", () => {
+    expect(hourWindow([])).toEqual({ start: 8, end: 16 });
+  });
+});
+
+describe("toBlock 相对时间窗", () => {
+  it("窗口收窄后位置随之变化", () => {
+    const win = { start: 18, end: 22 };
+    const block = toBlock({ start: "2026-11-09T19:00", end: "2026-11-09T21:00" }, 0, win);
+    expect(block.topPct).toBeCloseTo(25, 5);
+    expect(block.heightPct).toBeCloseTo(50, 5);
   });
 });
 

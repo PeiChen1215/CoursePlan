@@ -95,7 +95,7 @@ export function DraftPage() {
                     );
                     return (
                       <tr key={task.concept_id + task.kind}>
-                        <td>{task.concept_id}</td>
+                        <td>{task.name || "知识点 " + task.concept_id}</td>
                         <td>{task.kind === "study" ? "学习" : "练习"}</td>
                         <td className="num">{formatMinutes(task.minutes)}</td>
                         <td className="num">{slices.length}</td>

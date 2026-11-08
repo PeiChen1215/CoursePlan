@@ -74,12 +74,14 @@ def generate_draft(plan_id: int, request: Request,
     selected = {c for c in draft.order if c in by_id}
     report = validate(draft.tasks, draft.slices, slots, raw - buffer, raw, deadline,
                       edges, [by_id[c] for c in selected], selected, cfg)
+    names = {c.concept_id: c.name for c in concepts}
 
     return envelope("OK", "ok", {
         "revision": draft.revision,
-        "tasks": [{"concept_id": t.concept_id, "kind": t.kind, "minutes": t.minutes}
-                  for t in draft.tasks],
-        "slices": [{"concept_id": s.concept_id, "kind": s.kind, "slice_no": s.slice_no,
+        "tasks": [{"concept_id": t.concept_id, "name": names.get(t.concept_id, ""),
+                   "kind": t.kind, "minutes": t.minutes} for t in draft.tasks],
+        "slices": [{"concept_id": s.concept_id, "name": names.get(s.concept_id, ""),
+                    "kind": s.kind, "slice_no": s.slice_no,
                     "start": s.start.strftime("%Y-%m-%dT%H:%M"),
                     "end": s.end.strftime("%Y-%m-%dT%H:%M")} for s in draft.slices],
         "unscheduled": [{"concept_id": u.concept_id, "kind": u.kind, "reason": u.reason}

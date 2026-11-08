@@ -232,3 +232,46 @@ def test_http_list_plans_only_mine(client):
     make_plan(client, h)
     h_admin, _ = login(client, "admin", "Admin123!")
     assert client.get("/api/plans", headers=h_admin).json()["data"]["items"] == []
+
+
+def test_board_exposes_slice_position(client):
+    """同一任务被切成多片时，前端要知道这是第几片（含总片数）。"""
+    h, uid, pid = confirmed(client)
+    db = client.app.state.db
+    conn = db.connect()
+    conn.execute(
+        "INSERT INTO plan_version(plan_id,version_no,change_reason,change_note,"
+        "snapshot_json,input_hash,engine_version,operator_id,created_at)"
+        " VALUES(?,2,'manual','多片版本','{}',?,'0.1.0',?,'2026-11-09T12:00:00Z')",
+        (pid, "d" * 64, uid))
+    vid = conn.execute("SELECT version_id FROM plan_version WHERE plan_id=? AND version_no=2",
+                       (pid,)).fetchone()[0]
+    tid = conn.execute("SELECT task_id FROM plan_task WHERE plan_id=? LIMIT 1",
+                       (pid,)).fetchone()[0]
+    conn.execute("INSERT INTO version_task(version_id,task_id,plan_id,in_scope,frozen,"
+                 "original_minutes,estimated_minutes,schedule_state)"
+                 " VALUES(?,?,?,1,0,180,180,'scheduled')", (vid, tid, pid))
+    start_epoch = 1794250800          # 2026-11-09 19:00 本地时间附近的整分钟
+    for index, minutes in [(1, 120), (2, 60)]:
+        conn.execute("INSERT INTO task_slice(version_id,task_id,slice_no,start_epoch,end_epoch)"
+                     " VALUES(?,?,?,?,?)",
+                     (vid, tid, index, start_epoch + (index - 1) * 7200,
+                      start_epoch + (index - 1) * 7200 + minutes * 60))
+    conn.execute("UPDATE study_plan SET current_version=2 WHERE plan_id=?", (pid,))
+    conn.commit()
+    conn.close()
+
+    data = svc(client).build(pid, uid, BASE)
+    rows = [t for t in data["tasks"] if t["task_id"] == tid]
+    assert [r["slice_no"] for r in rows] == [1, 2]
+    assert all(r["slice_total"] == 2 for r in rows)
+
+
+def test_http_draft_tasks_carry_concept_names(client):
+    """草案里的任务要带知识点名称，界面不能只显示 ID。"""
+    h, uid = login(client)
+    pid = make_plan(client, h)
+    set_constraint(client, h, pid)
+    data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    assert data["tasks"] and all(task["name"] for task in data["tasks"])
+    assert all(slice_["name"] for slice_ in data["slices"])

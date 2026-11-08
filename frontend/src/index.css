@@ -285,6 +285,7 @@ button {
 
 .tt-col {
   position: relative;
+  overflow: hidden;
   border-right: 1px solid var(--rule);
   background-image: repeating-linear-gradient(
     to bottom,
@@ -356,6 +357,36 @@ button {
   font-weight: 600;
   line-height: 1.35;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.block-kind {
+  margin-left: 4px;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ink-2);
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  padding: 0 3px;
+  vertical-align: 1px;
+}
+
+.block-slice {
+  font-family: var(--font-num);
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
+.block[data-compact="true"] {
+  padding: 2px 5px;
+}
+
+.block[data-compact="true"] .block-title {
+  font-size: 11px;
+  line-height: 1.2;
 }
 
 .block-meta {

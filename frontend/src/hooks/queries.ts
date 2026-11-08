@@ -28,6 +28,8 @@ export interface BoardTask {
   overdue: boolean;
   issue_codes: string[];
   actual_minutes?: number | null;
+  slice_no: number;
+  slice_total: number;
 }
 
 export interface UnscheduledRow {

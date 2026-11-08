@@ -48,6 +48,7 @@ export interface Constraint {
 
 export interface TaskItem {
   concept_id: number;
+  name?: string;
   kind: "study" | "practice";
   minutes: number;
 }

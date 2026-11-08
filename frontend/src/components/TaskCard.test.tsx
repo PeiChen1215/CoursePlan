@@ -15,6 +15,8 @@ const task: BoardTask = {
   done: false,
   overdue: false,
   issue_codes: [],
+  slice_no: 1,
+  slice_total: 1,
 };
 
 describe("TaskCard", () => {

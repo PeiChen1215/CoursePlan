@@ -15,7 +15,8 @@ from ..db.uow import Database
 
 
 def _iso(epoch: int) -> str:
-    return datetime.fromtimestamp(epoch, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M")
+    """返回**本地墙上时间**（与草案 payload 口径一致，前端直接按本地渲染）。"""
+    return datetime.fromtimestamp(epoch).strftime("%Y-%m-%dT%H:%M")
 
 
 @dataclass(frozen=True)
@@ -91,6 +92,11 @@ class BoardService:
             " WHERE vt.version_id = ?"
             " ORDER BY ts.start_epoch IS NULL, ts.start_epoch, ts.slice_no", (version_id,))
 
+        totals: Dict[int, int] = {}
+        for r in rows:
+            if r["start_epoch"] is not None:
+                totals[int(r["task_id"])] = totals.get(int(r["task_id"]), 0) + 1
+
         now_epoch = int(now.timestamp())
         tasks: List[dict] = []
         unscheduled: List[dict] = []
@@ -117,6 +123,8 @@ class BoardService:
                 "done": done, "overdue": overdue,
                 "issue_codes": code_by_concept.get(cid, []),
                 "actual_minutes": actual.get(int(r["task_id"])),
+                "slice_no": int(r["slice_no"]),
+                "slice_total": totals.get(int(r["task_id"]), 1),
             })
 
         total_tasks = self.db.scalar(

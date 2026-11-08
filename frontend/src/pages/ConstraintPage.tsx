@@ -34,6 +34,7 @@ export function ConstraintPage() {
   const [questions, setQuestions] = useState<string[]>([]);
   const [candidates, setCandidates] = useState<{ concept_id: number; name: string }[]>([]);
   const [modeText, setModeText] = useState("");
+  const [dailyLimit, setDailyLimit] = useState<number | null>(null);
 
   useEffect(() => {
     const data = saved.data;
@@ -78,6 +79,7 @@ export function ConstraintPage() {
         setCandidates(data.candidates);
         if (typeof data.fields.target_concept_id === "number") setTarget(data.fields.target_concept_id);
         if (typeof data.fields.deadline === "string") setDeadline(data.fields.deadline);
+        setDailyLimit(typeof data.fields.daily_limit === "number" ? data.fields.daily_limit : null);
         if (data.warnings?.length) toast.push(data.warnings.join("；"), "info");
         if (data.degraded_reason) toast.push("模型不可用，已降级为规则解析", "info");
       },
@@ -113,11 +115,18 @@ export function ConstraintPage() {
             <div className="flex items-center justify-between">
               <span className="faint text-xs">
                 {modeText ? "解析方式：" + modeText : "规则优先，模型兜底"}
+                {dailyLimit ? " · 说到每天 " + dailyLimit + " 分钟" : ""}
               </span>
               <button className="btn" disabled={!utterance || extract.isPending} onClick={runExtract}>
                 解析这句话
               </button>
             </div>
+
+            {dailyLimit ? (
+              <p className="faint text-xs">
+                每日上限已识别为 {dailyLimit} 分钟。本期排程按可用时段总量计算，这一项仅作提醒。
+              </p>
+            ) : null}
 
             {questions.length ? (
               <ul className="rule-bottom space-y-1 pb-2 text-sm" style={{ color: "var(--rust)" }}>
