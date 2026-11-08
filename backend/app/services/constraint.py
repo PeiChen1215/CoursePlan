@@ -38,12 +38,15 @@ class ConstraintService:
         return rows[0]
 
     # ---------------- 目标路径时长
-    def path_minutes(self, course_id: int, goals: Sequence[int]) -> int:
+    def path_minutes(self, course_id: int, goals: Sequence[int],
+                     mastered: Sequence[int] = ()) -> int:
+        """闭包内参考时长之和；已掌握的知识点不计入（与排程剔除口径一致）。"""
         edges = graph.load_edges(self.db, course_id)
         closure = graph.prereq_closure(edges, goals)
         rows = graph.load_concepts(self.db, course_id, only_enabled=False)
         minutes = {int(r["concept_id"]): int(r["reference_minutes"]) for r in rows}
-        return sum(minutes.get(cid, 0) for cid in closure)
+        skip = {int(m) for m in mastered}
+        return sum(minutes.get(cid, 0) for cid in closure if cid not in skip)
 
     def _check_goals(self, course_id: int, goals: Sequence[int]) -> None:
         rows = graph.load_concepts(self.db, course_id, only_enabled=True)
@@ -52,6 +55,15 @@ class ConstraintService:
             if g not in valid:
                 raise ValidationError("E1001", "目标知识点不属于本课程或已停用",
                                       field="target_concept_id")
+
+    def _check_mastered(self, course_id: int, mastered: Sequence[int]) -> None:
+        """已掌握可以包含先修知识点（跳过已会的内容），但必须是本课程的知识点。"""
+        rows = graph.load_concepts(self.db, course_id, only_enabled=False)
+        valid = {int(r["concept_id"]) for r in rows}
+        for m in mastered:
+            if m not in valid:
+                raise ValidationError("E1001", "已掌握集合包含非本课程的知识点",
+                                      field="mastered_concept_ids")
 
     # ---------------- 保存
     def save(self, plan_id: int, student_id: int, raw: ConstraintInput,
@@ -62,12 +74,9 @@ class ConstraintService:
 
         goals = [norm.target_concept_id] + norm.extra_concept_ids
         self._check_goals(course_id, goals)
-        for m in norm.mastered_concept_ids:
-            if m not in goals:
-                raise ValidationError("E1001", "已掌握集合只能包含目标中的知识点",
-                                      field="mastered_concept_ids")
+        self._check_mastered(course_id, norm.mastered_concept_ids)
 
-        pm = self.path_minutes(course_id, goals)
+        pm = self.path_minutes(course_id, goals, norm.mastered_concept_ids)
         summary = summarize(norm, base_time, self.config.BUFFER_RATIO, pm)
         if summary.reject_reason:
             # 容量为零不入库：让学生先改约束（D06 §5.2 阻断分支）
@@ -102,7 +111,8 @@ class ConstraintService:
         norm = normalize(raw, base_time.date())
         goals = [norm.target_concept_id] + norm.extra_concept_ids
         self._check_goals(int(plan["course_id"]), goals)
-        pm = self.path_minutes(int(plan["course_id"]), goals)
+        self._check_mastered(int(plan["course_id"]), norm.mastered_concept_ids)
+        pm = self.path_minutes(int(plan["course_id"]), goals, norm.mastered_concept_ids)
         return summarize(norm, base_time, self.config.BUFFER_RATIO, pm)
 
     # ---------------- 读取

@@ -100,11 +100,22 @@ def test_goal_must_belong_to_course(client):
     assert r.json()["field"] == "target_concept_id"
 
 
-def test_mastered_must_be_subset_of_goals(client):
+def test_mastered_allows_prereq_concept(client):
+    """已掌握可以是先修（跳过已会的内容），不计入目标路径时长。"""
+    h = login(client)
+    pid = make_plan(client, h)
+    full = client.put("/api/plans/%d/constraint" % pid, headers=h,
+                      json=body()).json()["data"]
+    skipped = client.put("/api/plans/%d/constraint" % pid, headers=h,
+                         json=body(mastered_concept_ids=[1])).json()["data"]
+    assert skipped["path_minutes"] < full["path_minutes"]
+
+
+def test_mastered_rejects_foreign_concept(client):
     h = login(client)
     pid = make_plan(client, h)
     r = client.put("/api/plans/%d/constraint" % pid, headers=h,
-                   json=body(mastered_concept_ids=[3]))
+                   json=body(mastered_concept_ids=[999]))
     assert r.status_code == 400
     assert r.json()["field"] == "mastered_concept_ids"
 
