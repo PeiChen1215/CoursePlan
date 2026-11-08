@@ -10,17 +10,13 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 from ..core.errors import NotFound, PrereqCycle, StateError, ValidationError
 from ..db.uow import Database, UnitOfWork
 
 MAX_BATCH = 40
-
-
-def to_iso(dt: datetime) -> str:
-    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 # ---------------------------------------------------------------- 环检测
@@ -81,7 +77,7 @@ class ContentService:
         return rows[0]
 
     def create_course(self, maintainer_id: int, name: str, semester: str,
-                      total_hours: int, now: datetime) -> int:
+                      total_hours: int) -> int:
         if not name or len(name) > 100:
             raise ValidationError("E1001", "课程名长度需在 1–100 之间", field="name")
         if total_hours <= 0:
@@ -136,8 +132,8 @@ class ContentService:
             "SELECT from_concept_id, to_concept_id FROM prerequisite WHERE course_id = ?"
             " ORDER BY from_concept_id, to_concept_id", (course_id,))
 
-    def submit_prereqs(self, course_id: int, batch: Sequence[Tuple[int, int]],
-                       now: datetime) -> int:
+    def submit_prereqs(self, course_id: int,
+                       batch: Sequence[Tuple[int, int]]) -> int:
         if not batch:
             raise ValidationError("E1001", "本批为空", field="batch")
         if len(batch) > MAX_BATCH:

@@ -72,42 +72,42 @@ def test_content_revision_increments(svc, seeded):
 # ---------------- 先修（T-02-04..T-02-08）
 def test_self_loop_rejected(svc):
     with pytest.raises(ValidationError) as e:
-        svc.submit_prereqs(1, [(1, 1)], NOW)
+        svc.submit_prereqs(1, [(1, 1)])
     assert "自环" in e.value.message
 
 
 def test_concept_not_in_course_rejected(svc):
     """两端必须属于本课程；schema 用 ux_single_course 保证只有一门课程。"""
     with pytest.raises(ValidationError) as e:
-        svc.submit_prereqs(1, [(1, 999)], NOW)
+        svc.submit_prereqs(1, [(1, 999)])
     assert "不属于本课程" in e.value.message
 
 
 def test_duplicate_edges_deduped(svc):
-    n = svc.submit_prereqs(1, [(1, 2), (1, 2)], NOW)
+    n = svc.submit_prereqs(1, [(1, 2), (1, 2)])
     assert n == 1
     assert len(svc.list_prereqs(1)) == 1
 
 
 def test_cycle_in_batch_rejected(svc):
-    svc.submit_prereqs(1, [(1, 2), (2, 3)], NOW)
+    svc.submit_prereqs(1, [(1, 2), (2, 3)])
     with pytest.raises(PrereqCycle) as e:
-        svc.submit_prereqs(1, [(3, 1)], NOW)
+        svc.submit_prereqs(1, [(3, 1)])
     assert e.value.code == "E2001"
     assert e.value.detail["cycle"][0] == e.value.detail["cycle"][-1]
 
 
 def test_batch_atomic_on_cycle(svc):
-    svc.submit_prereqs(1, [(1, 2)], NOW)
+    svc.submit_prereqs(1, [(1, 2)])
     with pytest.raises(PrereqCycle):
-        svc.submit_prereqs(1, [(2, 3), (3, 1)], NOW)
+        svc.submit_prereqs(1, [(2, 3), (3, 1)])
     names = {(r["from_concept_id"], r["to_concept_id"]) for r in svc.list_prereqs(1)}
     assert names == {(1, 2)}          # 整批回滚，未残留
 
 
 def test_batch_size_limit(svc):
     with pytest.raises(ValidationError):
-        svc.submit_prereqs(1, [(1, 2)] * 41, NOW)
+        svc.submit_prereqs(1, [(1, 2)] * 41)
 
 
 # ---------------- 停用与影响（T-02-09、T-02-10）
@@ -200,20 +200,20 @@ def test_create_course_ok(db):
     conn.commit()
     conn.close()
     svc = ContentService(db)
-    cid = svc.create_course(1, "新课程", "2027春", 36, NOW)
+    cid = svc.create_course(1, "新课程", "2027春", 36)
     assert cid > 0
     assert [c["name"] for c in svc.list_courses()] == ["新课程"]
 
 
 def test_second_course_rejected(seeded, svc):
     with pytest.raises(StateError) as e:
-        svc.create_course(2, "另一门", "2027春", 36, NOW)
+        svc.create_course(2, "另一门", "2027春", 36)
     assert "只支持一门课程" in e.value.message
 
 
 def test_create_course_rejects_bad_hours(svc):
     with pytest.raises(ValidationError) as e:
-        svc.create_course(2, "x", "2027春", 0, NOW)
+        svc.create_course(2, "x", "2027春", 0)
     assert e.value.field == "total_hours"
 
 

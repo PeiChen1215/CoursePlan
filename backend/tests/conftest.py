@@ -35,3 +35,21 @@ def seeded(db):
     conn.commit()
     conn.close()
     return db
+
+
+@pytest.fixture()
+def cfg():
+    from app.core import config as C
+    return C.load({"DB_PATH": ":memory:", "SECRET_KEY": "test-secret"})
+
+
+@pytest.fixture()
+def svc(seeded):
+    from app.services.content import ContentService
+    return ContentService(seeded)
+
+
+@pytest.fixture()
+def auth_svc(seeded, cfg):
+    from app.services.auth import AuthService
+    return AuthService(seeded, cfg)

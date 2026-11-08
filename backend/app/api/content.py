@@ -58,7 +58,7 @@ def list_courses(request: Request, svc: ContentService = Depends(get_content)):
 def create_course(body: CourseIn, request: Request,
                   claims: Claims = Depends(_admin),
                   svc: ContentService = Depends(get_content)):
-    cid = svc.create_course(claims.sub, body.name, body.semester, body.total_hours, now_utc())
+    cid = svc.create_course(claims.sub, body.name, body.semester, body.total_hours)
     return envelope("OK", "ok", {"course_id": cid}, request_id=_rid(request))
 
 
@@ -93,7 +93,7 @@ def submit_prereqs(course_id: int, body: PrereqBatchIn, request: Request,
                    claims: Claims = Depends(_admin),
                    svc: ContentService = Depends(get_content)):
     pairs = [(int(e[0]), int(e[1])) for e in body.edges if len(e) == 2]
-    n = svc.submit_prereqs(course_id, pairs, now_utc())
+    n = svc.submit_prereqs(course_id, pairs)
     return envelope("OK", "ok", {"saved": n}, request_id=_rid(request))
 
 

@@ -105,15 +105,6 @@ class EngineConfig:
         }
 
 
-def _coerce(key: str, value: Any) -> Any:
-    if key in SPECS:
-        try:
-            return int(value) if isinstance(DEFAULTS[key], int) else float(value)
-        except (TypeError, ValueError):
-            raise ConfigError("%s=%r 不是数字（允许 %s）" % (key, value, SPECS[key]))
-    return str(value)
-
-
 def load(overrides: Optional[Dict[str, Any]] = None) -> EngineConfig:
     overrides = overrides or {}
     raw: Dict[str, Any] = {}
@@ -121,7 +112,10 @@ def load(overrides: Optional[Dict[str, Any]] = None) -> EngineConfig:
         raw[key] = overrides.get(key, os.getenv("DSH_" + key, default))
 
     for key, (low, high) in SPECS.items():
-        v = _coerce(key, raw[key])
+        try:
+            v = int(raw[key]) if isinstance(DEFAULTS[key], int) else float(raw[key])
+        except (TypeError, ValueError):
+            raise ConfigError("%s=%r 不是数字（允许 %s）" % (key, raw[key], SPECS[key]))
         if not low <= v <= high:
             raise ConfigError("%s=%s 越界（允许 %s–%s）" % (key, v, low, high))
         raw[key] = v
