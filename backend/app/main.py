@@ -16,6 +16,7 @@ from .core.logging import log_event, setup_logging
 from .db.uow import Database
 from .api.auth import router as auth_router
 from .api.content import router as content_router
+from .api.plans import router as plans_router
 
 SCHEMA_FILE = PROJECT_ROOT / "scripts" / "schema.sql"
 
@@ -68,6 +69,7 @@ def create_app(overrides: Dict[str, Any] | None = None) -> FastAPI:
     register_routes(app)
     app.include_router(auth_router)
     app.include_router(content_router)
+    app.include_router(plans_router)
     return app
 
 
