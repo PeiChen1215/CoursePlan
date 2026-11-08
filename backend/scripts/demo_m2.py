@@ -15,11 +15,14 @@ from app.main import create_app  # noqa: E402
 
 
 def main() -> int:
-    app = create_app({"DB_PATH": "data/demo_m2.db", "LOG_LEVEL": "ERROR",
+    db_path = Path(__file__).resolve().parents[1] / "data" / "demo_m2.db"
+    for suffix in ("", "-wal", "-shm"):
+        candidate = Path(str(db_path) + suffix)
+        if candidate.exists():
+            candidate.unlink()                  # 每次演示从空库开始
+    app = create_app({"DB_PATH": str(db_path), "LOG_LEVEL": "ERROR",
                       "SECRET_KEY": "demo-secret"})
     conn = app.state.db.connect()
-    conn.execute("DELETE FROM app_user")
-    conn.execute("DELETE FROM course")
     conn.execute("INSERT INTO app_user(username,password_hash,role,created_at)"
                  " VALUES('admin',?,'admin','2026-11-08T00:00:00Z')",
                  (hash_password("Admin123!"),))
