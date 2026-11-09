@@ -5,10 +5,11 @@
 """
 from __future__ import annotations
 
+import io
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -35,6 +36,7 @@ DEFAULTS: Dict[str, Any] = {
     "PROVIDER_KEY": "",
     "PROVIDER_BASE": "https://api.deepseek.com",
     "PROVIDER_MODEL": "deepseek-flash",
+    "PROVIDER_THINKING": "disabled",
     "SECRET_KEY": "studypath-dev-secret",
 }
 
@@ -85,6 +87,7 @@ class EngineConfig:
     SECRET_KEY: str
     PROVIDER_BASE: str = "https://api.deepseek.com"
     PROVIDER_MODEL: str = "deepseek-flash"
+    PROVIDER_THINKING: str = "disabled"
     BACKUP_KEEP: int = 7
     BACKUP_DIR: str = "backups"
 
@@ -120,9 +123,47 @@ class EngineConfig:
             "PROVIDER_MODE": self.PROVIDER_MODE,
             "PROVIDER_BASE": self.PROVIDER_BASE,
             "PROVIDER_MODEL": self.PROVIDER_MODEL,
+            "PROVIDER_THINKING": self.PROVIDER_THINKING,
             "BACKUP_KEEP": self.BACKUP_KEEP,
             "BACKUP_DIR": str(self.backup_dir),
         }
+
+
+# ---------------------------------------------------------------- .env
+ENV_FILE_NAMES = (".env", "backend/.env")
+
+
+def load_dotenv(root: Optional[Path] = None) -> List[str]:
+    """读 .env 到 os.environ，只填空缺项，不覆盖已有环境变量。
+
+    支持两种写法：
+        PROVIDER_MODE=real            # 自动补 DSH_ 前缀
+        DSH_PROVIDER_MODE=real        # 原样使用
+    返回实际生效的键，便于启动日志说明来源。
+    """
+    root = Path(root) if root else PROJECT_ROOT
+    applied: List[str] = []
+    seen = set()
+    for name in ENV_FILE_NAMES:
+        path = root / name
+        if not path.exists() or path in seen:
+            continue
+        seen.add(path)
+        for raw_line in io.open(path, encoding="utf-8"):
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if not key:
+                continue
+            env_key = key if key.startswith("DSH_") else "DSH_" + key
+            if env_key in os.environ:
+                continue
+            os.environ[env_key] = value
+            applied.append(env_key)
+    return applied
 
 
 def load(overrides: Optional[Dict[str, Any]] = None) -> EngineConfig:
@@ -147,3 +188,6 @@ def load(overrides: Optional[Dict[str, Any]] = None) -> EngineConfig:
         raw[key] = v
 
     return EngineConfig(**raw)
+
+
+load_dotenv()

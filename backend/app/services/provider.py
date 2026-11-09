@@ -68,11 +68,15 @@ class RealProvider(BaseProvider):
     name = "real"
 
     def __init__(self, key: str = "", timeout: int = 10,
-                 base: str = DEFAULT_BASE, model: str = DEFAULT_MODEL):
+                 base: str = DEFAULT_BASE, model: str = DEFAULT_MODEL,
+                 thinking: str = "disabled"):
         self.key = key
         self.timeout = timeout
         self.base = (base or DEFAULT_BASE).rstrip("/")
         self.model = model or DEFAULT_MODEL
+        # 目标映射是分类任务，不需要思维链；开着思考会把 max_tokens 全耗在
+        # reasoning_content 上，content 返空（deepseek-flash 实测如此）。
+        self.thinking = (thinking or "disabled").lower()
 
     # ---------------------------------------------------------------- HTTP
     def _request(self, path: str, payload: Optional[dict], method: str = "POST") -> dict:
@@ -121,6 +125,7 @@ class RealProvider(BaseProvider):
     def complete(self, prompt: str) -> str:
         payload = {
             "model": self.model,
+            "thinking": {"type": "enabled" if self.thinking == "enabled" else "disabled"},
             "messages": [
                 {"role": "system",
                  "content": "你是课程学习规划系统的抽取器。只输出 JSON，不要解释、不要代码块。"},
@@ -136,6 +141,15 @@ class RealProvider(BaseProvider):
         except (KeyError, IndexError, TypeError):
             raise ProviderError("响应缺少 choices")
         if not isinstance(content, str) or not content.strip():
+            reasoning = 0
+            try:
+                reasoning = int((data.get("usage") or {})
+                                .get("completion_tokens_details", {})
+                                .get("reasoning_tokens") or 0)
+            except (TypeError, ValueError):  # pragma: no cover - 结构异常时按 0 处理
+                reasoning = 0
+            if reasoning:
+                raise ProviderError("模型把 token 全用在思考上（%d 个），content 为空" % reasoning)
             raise ProviderError("模型返回空内容")
         return content.strip()
 
@@ -153,13 +167,14 @@ class RealProvider(BaseProvider):
 def build_provider(mode: str, key: str = "", timeout: int = 10,
                    mock: Optional[MockProvider] = None,
                    base: str = DEFAULT_BASE,
-                   model: str = DEFAULT_MODEL) -> BaseProvider:
+                   model: str = DEFAULT_MODEL,
+                   thinking: str = "disabled") -> BaseProvider:
     """mock / real / auto；auto 探测失败即降级为 mock（D06 §14.6.5）。"""
     if mode == "mock":
         return mock or MockProvider()
     if mode == "real":
-        return RealProvider(key, timeout, base, model)
-    provider = RealProvider(key, timeout, base, model)
+        return RealProvider(key, timeout, base, model, thinking)
+    provider = RealProvider(key, timeout, base, model, thinking)
     try:
         if provider.probe():
             return provider

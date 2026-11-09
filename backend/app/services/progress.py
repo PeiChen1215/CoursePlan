@@ -89,14 +89,23 @@ class ProgressService:
         if event_type == CORRECTION:
             self._check_correction(version, task_id, corrects_event_id)
 
+        try:
+            with UnitOfWork(self.db) as uow:
+                cur = uow.execute(
+                    "INSERT INTO learning_event(plan_id,task_id,version_id,event_type,"
+                    "actual_minutes,note,operator_id,request_key,corrects_event_id,"
+                    "occurred_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (plan_id, task_id, version, event_type, actual_minutes, note,
+                     student_id, request_key, corrects_event_id, _iso(now)))
+                event_id = int(cur.lastrowid)
+        except Exception as exc:  # noqa: BLE001 - 只把唯一约束翻译成业务错误
+            text = str(exc)
+            if "ux_done_once" in text or "learning_event.task_id" in text:
+                raise StateError("E1003", "该任务已经打过卡，不能重复完成",
+                                 field="task_id")
+            raise
+
         with UnitOfWork(self.db) as uow:
-            cur = uow.execute(
-                "INSERT INTO learning_event(plan_id,task_id,version_id,event_type,"
-                "actual_minutes,note,operator_id,request_key,corrects_event_id,occurred_at)"
-                " VALUES(?,?,?,?,?,?,?,?,?,?)",
-                (plan_id, task_id, version, event_type, actual_minutes, note,
-                 student_id, request_key, corrects_event_id, _iso(now)))
-            event_id = int(cur.lastrowid)
             uow.execute("UPDATE study_plan SET progress_revision = progress_revision + 1,"
                         " updated_at = ? WHERE plan_id = ?", (_iso(now), plan_id))
 
@@ -104,9 +113,11 @@ class ProgressService:
                             self._is_overdue(plan, now))
 
     def _has_done(self, version: int, task_id: int) -> bool:
+        # 不按版本过滤：同一任务在旧版本打过卡也算完成（schema 的 ux_done_once
+        # 按 task_id 唯一，D02 AT-25 要求冻结完成事实）
         return bool(self.db.query(
-            "SELECT 1 FROM learning_event WHERE version_id = ? AND task_id = ?"
-            " AND event_type = 'done'", (version, task_id)))
+            "SELECT 1 FROM learning_event WHERE task_id = ?"
+            " AND event_type = 'done'", (task_id,)))
 
     def _latest_completion(self, version: int, task_id: int) -> Optional[int]:
         rows = self.db.query(

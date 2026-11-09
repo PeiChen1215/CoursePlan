@@ -298,3 +298,42 @@ def test_confirm_ignores_unknown_reason(client):
         "SELECT change_reason FROM plan_version WHERE plan_id=? ORDER BY version_no DESC",
         (pid,))[0]
     assert row["change_reason"] == "manual"
+
+
+def test_http_event_without_key_is_accepted(client):
+    """D06：未带 Idempotency-Key 时服务端生成新键，而不是 400。"""
+    h, uid, pid, tasks = confirmed_plan(client)
+    r = client.post("/api/plans/%d/events" % pid, headers=h,
+                    json={"task_id": tasks[0], "event_type": "done", "actual_minutes": 30})
+    assert r.status_code == 200
+    assert r.json()["data"]["replayed"] is False
+
+
+def test_duplicate_done_race_returns_clean_error(client, monkeypatch):
+    """并发窗口里预检查可能漏掉：唯一约束触发时要翻译成业务错误，不能抛 SQL。"""
+    from app.core.errors import StateError
+    h, uid, pid, tasks = confirmed_plan(client)
+    s = svc(client)
+    s.submit(pid, uid, tasks[0], "done", "race-1", BASE, actual_minutes=30)
+    monkeypatch.setattr(type(s), "_has_done", lambda self, v, t: False)
+    with pytest.raises(StateError) as err:
+        s.submit(pid, uid, tasks[0], "done", "race-2", BASE, actual_minutes=30)
+    assert err.value.code == "E1003"
+    assert "打过卡" in err.value.message
+
+
+def test_submit_reraises_unexpected_db_error(client, monkeypatch):
+    """非唯一约束的异常要原样抛出，不能被当成重复打卡吞掉。"""
+    import app.services.progress as P
+    h, uid, pid, tasks = confirmed_plan(client)
+    s = svc(client)
+    real_execute = P.UnitOfWork.execute
+
+    def fake_execute(self, sql, params=()):
+        if "INSERT INTO learning_event" in sql:
+            raise ValueError("磁盘写满了")
+        return real_execute(self, sql, params)
+
+    monkeypatch.setattr(P.UnitOfWork, "execute", fake_execute)
+    with pytest.raises(ValueError, match="磁盘写满了"):
+        s.submit(pid, uid, tasks[0], "note", "boom-1", BASE, note="记一笔")

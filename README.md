@@ -88,6 +88,7 @@ python scripts/seed.py --db ..\data\dev_ui.db
 $env:DSH_PROVIDER_MODE  = "real"          # mock / real / auto
 $env:DSH_PROVIDER_KEY   = "<你的 API Key>"
 $env:DSH_PROVIDER_MODEL = "deepseek-flash"
+$env:DSH_PROVIDER_THINKING = "disabled"   # 抽取是分类任务，不需要思考链
 $env:DSH_PROVIDER_BASE  = "https://api.deepseek.com"
 ```
 

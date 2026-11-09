@@ -63,7 +63,8 @@ def client(tmp_path):
     from app.core.security import hash_password
     from app.main import create_app
 
-    app = create_app({"DB_PATH": str(tmp_path / "t.db"), "LOG_LEVEL": "ERROR",
+    app = create_app({"DB_PATH": str(tmp_path / "t.db"),
+        "PROVIDER_MODE": "mock", "LOG_LEVEL": "ERROR",
                       "SECRET_KEY": "s"})
     conn = app.state.db.connect()
     conn.execute("INSERT INTO app_user(username,password_hash,role,created_at)"

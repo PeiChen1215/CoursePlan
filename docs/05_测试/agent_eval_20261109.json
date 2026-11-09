@@ -1,0 +1,60 @@
+{
+  "total": 22,
+  "ok": 21,
+  "accuracy": 0.955,
+  "model_cases": 15,
+  "model_ok": 14,
+  "model_accuracy": 0.933,
+  "model_called": 15,
+  "rule_cases": 7,
+  "rule_ok": 7,
+  "latency_mean_s": 0.95,
+  "latency_p95_s": 1.2,
+  "by_category": {
+    "A 精确名称": {
+      "total": 3,
+      "ok": 3
+    },
+    "B 名称包含": {
+      "total": 2,
+      "ok": 2
+    },
+    "C 模糊描述": {
+      "total": 9,
+      "ok": 8
+    },
+    "D 多意图": {
+      "total": 2,
+      "ok": 2
+    },
+    "E 噪声": {
+      "total": 2,
+      "ok": 2
+    },
+    "F 注入": {
+      "total": 2,
+      "ok": 2
+    },
+    "G 英文": {
+      "total": 1,
+      "ok": 1
+    },
+    "G 超长": {
+      "total": 1,
+      "ok": 1
+    }
+  },
+  "failures": [
+    {
+      "utterance": "团队协作那部分",
+      "category": "C 模糊描述",
+      "mode": "llm",
+      "got": null,
+      "expect": [
+        10,
+        12
+      ],
+      "error": ""
+    }
+  ]
+}

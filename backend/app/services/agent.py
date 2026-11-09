@@ -103,6 +103,19 @@ def parse_minutes(text: str) -> Optional[int]:
 
 
 # ---------------------------------------------------------------- 目标映射
+def _parse_json_object(raw: str) -> dict:
+    """模型可能加 ```json 围栏或前后废话，这里只取第一个 JSON 对象。"""
+    text = (raw or "").strip()
+    if text.startswith("```"):
+        text = text.split("```", 2)[1] if text.count("```") >= 2 else text
+        if text.lower().startswith("json"):
+            text = text[4:]
+    start, end = text.find("{"), text.rfind("}")
+    if start < 0 or end <= start:
+        raise ValueError("不是 JSON 对象")
+    return json.loads(text[start:end + 1])
+
+
 def map_target(text: str, concepts: Sequence[dict], provider=None,
                mode: str = MODE_LOCAL) -> tuple:
     """返回 (映射结果, candidates, 实际使用的模式, 降级原因)。"""
@@ -130,20 +143,30 @@ def map_target(text: str, concepts: Sequence[dict], provider=None,
         return best, [], MODE_LOCAL, None
 
     if provider is not None:
+        # 对外只暴露 D06 的三种模式：local / mock / llm
+        used = (MODE_LLM if getattr(provider, "name", "") == "real"
+                else getattr(provider, "name", MODE_LLM))
         try:
             raw = provider.complete(_mapping_prompt(text, concepts))
-            data = json.loads(raw)
-            cid = data.get("concept_id")
-            match = [c for c in concepts if c["concept_id"] == cid]
-            if match:
-                # 对外只暴露 D06 的三种模式：local / mock / llm
-                used = MODE_LLM if getattr(provider, "name", "") == "real"                     else getattr(provider, "name", MODE_LLM)
-                return match[0], [], used, None
-            return None, _candidates(text, concepts), mode, "INVALID_OUTPUT"
         except ProviderTimeout:
             return None, _candidates(text, concepts), MODE_LOCAL, "TIMEOUT"
-        except (ProviderError, ValueError, AttributeError):
+        except ProviderError:
             return None, _candidates(text, concepts), MODE_LOCAL, "UNAVAILABLE"
+
+        try:
+            data = _parse_json_object(raw)
+        except (ValueError, AttributeError):
+            return None, _candidates(text, concepts), MODE_LOCAL, "INVALID_OUTPUT"
+
+        cid = data.get("concept_id")
+        if cid is None:
+            # 模型明确表示"都不匹配"：这是有效回答，不是故障
+            return None, _candidates(text, concepts), used, None
+        match = [c for c in concepts if c["concept_id"] == cid]
+        if match:
+            return match[0], [], used, None
+        # 模型给了候选之外的 id：丢弃，但仍记为模型作答
+        return None, _candidates(text, concepts), used, "INVALID_OUTPUT"
 
     return None, _candidates(text, concepts), mode, None
 

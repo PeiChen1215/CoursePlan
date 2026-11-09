@@ -1,6 +1,7 @@
 """追问抽取与进度事件路由（D06 §12.6.1）。"""
 from __future__ import annotations
 
+import uuid
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Header, Request
@@ -42,7 +43,7 @@ def agent_extract(body: ExtractIn, request: Request,
                  "aliases": []} for r in rows]
     provider = build_provider(cfg.PROVIDER_MODE, cfg.PROVIDER_KEY,
                               cfg.MODEL_TIMEOUT_SECONDS, None,
-                              cfg.PROVIDER_BASE, cfg.PROVIDER_MODEL)
+                              cfg.PROVIDER_BASE, cfg.PROVIDER_MODEL, cfg.PROVIDER_THINKING)
     result = extract(body.utterance, body.filled, concepts, provider, base,
                      int(body.filled.get("daily_limit") or 480))
     return envelope("OK", "ok", {
@@ -75,7 +76,7 @@ def submit_event(plan_id: int, body: EventIn, request: Request,
                  claims: Claims = Depends(current_claims),
                  svc: ProgressService = Depends(get_progress_service)):
     result = svc.submit(plan_id, claims.sub, body.task_id, body.event_type,
-                        idempotency_key or "", now_utc(), body.actual_minutes,
+                        idempotency_key or uuid.uuid4().hex, now_utc(), body.actual_minutes,
                         body.note, body.corrects_event_id)
     return envelope("OK", "ok", {
         "event_id": result.event_id,

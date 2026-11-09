@@ -89,8 +89,10 @@ def test_map_via_model_returns_first_candidate():
 
 
 def test_map_falls_back_to_candidates():
+    """模型明确回答"都不匹配"时，如实记为模型作答并给候选。"""
     hit, cands, mode, why = map_target("那个循环的东西", CONCEPTS, MockProvider())
-    assert hit is None and len(cands) <= 5 and mode == MODE_LOCAL
+    assert hit is None and len(cands) <= 5
+    assert mode == "mock" and why is None
 
 
 def test_map_discards_model_invented_id():
@@ -101,9 +103,36 @@ def test_map_discards_model_invented_id():
 
 
 def test_map_model_garbage_output():
+    """模型回了非 JSON：退回规则，原因记为 INVALID_OUTPUT。"""
     provider = MockProvider(fail_mode="garbage")
-    hit, _, _, why = map_target("循环", CONCEPTS, provider)
-    assert hit is None and why == "UNAVAILABLE"
+    hit, _, mode, why = map_target("循环", CONCEPTS, provider)
+    assert hit is None and mode == MODE_LOCAL and why == "INVALID_OUTPUT"
+
+
+def test_map_accepts_fenced_json():
+    """真实模型常把 JSON 包在 ``` 围栏里，必须能剥掉。"""
+    class Fenced(MockProvider):
+        def complete(self, prompt):
+            return "```json\n{\"concept_id\": 1}\n```"
+
+    hit, cands, mode, why = map_target("循环", CONCEPTS, Fenced())
+    assert hit is not None and hit["concept_id"] == 1
+    assert cands == [] and mode == "mock" and why is None
+
+
+def test_map_accepts_json_with_prefix_text():
+    class Chatty(MockProvider):
+        def complete(self, prompt):
+            return '我认为是第一个：{"concept_id": 1} 希望有帮助'
+
+    hit, _, _, why = map_target("循环", CONCEPTS, Chatty())
+    assert hit is not None and hit["concept_id"] == 1 and why is None
+
+
+def test_map_model_unknown_id_keeps_mode():
+    """模型给了候选外的 id：结果丢弃，但模式仍是模型。"""
+    hit, cands, mode, why = map_target("循环", CONCEPTS, MockProvider(fail_mode="bad_id"))
+    assert hit is None and cands and mode == "mock" and why == "INVALID_OUTPUT"
 
 
 def test_map_model_timeout_degrades():
@@ -168,3 +197,10 @@ def test_build_provider_auto_falls_back_to_mock(monkeypatch):
 
 def test_mock_probe_unavailable():
     assert MockProvider(fail_mode="unavailable").probe() is False
+
+
+def test_map_provider_error_degrades_to_local():
+    """模型不可用（如鉴权失败）时退回规则，原因 UNAVAILABLE。"""
+    provider = MockProvider(fail_mode="unavailable")
+    hit, cands, mode, why = map_target("循环", CONCEPTS, provider)
+    assert hit is None and mode == MODE_LOCAL and why == "UNAVAILABLE"

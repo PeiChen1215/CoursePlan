@@ -63,9 +63,18 @@ class BoardService:
         version_id = int(version[0]["version_id"])
         readonly = int(version_no) != current
 
+        # 完成事实是跨版本冻结的：同一任务在旧版本打过卡，新版本里仍算完成
+        # （schema 的 ux_done_once 按 task_id 唯一，两者必须同口径）
         done_ids = {int(r["task_id"]) for r in self.db.query(
             "SELECT DISTINCT task_id FROM learning_event"
-            " WHERE version_id = ? AND event_type = 'done'", (version_id,))}
+            " WHERE event_type = 'done'")}
+
+        actual = {}
+        for r in self.db.query(
+                "SELECT task_id, actual_minutes, occurred_at FROM learning_event"
+                " WHERE event_type IN ('done','correction')"
+                " ORDER BY occurred_at"):
+            actual[int(r["task_id"])] = r["actual_minutes"]
         actual: Dict[int, int] = {}
         for r in self.db.query(
                 "SELECT task_id, actual_minutes FROM learning_event"

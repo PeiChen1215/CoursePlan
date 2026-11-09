@@ -1,0 +1,242 @@
+{
+  "passed": 46,
+  "total": 46,
+  "elapsed_s": 6.8,
+  "llm_calls": 5,
+  "latency_mean_s": 0.76,
+  "latency_max_s": 1.0,
+  "checks": [
+    {
+      "name": "health 可达",
+      "ok": true,
+      "detail": "{\"service\": \"ok\", \"database\": \"ok\", \"provider\": \"real\", \"backup\": \"warn\", \"backup_age_hours\": null}"
+    },
+    {
+      "name": "provider = real（真实模型）",
+      "ok": true,
+      "detail": "real"
+    },
+    {
+      "name": "学生登录",
+      "ok": true,
+      "detail": "user_id=2"
+    },
+    {
+      "name": "管理员登录",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "未认证返回 401",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "抽取「我想把那块讲数据流的东西学会」",
+      "ok": true,
+      "detail": "0.95s mode=llm(期望 llm) 目标=None"
+    },
+    {
+      "name": "抽取「想把版本管理这块补上」",
+      "ok": true,
+      "detail": "0.80s mode=llm(期望 llm) 目标=10"
+    },
+    {
+      "name": "抽取「计划两周内弄明白测试相关的内」",
+      "ok": true,
+      "detail": "1.00s mode=llm(期望 llm) 目标=9"
+    },
+    {
+      "name": "抽取「帮我安排下用例图相关的学习，」",
+      "ok": true,
+      "detail": "0.90s mode=llm(期望 llm) 目标=3"
+    },
+    {
+      "name": "抽取「需求那块想系统过一遍，三周」",
+      "ok": true,
+      "detail": "0.93s mode=llm(期望 llm) 目标=2"
+    },
+    {
+      "name": "抽取「我想学单元测试」",
+      "ok": true,
+      "detail": "0.01s mode=local(期望 local) 目标=9"
+    },
+    {
+      "name": "5 次模糊输入全部走真实模型",
+      "ok": true,
+      "detail": "llm 次数=5"
+    },
+    {
+      "name": "模型延迟 P95 < 10s",
+      "ok": true,
+      "detail": "均值 0.76s 最慢 1.00s"
+    },
+    {
+      "name": "二轮补全（带 filled）",
+      "ok": true,
+      "detail": "追问=['每周哪些时间段方便学习？']"
+    },
+    {
+      "name": "读到演示计划",
+      "ok": true,
+      "detail": "共 1 个"
+    },
+    {
+      "name": "容量预览 C/B/C′",
+      "ok": true,
+      "detail": "C=2340 B=234 C'=2106 路径=1180"
+    },
+    {
+      "name": "保存约束",
+      "ok": true,
+      "detail": "目标=[9, 12] C=2340"
+    },
+    {
+      "name": "已掌握剔除生效（路径不含概念 1）",
+      "ok": true,
+      "detail": "路径=1180 分钟"
+    },
+    {
+      "name": "生成草案",
+      "ok": true,
+      "detail": "22 任务 / 30 片"
+    },
+    {
+      "name": "草案校验通过",
+      "ok": true,
+      "detail": "issues=0"
+    },
+    {
+      "name": "草案带知识点名",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "草案带差异结构",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "覆盖 135 分钟后片合计仍为 135",
+      "ok": true,
+      "detail": "片数=2 合计=135"
+    },
+    {
+      "name": "单片不超过 120 分钟",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "确认生效",
+      "ok": true,
+      "detail": "v2"
+    },
+    {
+      "name": "看板有任务",
+      "ok": true,
+      "detail": "30 任务 未排入 0"
+    },
+    {
+      "name": "看板时间戳为本地墙钟",
+      "ok": true,
+      "detail": "2026-11-09T19:00"
+    },
+    {
+      "name": "进度结构完整",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "含调整提示字段",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "找到未完成任务",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "打卡成功",
+      "ok": true,
+      "detail": "完成率 4.5%"
+    },
+    {
+      "name": "同键重放不重复计数",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "更正事件",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "时间线含更正链",
+      "ok": true,
+      "detail": "4 条"
+    },
+    {
+      "name": "调整后生成 v2",
+      "ok": true,
+      "detail": "v3"
+    },
+    {
+      "name": "版本列表",
+      "ok": true,
+      "detail": "v1:initial / v2:manual / v3:delay"
+    },
+    {
+      "name": "调整原因落库",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "版本差异结构",
+      "ok": true,
+      "detail": "新增0 移除0 移动6 改时长0"
+    },
+    {
+      "name": "课程资料列表",
+      "ok": true,
+      "detail": "6 条"
+    },
+    {
+      "name": "知识点关联资料",
+      "ok": true,
+      "detail": [
+        "需求工程速览"
+      ]
+    },
+    {
+      "name": "学生不能写内容",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "修改课程总学时",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "新增知识点",
+      "ok": true,
+      "detail": "id=13"
+    },
+    {
+      "name": "成环被拒并返回环路",
+      "ok": true,
+      "detail": "HTTP 422 环路=[13, 14, 13]"
+    },
+    {
+      "name": "一致性备份",
+      "ok": true,
+      "detail": "studypath-20261109-153243.db 256 KB"
+    },
+    {
+      "name": "备份列表",
+      "ok": true,
+      "detail": "4 份"
+    }
+  ]
+}

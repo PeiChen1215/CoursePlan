@@ -195,3 +195,14 @@ def test_os_error_maps_to_provider_error(monkeypatch):
     patch_urlopen(monkeypatch, OSError("socket reset"))
     with pytest.raises(ProviderError, match="网络错误"):
         RealProvider("k").complete("x")
+
+
+def test_empty_content_when_reasoning_ate_tokens(monkeypatch):
+    """思考模型把 max_tokens 全用在 reasoning_content 上时，要给可读的原因。"""
+    body = json.dumps({
+        "choices": [{"message": {"content": ""}, "finish_reason": "length"}],
+        "usage": {"completion_tokens_details": {"reasoning_tokens": 200}},
+    })
+    patch_urlopen(monkeypatch, FakeResponse(body))
+    with pytest.raises(ProviderError, match="思考"):
+        RealProvider("k").complete("x")

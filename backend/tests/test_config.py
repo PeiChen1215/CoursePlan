@@ -94,3 +94,19 @@ def test_backup_dir_absolute_is_honoured(tmp_path):
     cfg = C.EngineConfig(**{**C.DEFAULTS, "DB_PATH": "data/x.db",
                         "BACKUP_DIR": str(tmp_path / "bk")})
     assert cfg.backup_dir == tmp_path / "bk"
+
+
+def test_load_dotenv_does_not_override_existing_env(tmp_path, monkeypatch):
+    """已有环境变量优先，.env 只填空缺项。"""
+    lines = ["PROVIDER_MODE=real", "PROVIDER_MODEL=m-from-env-file", "",
+             "# 注释行", "=没有键名"]
+    (tmp_path / ".env").write_text(chr(10).join(lines), encoding="utf-8")
+    monkeypatch.setenv("DSH_PROVIDER_MODE", "mock")
+    monkeypatch.delenv("DSH_PROVIDER_MODEL", raising=False)
+
+    applied = C.load_dotenv(tmp_path)
+    import os
+    assert os.environ["DSH_PROVIDER_MODE"] == "mock"
+    assert os.environ["DSH_PROVIDER_MODEL"] == "m-from-env-file"
+    assert "DSH_PROVIDER_MODE" not in applied
+    assert "DSH_PROVIDER_MODEL" in applied
