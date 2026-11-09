@@ -41,7 +41,8 @@ def agent_extract(body: ExtractIn, request: Request,
     concepts = [{"concept_id": int(r["concept_id"]), "name": r["name"],
                  "aliases": []} for r in rows]
     provider = build_provider(cfg.PROVIDER_MODE, cfg.PROVIDER_KEY,
-                             cfg.MODEL_TIMEOUT_SECONDS)
+                              cfg.MODEL_TIMEOUT_SECONDS, None,
+                              cfg.PROVIDER_BASE, cfg.PROVIDER_MODEL)
     result = extract(body.utterance, body.filled, concepts, provider, base,
                      int(body.filled.get("daily_limit") or 480))
     return envelope("OK", "ok", {

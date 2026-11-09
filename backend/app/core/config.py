@@ -33,6 +33,8 @@ DEFAULTS: Dict[str, Any] = {
     "LOG_LEVEL": "INFO",
     "PROVIDER_MODE": "mock",          # mock / real / auto
     "PROVIDER_KEY": "",
+    "PROVIDER_BASE": "https://api.deepseek.com",
+    "PROVIDER_MODEL": "deepseek-flash",
     "SECRET_KEY": "studypath-dev-secret",
 }
 
@@ -81,6 +83,8 @@ class EngineConfig:
     PROVIDER_MODE: str
     PROVIDER_KEY: str
     SECRET_KEY: str
+    PROVIDER_BASE: str = "https://api.deepseek.com"
+    PROVIDER_MODEL: str = "deepseek-flash"
     BACKUP_KEEP: int = 7
     BACKUP_DIR: str = "backups"
 
@@ -114,6 +118,8 @@ class EngineConfig:
             "DB_PATH": str(self.db_file),
             "LOG_LEVEL": self.LOG_LEVEL,
             "PROVIDER_MODE": self.PROVIDER_MODE,
+            "PROVIDER_BASE": self.PROVIDER_BASE,
+            "PROVIDER_MODEL": self.PROVIDER_MODEL,
             "BACKUP_KEEP": self.BACKUP_KEEP,
             "BACKUP_DIR": str(self.backup_dir),
         }

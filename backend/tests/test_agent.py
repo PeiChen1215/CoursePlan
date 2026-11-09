@@ -159,9 +159,11 @@ def test_build_provider_real_without_key_is_unusable():
         p.complete("x")
 
 
-def test_build_provider_auto_falls_back_to_mock():
+def test_build_provider_auto_falls_back_to_mock(monkeypatch):
+    """auto 现在真的探测 /models：没 key 或探测失败都回落 mock。"""
     assert build_provider("auto").name == "mock"
-    assert build_provider("auto", key="k").name == "real"
+    monkeypatch.setattr("app.services.provider.RealProvider.probe", lambda self: False)
+    assert build_provider("auto", key="k").name == "mock"
 
 
 def test_mock_probe_unavailable():

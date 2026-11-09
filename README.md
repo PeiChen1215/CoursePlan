@@ -24,16 +24,17 @@
 
 ---
 
-## 三、技术栈（拟）
+## 三、技术栈
 
 | 层级 | 选型 | 状态 |
 |---|---|---|
-| 后端 | Python 3.11 + FastAPI + SQLite | 待实现 |
-| 前端 | React 18 + TypeScript + Vite + Tailwind CSS | 待实现 |
-| 大模型 | 通过统一 Provider 接口接入（支持本地 Mock 便于离线演示） | 待实现 |
-| 智能体 | 自研多智能体编排（意图路由 + 计划生成 + 调整建议） | 待实现 |
+| 后端 | Python 3.12 + FastAPI + SQLite（WAL） | 已实现 |
+| 前端 | React 18 + TypeScript + Vite 5 + Tailwind CSS | 已实现 |
+| 大模型 | 统一 Provider 接口：`mock` / `real` / `auto`，真实实现走 OpenAI 兼容 `chat/completions` | 已实现 |
+| 智能体 | 意图抽取 + 目标映射（精确 → 别名 → 模型 → 候选） | 已实现 |
 
-> 技术栈以《概要设计说明书》定稿为准。
+> 模型调用遵循「规则优先、模型兜底」：日期、时长这类有明确写法的字段不调模型；
+> 只有目标映射无法用规则命中时才调用，超时或失败自动降级为规则结果，已填字段不清空。
 
 ---
 
@@ -42,10 +43,10 @@
 ```
 CoursePlan/
 ├─ docs/              课程文档（14 类交付物 + 过程记录，见 docs/README.md）
-├─ backend/           FastAPI 后端
-├─ frontend/          React 前端
-├─ data/              课程种子数据与演示数据
-├─ scripts/           启动、导入、备份等脚本
+├─ backend/           FastAPI 后端（app/ 25 个模块，tests/ 20 个测试文件）
+├─ frontend/          React 前端（8 个页面 + 组件与 hooks）
+├─ data/              演示库（dev_ui.db，不入库）
+├─ scripts/           导出、校验、备份等脚本
 ├─ logs/              运行日志（不入库）
 └─ backups/           数据备份（不入库）
 ```
@@ -54,20 +55,44 @@ CoursePlan/
 
 ## 五、本地运行
 
-> 待后端与前端骨架完成后补充。计划：
-
 ```powershell
 # 终端 1：后端
 cd backend
-python -m venv venv
-.\venv\Scripts\pip install -r requirements.txt
-.\venv\Scripts\python -m uvicorn app.main:app --port 8000 --reload
+pip install -r requirements.txt
+python -m uvicorn app.main:app --port 8000 --reload
 
 # 终端 2：前端
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev          # http://127.0.0.1:5173，/api 代理到 8000
 ```
+
+### 演示数据
+
+```powershell
+cd backend
+python scripts/seed.py --db ..\data\dev_ui.db
+```
+
+会重建演示库：12 个知识点、12 条先修关系、6 条资料、4 个账号、1 份已确认计划（22 个任务 / 29 片）。
+
+演示账号：`alice / Passw0rd!`（学生）、`admin / Admin123!`（管理员）。
+
+### 大模型配置
+
+默认 `PROVIDER_MODE=mock`，**不联网、结果可复现**，适合演示与自动化测试。
+
+接真实模型时用环境变量开启，密钥不要写进仓库：
+
+```powershell
+$env:DSH_PROVIDER_MODE  = "real"          # mock / real / auto
+$env:DSH_PROVIDER_KEY   = "<你的 API Key>"
+$env:DSH_PROVIDER_MODEL = "deepseek-flash"
+$env:DSH_PROVIDER_BASE  = "https://api.deepseek.com"
+```
+
+`auto` 模式启动时用 `GET /models` 探测一次，失败即回落 `mock`。
+密钥只从环境变量读取，`config` 里的默认值为空字符串。
 
 ---
 

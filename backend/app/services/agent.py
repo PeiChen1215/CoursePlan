@@ -131,12 +131,13 @@ def map_target(text: str, concepts: Sequence[dict], provider=None,
 
     if provider is not None:
         try:
-            raw = provider.complete("从候选里选一个知识点：" + text)
+            raw = provider.complete(_mapping_prompt(text, concepts))
             data = json.loads(raw)
             cid = data.get("concept_id")
             match = [c for c in concepts if c["concept_id"] == cid]
             if match:
-                used = getattr(provider, "name", MODE_LLM)
+                # 对外只暴露 D06 的三种模式：local / mock / llm
+                used = MODE_LLM if getattr(provider, "name", "") == "real"                     else getattr(provider, "name", MODE_LLM)
                 return match[0], [], used, None
             return None, _candidates(text, concepts), mode, "INVALID_OUTPUT"
         except ProviderTimeout:
@@ -145,6 +146,20 @@ def map_target(text: str, concepts: Sequence[dict], provider=None,
             return None, _candidates(text, concepts), MODE_LOCAL, "UNAVAILABLE"
 
     return None, _candidates(text, concepts), mode, None
+
+
+def _mapping_prompt(text: str, concepts: Sequence[dict]) -> str:
+    """把候选知识点连 id 一起给模型，并要求只回 JSON。"""
+    listing = "\n".join(
+        "%d. %s（%s，%d 分钟）" % (c["concept_id"], c["name"],
+                                  c.get("chapter") or "未分章", int(c.get("reference_minutes") or 0))
+        for c in concepts[:40])
+    return (
+        "学生说：「" + text + "」\n"
+        "候选知识点（编号. 名称（章节，参考时长））：\n" + listing + "\n"
+        "请判断学生想重点掌握哪个知识点。只输出 JSON，例如 {\"concept_id\": 3}；"
+        "如果都不匹配，输出 {\"concept_id\": null}。"
+    )
 
 
 def _candidates(text: str, concepts: Sequence[dict], limit: int = 5) -> List[dict]:
