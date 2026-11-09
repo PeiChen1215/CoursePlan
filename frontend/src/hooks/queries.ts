@@ -57,6 +57,13 @@ export interface BoardData {
   unscheduled: UnscheduledRow[];
   issues: IssueRow[];
   progress: Progress;
+  adjust_hint?: {
+    reason: string;
+    overdue_tasks: number;
+    worst_lateness_hours: number;
+    threshold_hours: number;
+    message: string;
+  } | null;
 }
 
 export function usePlans() {
@@ -121,6 +128,44 @@ export function useGenerateDraft(planId: number) {
   return useMutation({
     mutationFn: () => api.post<DraftDetail>("/api/plans/" + planId + "/drafts"),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.plans }),
+  });
+}
+
+export function useOverrideTasks(planId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: {
+      revision: number;
+      items: { concept_id: number; kind: string; minutes: number }[];
+    }) =>
+      api.request<{ revision: number } & Record<string, unknown>>(
+        "/api/plans/" + planId + "/drafts/" + args.revision + "/tasks",
+        { method: "PATCH", body: JSON.stringify({ items: args.items }) },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["draft", planId] });
+      qc.invalidateQueries({ queryKey: qk.plans });
+    },
+  });
+}
+
+export function usePatchCourse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { courseId: number; patch: Record<string, unknown> }) =>
+      api.request<{ course_id: number }>("/api/courses/" + args.courseId,
+        { method: "PATCH", body: JSON.stringify(args.patch) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.courses }),
+  });
+}
+
+export function useDisableCourse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (courseId: number) =>
+      api.post<{ course_id: number; status: string }>(
+        "/api/courses/" + courseId + "/disable"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.courses }),
   });
 }
 
@@ -242,9 +287,13 @@ export function useExtract() {
 export function useCourses() {
   return useQuery({
     queryKey: qk.courses,
-    queryFn: () => api.get<{ items: { course_id: number; name: string; total_hours: number }[] }>(
-      "/api/courses",
-    ),
+    queryFn: () =>
+      api.get<{
+        items: {
+          course_id: number; name: string; semester: string; total_hours: number;
+          status: string; content_revision: number;
+        }[];
+      }>("/api/courses"),
   });
 }
 

@@ -265,3 +265,34 @@ def test_generate_rejects_when_everything_mastered(plan_env):
     with pytest.raises(StateError) as e:
         PlannerService(plan_env, CFG).generate(1, 1, BASE)
     assert "全部掌握" in e.value.message
+
+# ---------------- 覆盖时长的边界（D02 AT-17）
+def test_apply_overrides_missing_draft(plan_env):
+    from app.core.errors import NotFound
+    with pytest.raises(NotFound):
+        PlannerService(plan_env, CFG).apply_overrides(1, 1, 99, {(1, "study"): 60}, BASE)
+
+def test_apply_overrides_other_student(plan_env):
+    from app.core.errors import NotFound
+    svc2 = PlannerService(plan_env, CFG)
+    draft = svc2.generate(1, 1, BASE)
+    with pytest.raises(NotFound):
+        svc2.apply_overrides(1, 99, draft.revision, {}, BASE)
+
+def test_apply_overrides_rejects_too_large(plan_env):
+    from app.core.errors import ValidationError
+    svc2 = PlannerService(plan_env, CFG)
+    draft = svc2.generate(1, 1, BASE)
+    key = (draft.tasks[0].concept_id, draft.tasks[0].kind)
+    with pytest.raises(ValidationError):
+        svc2.apply_overrides(1, 1, draft.revision, {key: 2000}, BASE)
+
+def test_apply_overrides_totals_match(plan_env):
+    svc2 = PlannerService(plan_env, CFG)
+    draft = svc2.generate(1, 1, BASE)
+    key = (draft.tasks[0].concept_id, draft.tasks[0].kind)
+    edited = svc2.apply_overrides(1, 1, draft.revision, {key: 135}, BASE)
+    mine = [s for s in edited.slices if (s.concept_id, s.kind) == key]
+    assert sum(s.minutes for s in mine) == 135
+    assert all(s.minutes <= CFG.MAX_SLICE_SECONDS // 60 for s in mine)
+    assert edited.revision == draft.revision + 1

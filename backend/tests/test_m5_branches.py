@@ -168,3 +168,22 @@ def test_list_versions_of_other_student_404(client):
     _, admin_id = login(client, "admin", "Admin123!")
     with pytest.raises(NotFound):
         vsvc(client).list_versions(pid, admin_id)
+
+# ---------------- 草案差异的四类分支（调整预览用）
+def test_diff_helper_detects_added_removed_moved_resized(client):
+    from types import SimpleNamespace
+    from datetime import datetime as dt
+    from app.api.board import _diff_against_current
+    from app.services.planner import Task, Slice
+
+    h, uid, pid = setup_draft(client)[0], setup_draft(client)[1], setup_draft(client)[2]
+    vsvc(client).confirm(pid, 1, "k1", uid, BASE)
+    db = client.app.state.db
+    # 旧版本里概念 1 的任务在 11-09；新草案把它挪到 11-11 且改时长
+    tasks = [Task(1, "study", 50), Task(9, "study", 20)]
+    slices = [Slice(1, "study", 1, dt(2026, 11, 11, 19, 0), dt(2026, 11, 11, 19, 50))]
+    diff = _diff_against_current(db, pid, SimpleNamespace(tasks=tasks, slices=slices))
+    assert "9-study" in diff["added"]
+    assert diff["removed"], "当前版本里有、草案里没有的任务应被列出"
+    assert "1-study" in diff["moved"]
+    assert "1-study" in diff["resized"]

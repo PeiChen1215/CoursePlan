@@ -138,6 +138,46 @@ def _diff_against_current(db, plan_id: int, draft) -> dict:
             "moved": sorted(moved), "resized": sorted(resized)}
 
 
+class OverrideItem(BaseModel):
+    concept_id: int = Field(gt=0)
+    kind: str = Field(pattern="^(study|practice)$")
+    minutes: int = Field(ge=1, le=1440)
+    note: Optional[str] = Field(default=None, max_length=500)
+
+
+class OverridesIn(BaseModel):
+    items: list[OverrideItem]
+
+
+@router.patch("/{plan_id}/drafts/{revision}/tasks")
+def override_tasks(plan_id: int, revision: int, body: OverridesIn, request: Request,
+                   claims: Claims = Depends(current_claims)):
+    """覆盖任务时长并重新装箱，返回新一版草案（对应 D02 AT-17）。"""
+    overrides = {(item.concept_id, item.kind): item.minutes for item in body.items}
+    draft = PlannerService(get_db(request), request.app.state.config).apply_overrides(
+        plan_id, claims.sub, revision, overrides, now_utc())
+    return envelope("OK", "ok", {
+        "revision": draft.revision,
+        "tasks": [{"concept_id": t.concept_id, "kind": t.kind, "minutes": t.minutes}
+                  for t in draft.tasks],
+        "slices": [{"concept_id": s.concept_id, "kind": s.kind, "slice_no": s.slice_no,
+                    "start": s.start.strftime("%Y-%m-%dT%H:%M"),
+                    "end": s.end.strftime("%Y-%m-%dT%H:%M")} for s in draft.slices],
+        "unscheduled": [{"concept_id": u.concept_id, "kind": u.kind, "reason": u.reason}
+                        for u in draft.unscheduled],
+        "metrics": {
+            "total_minutes": draft.metrics.total_minutes,
+            "raw_minutes": draft.metrics.raw_minutes,
+            "buffer_minutes": draft.metrics.buffer_minutes,
+            "usable_minutes": draft.metrics.usable_minutes,
+            "deficit_minutes": draft.metrics.deficit_minutes,
+            "utilization": draft.metrics.utilization,
+            "scheduled_minutes": draft.metrics.scheduled_minutes,
+            "slices": draft.metrics.slices,
+        },
+    }, request_id=_rid(request))
+
+
 @router.get("/{plan_id}/drafts/{revision}")
 def get_draft(plan_id: int, revision: int, request: Request,
               claims: Claims = Depends(current_claims)):

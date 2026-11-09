@@ -97,6 +97,25 @@ export function BoardPage() {
           <TimetableGrid tasks={data.tasks} monday={monday} onSelect={setSelected} />
         ) : null}
 
+        {data?.adjust_hint ? (
+          <section
+            className="sheet sheet-pad"
+            style={{ borderColor: "var(--rust)" }}
+            role="status"
+          >
+            <p className="text-sm" style={{ color: "var(--rust)" }}>
+              {data.adjust_hint.message}
+            </p>
+            <p className="faint mt-1 text-xs">
+              逾期超过 {data.adjust_hint.threshold_hours} 小时，建议重排一次；
+              已完成的记录不会被改动。
+            </p>
+            <a className="btn mt-3 inline-flex" href="/adjust">
+              去调整计划
+            </a>
+          </section>
+        ) : null}
+
         {data?.unscheduled.length ? (
           <section className="sheet sheet-pad">
             <h3 className="display text-sm">未排入</h3>

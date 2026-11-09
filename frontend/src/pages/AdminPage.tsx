@@ -2,11 +2,21 @@ import { useState } from "react";
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
-import { useConcepts, useCreateConcept, usePrereqs, useSubmitPrereqs } from "../hooks/queries";
+import {
+  useConcepts, useCourses, useCreateConcept, useDisableCourse, usePatchCourse, usePrereqs,
+  useSubmitPrereqs,
+} from "../hooks/queries";
 
 export function AdminPage() {
   const toast = useToast();
   const courseId = 1;
+  const courses = useCourses();
+  const patchCourse = usePatchCourse();
+  const disableCourse = useDisableCourse();
+  const course = courses.data?.items?.find((item) => item.course_id === courseId) ?? null;
+  const [courseName, setCourseName] = useState("");
+  const [courseHours, setCourseHours] = useState("");
+
   const concepts = useConcepts(courseId);
   const prereqs = usePrereqs(courseId);
   const createConcept = useCreateConcept(courseId);
@@ -32,6 +42,76 @@ export function AdminPage() {
             先修关系整批提交：成环时整批拒绝，并返回环路；被版本引用的知识点只能停用。
           </p>
         </section>
+
+        <section className="sheet sheet-pad">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="display text-sm">课程信息</h3>
+            <span className="faint text-xs">
+              {course ? "当前状态：" + (course.status === "enabled" ? "启用" : "已停用") : ""}
+            </span>
+          </div>
+          <div className="mt-2 grid gap-4 sm:grid-cols-3">
+            <div className="field-row">
+              <label htmlFor="course-name">名称</label>
+              <input
+                id="course-name"
+                className="input"
+                placeholder={course?.name ?? ""}
+                value={courseName}
+                onChange={(event) => setCourseName(event.target.value)}
+              />
+            </div>
+            <div className="field-row">
+              <label htmlFor="course-hours">总学时</label>
+              <input
+                id="course-hours"
+                className="input num"
+                placeholder={course ? String(course.total_hours) : ""}
+                value={courseHours}
+                onChange={(event) => setCourseHours(event.target.value)}
+                inputMode="numeric"
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <button
+                className="btn"
+                disabled={patchCourse.isPending || (!courseName && !courseHours)}
+                onClick={() => {
+                  const patch: Record<string, unknown> = {};
+                  if (courseName) patch.name = courseName;
+                  if (courseHours) patch.total_hours = Number(courseHours);
+                  patchCourse.mutate({ courseId, patch }, {
+                    onSuccess: () => {
+                      toast.push("课程信息已更新", "success");
+                      setCourseName("");
+                      setCourseHours("");
+                    },
+                    onError: (error) =>
+                      toast.push(error instanceof Error ? error.message : "更新失败", "error"),
+                  });
+                }}
+              >
+                保存
+              </button>
+              <button
+                className="btn btn-quiet"
+                disabled={disableCourse.isPending || course?.status === "disabled"}
+                onClick={() => {
+                  if (!window.confirm("停用后无法新建学习计划，历史计划仍可打开。确认停用？")) return;
+                  disableCourse.mutate(courseId, {
+                    onSuccess: () => toast.push("课程已停用", "success"),
+                    onError: (error) =>
+                      toast.push(error instanceof Error ? error.message : "停用失败", "error"),
+                  });
+                }}
+              >
+                停用课程
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <ErrorBox error={patchCourse.error ?? disableCourse.error} />
 
         <section className="sheet sheet-pad">
           <h3 className="display text-sm">新增知识点</h3>

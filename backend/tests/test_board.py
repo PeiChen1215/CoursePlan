@@ -291,3 +291,69 @@ def test_http_draft_diff_without_current_version(client):
     set_constraint(client, h, pid)
     data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
     assert data["diff"] == {"added": [], "removed": [], "moved": [], "resized": []}
+
+# ---------------- 任务时长覆盖（D02 AT-17）
+def test_override_minutes_repacks_and_totals(client):
+    h, uid, pid = confirmed(client)
+    draft = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    target = draft["tasks"][0]
+    key = {"concept_id": target["concept_id"], "kind": target["kind"], "minutes": 135}
+    r = client.patch("/api/plans/%d/drafts/%d/tasks" % (pid, draft["revision"]),
+                     headers=h, json={"items": [key]})
+    assert r.status_code == 200, r.text
+    data = r.json()["data"]
+    mine = [s for s in data["slices"]
+            if s["concept_id"] == target["concept_id"] and s["kind"] == target["kind"]]
+    total = sum(int((__import__("datetime").datetime.strptime(s["end"], "%Y-%m-%dT%H:%M")
+                     - __import__("datetime").datetime.strptime(s["start"], "%Y-%m-%dT%H:%M")
+                     ).total_seconds()) // 60 for s in mine)
+    assert total == 135, "覆盖后的片合计必须等于 135"
+    assert all(int((__import__("datetime").datetime.strptime(s["end"], "%Y-%m-%dT%H:%M")
+                    - __import__("datetime").datetime.strptime(s["start"], "%Y-%m-%dT%H:%M")
+                    ).total_seconds()) // 60 <= 120 for s in mine), "单片不超过 120 分钟"
+
+def test_override_rejects_out_of_range(client):
+    h, uid, pid = confirmed(client)
+    draft = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    target = draft["tasks"][0]
+    r = client.patch("/api/plans/%d/drafts/%d/tasks" % (pid, draft["revision"]),
+                     headers=h,
+                     json={"items": [{"concept_id": target["concept_id"],
+                                     "kind": target["kind"], "minutes": 5000}]})
+    assert r.status_code == 400
+
+def test_confirm_writes_override_minutes(client):
+    h, uid, pid = confirmed(client)
+    from app.services.planner import PlannerService
+    from app.services.version import VersionService
+    svc2 = PlannerService(client.app.state.db, client.app.state.config)
+    draft = svc2.generate(pid, uid, BASE)
+    target = draft.tasks[0]
+    edited = svc2.apply_overrides(pid, uid, draft.revision,
+                                  {(target.concept_id, target.kind): 135}, BASE)
+    VersionService(client.app.state.db, client.app.state.config).confirm(
+        pid, edited.revision, "ov-1", uid, BASE)
+    row = client.app.state.db.query(
+        "SELECT original_minutes, estimated_minutes, override_minutes FROM version_task"
+        " WHERE version_id = (SELECT MAX(version_id) FROM plan_version WHERE plan_id=?)"
+        " AND task_id = (SELECT task_id FROM plan_task WHERE plan_id=? AND concept_id=?"
+        " AND task_type=?)", (pid, pid, target.concept_id, target.kind))[0]
+    assert row["estimated_minutes"] == 135
+    assert row["override_minutes"] == 135
+    assert row["original_minutes"] != 135
+
+# ---------------- 逾期提示（D02 AT-25）
+def test_board_hints_adjust_when_overdue_beyond_threshold(client):
+    h, uid, pid = confirmed(client)
+    later = BASE + timedelta(days=3)
+    data = svc(client).build(pid, uid, later)
+    hint = data["adjust_hint"]
+    assert hint is not None
+    assert hint["reason"] == "DELAY" and hint["overdue_tasks"] > 0
+    assert hint["worst_lateness_hours"] >= 48
+    assert "调整" in hint["message"]
+
+def test_board_no_hint_within_threshold(client):
+    h, uid, pid = confirmed(client)
+    data = svc(client).build(pid, uid, BASE)
+    assert data["adjust_hint"] is None

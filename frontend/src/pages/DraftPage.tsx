@@ -3,7 +3,9 @@ import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { IssueList } from "../components/IssueList";
 import { useToast } from "../components/Toast";
-import { useConfirmDraft, useGenerateDraft, usePlans } from "../hooks/queries";
+import {
+  useConfirmDraft, useGenerateDraft, useOverrideTasks, usePlans,
+} from "../hooks/queries";
 import { formatMinutes } from "../lib/format";
 
 export function DraftPage() {
@@ -13,9 +15,12 @@ export function DraftPage() {
   const planId = plan?.plan_id ?? 0;
   const generate = useGenerateDraft(planId);
   const confirm = useConfirmDraft(planId);
+  const override = useOverrideTasks(planId);
   const [confirmKey] = useState(() => crypto.randomUUID());
+  const [edited, setEdited] = useState<Record<string, string>>({});
 
   const draft = generate.data ?? null;
+  const keyOf = (conceptId: number, kind: string) => conceptId + "-" + kind;
   const blocked = draft ? draft.report.issues.some((issue) => issue.level === "ERROR") : true;
 
   return (
@@ -50,7 +55,7 @@ export function DraftPage() {
         </section>
 
         {!planId ? <p className="empty">还没有学习计划，先去「填写约束」。</p> : null}
-        <ErrorBox error={generate.error ?? confirm.error} />
+        <ErrorBox error={generate.error ?? confirm.error ?? override.error} />
 
         {draft ? (
           <>
@@ -77,7 +82,12 @@ export function DraftPage() {
             </section>
 
             <section className="sheet sheet-pad">
-              <h3 className="display text-sm">任务清单</h3>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="display text-sm">任务清单</h3>
+                <span className="faint text-xs">
+                  觉得估得不准可以直接改分钟数，然后重排（覆盖值不会改课程原始参考时长）
+                </span>
+              </div>
               <table className="ledger mt-2">
                 <thead>
                   <tr>
@@ -97,7 +107,22 @@ export function DraftPage() {
                       <tr key={task.concept_id + task.kind}>
                         <td>{task.name || "知识点 " + task.concept_id}</td>
                         <td>{task.kind === "study" ? "学习" : "练习"}</td>
-                        <td className="num">{formatMinutes(task.minutes)}</td>
+                        <td>
+                          <input
+                            aria-label={"时长 " + task.concept_id + task.kind}
+                            className="input num"
+                            style={{ width: "4.5rem" }}
+                            value={edited[keyOf(task.concept_id, task.kind)] ?? String(task.minutes)}
+                            onChange={(event) =>
+                              setEdited((prev) => ({
+                                ...prev,
+                                [keyOf(task.concept_id, task.kind)]: event.target.value,
+                              }))
+                            }
+                            inputMode="numeric"
+                          />
+                          <span className="faint text-xs"> 分</span>
+                        </td>
                         <td className="num">{slices.length}</td>
                         <td className="num faint text-xs">
                           {slices[0] ? slices[0].start.slice(5).replace("T", " ") : "—"}
@@ -107,6 +132,41 @@ export function DraftPage() {
                   })}
                 </tbody>
               </table>
+              <div className="mt-3">
+                <button
+                  className="btn btn-quiet"
+                  disabled={override.isPending || Object.keys(edited).length === 0}
+                  onClick={() => {
+                    const items = draft.tasks
+                      .map((task) => {
+                        const raw = edited[keyOf(task.concept_id, task.kind)];
+                        if (raw === undefined) return null;
+                        const minutes = Number(raw);
+                        if (!Number.isFinite(minutes) || minutes <= 0) return null;
+                        if (minutes === task.minutes) return null;
+                        return { concept_id: task.concept_id, kind: task.kind, minutes };
+                      })
+                      .filter(Boolean) as { concept_id: number; kind: string; minutes: number }[];
+                    if (!items.length) {
+                      toast.push("没有改动", "info");
+                      return;
+                    }
+                    override.mutate(
+                      { revision: draft.revision, items },
+                      {
+                        onSuccess: () => {
+                          toast.push("已按新时长重排，请重新生成查看新版草案", "success");
+                          setEdited({});
+                        },
+                        onError: (error) =>
+                          toast.push(error instanceof Error ? error.message : "重排失败", "error"),
+                      },
+                    );
+                  }}
+                >
+                  按新时长重排
+                </button>
+              </div>
             </section>
           </>
         ) : (

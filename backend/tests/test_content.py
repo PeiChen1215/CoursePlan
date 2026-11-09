@@ -220,3 +220,48 @@ def test_create_course_rejects_bad_hours(svc):
 def test_get_missing_course_404(svc):
     with pytest.raises(NotFound):
         svc.get_course(999)
+
+# ---------------- 课程编辑与停用（D02 AT-04）
+def test_update_course_fields(svc):
+    row = svc.update_course(1, name="软件工程实训（改）", total_hours=64, description="新的简介")
+    assert row["name"] == "软件工程实训（改）"
+    assert row["total_hours"] == 64
+
+def test_update_course_rejects_bad_hours(svc):
+    with pytest.raises(ValidationError) as e:
+        svc.update_course(1, total_hours=0)
+    assert e.value.field == "total_hours"
+
+def test_update_course_requires_a_field(svc):
+    with pytest.raises(ValidationError):
+        svc.update_course(1)
+
+def test_disable_course_blocks_new_plans(client):
+    h_admin = auth(token_of(client, "admin"))
+    assert client.post("/api/courses/1/disable", headers=h_admin).status_code == 200
+    h = auth(token_of(client, "alice"))
+    r = client.post("/api/plans", headers=h, json={"course_id": 1})
+    assert r.status_code == 400
+    assert r.json()["field"] == "course_id"
+
+
+def test_http_patch_course(client):
+    h_admin = auth(token_of(client, "admin"))
+    r = client.patch("/api/courses/1", headers=h_admin, json={"total_hours": 72})
+    assert r.status_code == 200
+    assert r.json()["data"]["total_hours"] == 72
+
+
+def test_student_cannot_patch_course(client):
+    h = auth(token_of(client, "alice"))
+    assert client.patch("/api/courses/1", headers=h, json={"total_hours": 72}).status_code == 403
+
+def test_update_course_rejects_long_name(svc):
+    with pytest.raises(ValidationError) as e:
+        svc.update_course(1, name="课" * 101)
+    assert e.value.field == "name"
+
+def test_update_course_rejects_long_description(svc):
+    with pytest.raises(ValidationError) as e:
+        svc.update_course(1, description="x" * 2001)
+    assert e.value.field == "description"

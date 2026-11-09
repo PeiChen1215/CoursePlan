@@ -90,6 +90,40 @@ class ContentService:
                 " VALUES(?,?,?,?,'enabled')", (maintainer_id, name, semester, total_hours))
             return int(cur.lastrowid)
 
+    def update_course(self, course_id: int, name: Optional[str] = None,
+                      description: Optional[str] = None,
+                      total_hours: Optional[int] = None,
+                      semester: Optional[str] = None) -> sqlite3.Row:
+        """修改课程基本信息（D02 AT-04）。"""
+        self.get_course(course_id)
+        if name is not None and not (1 <= len(name) <= 100):
+            raise ValidationError("E1001", "课程名长度需在 1–100 之间", field="name")
+        if description is not None and len(description) > 2000:
+            raise ValidationError("E1001", "简介最长 2000 字", field="description")
+        if total_hours is not None and total_hours <= 0:
+            raise ValidationError("E1001", "总学时需大于 0", field="total_hours")
+        sets, params = [], []
+        for column, value in (("name", name), ("description", description),
+                              ("total_hours", total_hours), ("semester", semester)):
+            if value is not None:
+                sets.append(column + " = ?")
+                params.append(value)
+        if not sets:
+            raise ValidationError("E1001", "没有要修改的字段")
+        params.append(course_id)
+        with UnitOfWork(self.db) as uow:
+            uow.execute("UPDATE course SET " + ", ".join(sets) + " WHERE course_id = ?",
+                        tuple(params))
+        return self.get_course(course_id)
+
+    def disable_course(self, course_id: int) -> sqlite3.Row:
+        """停用课程：禁止新建计划，历史计划仍可打开（D02 AT-04）。"""
+        self.get_course(course_id)
+        with UnitOfWork(self.db) as uow:
+            uow.execute("UPDATE course SET status = 'disabled' WHERE course_id = ?",
+                        (course_id,))
+        return self.get_course(course_id)
+
     # ---------------- 知识点
     def list_concepts(self, course_id: int, include_disabled: bool = False):
         sql = ("SELECT concept_id, name, chapter, difficulty, reference_minutes, status"

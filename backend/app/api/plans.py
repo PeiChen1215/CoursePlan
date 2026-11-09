@@ -53,9 +53,12 @@ class ConstraintIn(BaseModel):
 def create_plan(body: PlanIn, request: Request, claims: Claims = Depends(current_claims)):
     db = get_db(request)
     now = now_utc()
-    rows = db.query("SELECT course_id FROM course WHERE course_id = ?", (body.course_id,))
+    rows = db.query("SELECT course_id, status FROM course WHERE course_id = ?",
+                    (body.course_id,))
     if not rows:
         raise ValidationError("E1001", "课程不存在", field="course_id")
+    if rows[0]["status"] != "enabled":
+        raise ValidationError("E1003", "课程已停用，不能新建学习计划", field="course_id")
     with UnitOfWork(db) as uow:
         cur = uow.execute(
             "INSERT INTO study_plan(student_id,course_id,status,created_at,updated_at)"

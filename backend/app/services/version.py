@@ -214,11 +214,13 @@ class VersionService:
         for t in payload["tasks"]:
             tid = task_ids[(t["concept_id"], t["kind"])]
             state = "scheduled" if (t["concept_id"], t["kind"]) in scheduled else "unscheduled"
+            original = int(t.get("original_minutes", t["minutes"]))
+            override = t["minutes"] if original != t["minutes"] else None
             uow.execute(
                 "INSERT INTO version_task(version_id,task_id,plan_id,in_scope,frozen,"
-                "original_minutes,estimated_minutes,schedule_state)"
-                " VALUES(?,?,?,1,0,?,?,?)",
-                (version_id, tid, plan_id, t["minutes"], t["minutes"], state))
+                "original_minutes,estimated_minutes,override_minutes,schedule_state)"
+                " VALUES(?,?,?,1,0,?,?,?,?)",
+                (version_id, tid, plan_id, original, t["minutes"], override, state))
 
         for s in payload["slices"]:
             tid = task_ids[(s["concept_id"], s["kind"])]

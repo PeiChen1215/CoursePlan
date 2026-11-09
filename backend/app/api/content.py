@@ -62,6 +62,30 @@ def create_course(body: CourseIn, request: Request,
     return envelope("OK", "ok", {"course_id": cid}, request_id=_rid(request))
 
 
+class CoursePatch(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    description: Optional[str] = Field(default=None, max_length=2000)
+    total_hours: Optional[int] = Field(default=None, gt=0, le=200)
+    semester: Optional[str] = Field(default=None, max_length=32)
+
+
+@router.patch("/courses/{course_id}")
+def patch_course(course_id: int, body: CoursePatch, request: Request,
+                 claims: Claims = Depends(_admin),
+                 svc: ContentService = Depends(get_content)):
+    row = svc.update_course(course_id, body.name, body.description,
+                            body.total_hours, body.semester)
+    return envelope("OK", "ok", dict(row), request_id=_rid(request))
+
+
+@router.post("/courses/{course_id}/disable")
+def disable_course(course_id: int, request: Request,
+                   claims: Claims = Depends(_admin),
+                   svc: ContentService = Depends(get_content)):
+    row = svc.disable_course(course_id)
+    return envelope("OK", "ok", dict(row), request_id=_rid(request))
+
+
 @router.get("/courses/{course_id}/concepts")
 def list_concepts(course_id: int, request: Request,
                   include_disabled: bool = False,

@@ -127,6 +127,26 @@ class BoardService:
                 "slice_total": totals.get(int(r["task_id"]), 1),
             })
 
+        lateness = [
+            (now_epoch - int(r["end_epoch"])) // 3600
+            for r in rows
+            if r["start_epoch"] is not None
+            and int(r["task_id"]) not in done_ids
+            and (not readonly)
+            and now_epoch > int(r["end_epoch"])
+        ]
+        worst = max(lateness) if lateness else 0
+        adjust_hint = None
+        if worst >= self.config.DELAY_THRESHOLD_HOURS:
+            adjust_hint = {
+                "reason": "DELAY",
+                "overdue_tasks": len(lateness),
+                "worst_lateness_hours": worst,
+                "threshold_hours": self.config.DELAY_THRESHOLD_HOURS,
+                "message": "有 %d 个任务已逾期 %d 小时，建议调整计划"
+                           % (len(lateness), worst),
+            }
+
         total_tasks = self.db.scalar(
             "SELECT COUNT(*) FROM version_task WHERE version_id = ? AND in_scope = 1",
             (version_id,)) or 0
@@ -135,6 +155,7 @@ class BoardService:
         return {
             "plan_id": plan_id, "version_no": int(version_no), "readonly": readonly,
             "tasks": tasks, "unscheduled": unscheduled, "issues": issues,
+            "adjust_hint": adjust_hint,
             "progress": {
                 "total_tasks": int(total_tasks), "done_tasks": done_count,
                 "completion_rate": round(done_count / total_tasks, 3) if total_tasks else 0.0,

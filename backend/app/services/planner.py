@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
-from ..core.errors import NotFound, PrereqCycle, StateError
+from ..core.errors import NotFound, PrereqCycle, StateError, ValidationError
 from ..db.uow import Database, UnitOfWork
 from . import graph
 from .capacity import (Interval, as_naive_utc, compute_capacity, expand_slots,
@@ -287,6 +287,69 @@ class PlannerService:
         return Draft(plan_id=plan_id, revision=revision, tasks=tasks, slices=slices,
                      unscheduled=unscheduled, metrics=metrics, goals=goals, order=order,
                      hash=digest, base_time=base_time,
+                     deadline=deadline.isoformat())
+
+    def apply_overrides(self, plan_id: int, student_id: int, revision: int,
+                        overrides: Dict[Tuple[int, str], int],
+                        now: datetime) -> Draft:
+        """按 (知识点, 类型) 覆盖任务时长，重新装箱并生成新一版草案。
+
+        对应 D02 AT-17：参考 5 分钟的任务被覆盖成 135 分钟时，
+        片数按单片上限拆分，但合计必须仍等于 135。
+        """
+        rows = self.db.query(
+            "SELECT payload_json FROM plan_draft WHERE plan_id = ? AND revision = ?",
+            (plan_id, revision))
+        if not rows:
+            raise NotFound("E1002", "草案不存在")
+        plan = self.db.query("SELECT student_id FROM study_plan WHERE plan_id = ?",
+                             (plan_id,))
+        if not plan or int(plan[0]["student_id"]) != int(student_id):
+            raise NotFound("E1002", "草案不存在")
+
+        payload = json.loads(rows[0]["payload_json"])
+        tasks: List[Task] = []
+        for item in payload["tasks"]:
+            key = (int(item["concept_id"]), item["kind"])
+            original = int(item.get("original_minutes", item["minutes"]))
+            minutes = int(overrides.get(key, item["minutes"]))
+            if minutes < self.config.MIN_TASK_MINUTES or minutes > 1440:
+                raise ValidationError("E1001", "覆盖时长需在 %d–1440 分钟之间"
+                                      % self.config.MIN_TASK_MINUTES,
+                                      field="minutes")
+            tasks.append(Task(key[0], key[1], minutes))
+            item["original_minutes"] = original
+            item["minutes"] = minutes
+
+        base_time = datetime.strptime(payload["base_time"], "%Y-%m-%dT%H:%M:%SZ")
+        deadline = datetime.strptime(payload["deadline"], "%Y-%m-%d").date()
+        cons = self.db.query("SELECT * FROM plan_constraint WHERE plan_id = ?",
+                             (plan_id,))[0]
+        availability = normalize_availability(json.loads(cons["availability_json"]))
+        excluded = normalize_dates(json.loads(cons["excluded_dates_json"]))
+        slots = expand_slots(availability, excluded, base_time, deadline)
+        cap = compute_capacity(slots, self.config.BUFFER_RATIO)
+
+        slices, unscheduled = pack(tasks, slots, self.config)
+        metrics = metrics_of(tasks, slices, cap.raw_minutes, cap.buffer_minutes,
+                             cap.usable_minutes)
+        payload["slices"] = [{"concept_id": s.concept_id, "kind": s.kind,
+                              "slice_no": s.slice_no,
+                              "start": s.start.strftime("%Y-%m-%dT%H:%M"),
+                              "end": s.end.strftime("%Y-%m-%dT%H:%M")} for s in slices]
+        payload["unscheduled"] = [{"concept_id": u.concept_id, "kind": u.kind,
+                                   "reason": u.reason} for u in unscheduled]
+        payload["overrides"] = [{"concept_id": k[0], "kind": k[1], "minutes": v}
+                                for k, v in overrides.items()]
+        payload["input_hash"] = input_hash({k: v for k, v in payload.items()
+                                            if k != "input_hash"})
+        digest = payload["input_hash"]
+
+        new_revision = self._next_revision(plan_id)
+        self._save_draft(plan_id, new_revision, payload, digest)
+        return Draft(plan_id=plan_id, revision=new_revision, tasks=tasks, slices=slices,
+                     unscheduled=unscheduled, metrics=metrics, goals=payload["goals"],
+                     order=payload["order"], hash=digest, base_time=base_time,
                      deadline=deadline.isoformat())
 
     def _next_revision(self, plan_id: int) -> int:
