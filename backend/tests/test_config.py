@@ -82,3 +82,15 @@ def test_frozen_config_cannot_be_mutated():
     cfg = C.load({})
     with pytest.raises(Exception):
         cfg.STUDY_RATIO = 0.5
+
+
+def test_backup_dir_relative_to_db_file():
+    """相对路径落在数据库同级目录下，便于整目录搬走。"""
+    cfg = C.EngineConfig(**{**C.DEFAULTS, "DB_PATH": "data/x.db"})
+    assert cfg.backup_dir == cfg.db_file.parent / "backups"
+
+
+def test_backup_dir_absolute_is_honoured(tmp_path):
+    cfg = C.EngineConfig(**{**C.DEFAULTS, "DB_PATH": "data/x.db",
+                        "BACKUP_DIR": str(tmp_path / "bk")})
+    assert cfg.backup_dir == tmp_path / "bk"

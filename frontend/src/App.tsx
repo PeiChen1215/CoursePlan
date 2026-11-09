@@ -1,5 +1,7 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
+import { onUnauthorized, setToken } from "./lib/api";
 import { LoginPage } from "./pages/LoginPage";
 import { BoardPage } from "./pages/BoardPage";
 import { ConstraintPage } from "./pages/ConstraintPage";
@@ -17,6 +19,15 @@ function Guard({ children }: { children: React.ReactNode }) {
 }
 
 export function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    onUnauthorized(() => {
+      setToken(null);
+      navigate("/login", { replace: true });
+    });
+  }, [navigate]);
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

@@ -15,6 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core import config as config_mod  # noqa: E402
+from app.db.uow import UnitOfWork  # noqa: E402
 from app.core.security import hash_password  # noqa: E402
 from app.db.uow import Database  # noqa: E402
 from app.services.planner import PlannerService  # noqa: E402
@@ -87,6 +88,37 @@ def seed_content(db: Database) -> dict:
     return ids
 
 
+RESOURCES = [
+    ("需求工程速览", "document", "https://example.edu/se/requirements",
+     "第 2 章要点：涉众、需求来源、需求分类", 25, [2, 4]),
+    ("用例图十分钟", "video", "https://example.edu/se/usecase",
+     "用一个图书借阅的例子讲清参与者与用例", 12, [3]),
+    ("结构化设计自查表", "document", "https://example.edu/se/design-check",
+     "内聚耦合自查 10 条", 18, [5]),
+    ("UML 类图练习", "exercise", "https://example.edu/se/class-diagram",
+     "给 3 个场景画类图，附参考答案", 40, [6]),
+    ("单元测试模板", "document", "https://example.edu/se/unit-test",
+     "JUnit 与 pytest 两份模板", 20, [9]),
+    ("Git 分支策略对照", "link", "https://example.edu/se/git-flow",
+     None, 15, [10, 11]),
+]
+
+
+def seed_resources(db: Database) -> int:
+    """写入演示资料并关联到知识点，返回资料条数。"""
+    with UnitOfWork(db) as uow:
+        for title, kind, url, summary, minutes, concepts in RESOURCES:
+            cur = uow.execute(
+                "INSERT INTO resource(course_id,title,type,url,summary,read_minutes,status)"
+                " VALUES(1,?,?,?,?,?,'enabled')",
+                (title, kind, url, summary, minutes))
+            rid = int(cur.lastrowid)
+            for cid in concepts:
+                uow.execute("INSERT INTO concept_resource(concept_id,resource_id,course_id)"
+                            " VALUES(?,?,1)", (cid, rid))
+    return len(RESOURCES)
+
+
 def seed_plan(db: Database, cfg, ids: dict) -> dict:
     alice = db.scalar("SELECT user_id FROM app_user WHERE username='alice'")
     with db.connect() as conn:
@@ -146,14 +178,18 @@ def main() -> int:
     print("课程内容：%d 个知识点、%d 条先修关系、%d 个账号"
           % (len(CONCEPTS), len(PREREQS), len(USERS)))
 
+    resources = seed_resources(db)
+    print("课程资料：%d 条（已关联到知识点）" % resources)
+
     if not args.no_plan:
         info = seed_plan(db, cfg, ids)
         print("演示计划：plan_id=%d，v%d 生效，%d 个任务 / %d 片（学生 alice）"
               % (info["plan_id"], info["version_no"], info["tasks"], info["slices"]))
 
     counts = {t: db.scalar("SELECT COUNT(*) FROM %s" % t)
-              for t in ("app_user", "course", "concept", "prerequisite",
-                        "study_plan", "plan_version", "version_task", "task_slice")}
+              for t in ("app_user", "course", "concept", "prerequisite", "resource",
+                        "concept_resource", "study_plan", "plan_version", "version_task",
+                        "task_slice")}
     print("库内统计：" + "，".join("%s=%d" % (k, v) for k, v in counts.items()))
     print("账号：admin/Admin123!，alice/Passw0rd!，bob/Bob12345!，carol/Carol123!")
     return 0

@@ -20,6 +20,8 @@ DEFAULTS: Dict[str, Any] = {
     "MAX_SLICES_PER_TASK": 100,
     "CAP_TIGHT_THRESHOLD": 0.80,
     "DELAY_THRESHOLD_HOURS": 48,
+    "BACKUP_KEEP": 7,
+    "BACKUP_DIR": "backups",
     "MODEL_TIMEOUT_SECONDS": 10,
     "MIN_TASK_MINUTES": 1,
     "MAX_DEADLINE_DAYS": 180,
@@ -79,11 +81,21 @@ class EngineConfig:
     PROVIDER_MODE: str
     PROVIDER_KEY: str
     SECRET_KEY: str
+    BACKUP_KEEP: int = 7
+    BACKUP_DIR: str = "backups"
 
     @property
     def db_file(self) -> Path:
         p = Path(self.DB_PATH)
         return p if p.is_absolute() else PROJECT_ROOT / p
+
+    @property
+    def backup_dir(self) -> Path:
+        """默认放在数据库文件同级的 backups/ 下。"""
+        p = Path(self.BACKUP_DIR or "backups")
+        if p.is_absolute():
+            return p
+        return self.db_file.parent / p
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -102,6 +114,8 @@ class EngineConfig:
             "DB_PATH": str(self.db_file),
             "LOG_LEVEL": self.LOG_LEVEL,
             "PROVIDER_MODE": self.PROVIDER_MODE,
+            "BACKUP_KEEP": self.BACKUP_KEEP,
+            "BACKUP_DIR": str(self.backup_dir),
         }
 
 

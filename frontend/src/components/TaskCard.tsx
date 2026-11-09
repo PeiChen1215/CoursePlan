@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { BoardTask } from "../hooks/queries";
+import { useConceptResources } from "../hooks/queries";
 import { formatMinutes } from "../lib/format";
 import { StatusBadge } from "./StatusBadge";
 
@@ -17,6 +18,8 @@ export function TaskCard({ task, readonly, onDone, onCorrection, onNote, busy }:
   const [minutes, setMinutes] = useState(String(task.minutes));
   const [note, setNote] = useState("");
   const conflict = task.issue_codes.length > 0;
+  const resources = useConceptResources(task.concept_id);
+  const links = (resources.data?.items ?? []).filter((item) => item.status === "enabled");
 
   return (
     <div className="space-y-3">
@@ -31,6 +34,30 @@ export function TaskCard({ task, readonly, onDone, onCorrection, onNote, busy }:
         <StatusBadge done={task.done} overdue={task.overdue} conflict={conflict}
                      extra={conflict ? task.issue_codes[0] : undefined} />
       </div>
+
+      {links.length ? (
+        <>
+          <div>
+            <p className="faint text-xs">这个知识点的资料</p>
+            <ul className="mt-1 space-y-1">
+              {links.map((item) => (
+                <li key={item.resource_id} className="text-xs">
+                  {item.url ? (
+                    <a href={item.url} target="_blank" rel="noreferrer"
+                       className="btn-link" style={{ borderBottomColor: "var(--rule-strong)" }}>
+                      {item.title}
+                    </a>
+                  ) : (
+                    item.title
+                  )}
+                  <span className="faint"> · {item.type_label} · {item.read_minutes} 分钟</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <hr className="hairline" />
+        </>
+      ) : null}
 
       <hr className="hairline" />
 

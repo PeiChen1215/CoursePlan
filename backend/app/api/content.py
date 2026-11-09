@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from ..core.errors import envelope
 from ..core.security import Claims
 from ..services.content import ConceptInput, ContentService
+from ..services.resource import ResourceInput, ResourceService
 from .deps import current_claims, get_config, get_db, now_utc
 
 router = APIRouter(prefix="/api", tags=["content"])
@@ -84,6 +85,64 @@ def disable_course(course_id: int, request: Request,
                    svc: ContentService = Depends(get_content)):
     row = svc.disable_course(course_id)
     return envelope("OK", "ok", dict(row), request_id=_rid(request))
+
+
+def get_resource_service(request: Request) -> ResourceService:
+    return ResourceService(get_db(request))
+
+
+class ResourceIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    type: str = Field(pattern="^(document|video|exercise|link)$")
+    url: Optional[str] = Field(default=None, max_length=2048)
+    summary: Optional[str] = Field(default=None, max_length=2000)
+    read_minutes: int = Field(default=0, ge=0, le=240)
+
+
+class ConceptResourcesIn(BaseModel):
+    resource_ids: List[int] = []
+
+
+@router.get("/courses/{course_id}/resources")
+def list_resources(course_id: int, request: Request,
+                   claims: Claims = Depends(current_claims),
+                   svc: ResourceService = Depends(get_resource_service)):
+    return envelope("OK", "ok", {"items": svc.list_resources(course_id)},
+                    request_id=_rid(request))
+
+
+@router.post("/courses/{course_id}/resources")
+def create_resource(course_id: int, body: ResourceIn, request: Request,
+                    claims: Claims = Depends(_admin),
+                    svc: ResourceService = Depends(get_resource_service)):
+    rid = svc.create_resource(course_id, ResourceInput(
+        title=body.title, type=body.type, url=body.url, summary=body.summary,
+        read_minutes=body.read_minutes))
+    return envelope("OK", "ok", {"resource_id": rid}, request_id=_rid(request))
+
+
+@router.post("/resources/{resource_id}/disable")
+def disable_resource(resource_id: int, request: Request,
+                     claims: Claims = Depends(_admin),
+                     svc: ResourceService = Depends(get_resource_service)):
+    return envelope("OK", "ok", svc.disable_resource(resource_id),
+                    request_id=_rid(request))
+
+
+@router.get("/concepts/{concept_id}/resources")
+def concept_resources(concept_id: int, request: Request,
+                      claims: Claims = Depends(current_claims),
+                      svc: ResourceService = Depends(get_resource_service)):
+    return envelope("OK", "ok", {"items": svc.concept_resources(concept_id)},
+                    request_id=_rid(request))
+
+
+@router.put("/concepts/{concept_id}/resources")
+def set_concept_resources(concept_id: int, body: ConceptResourcesIn, request: Request,
+                          claims: Claims = Depends(_admin),
+                          svc: ResourceService = Depends(get_resource_service)):
+    return envelope("OK", "ok", svc.set_concept_resources(concept_id, body.resource_ids),
+                    request_id=_rid(request))
 
 
 @router.get("/courses/{course_id}/concepts")

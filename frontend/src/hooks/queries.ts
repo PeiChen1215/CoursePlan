@@ -149,6 +149,68 @@ export function useOverrideTasks(planId: number) {
   });
 }
 
+export interface ResourceRow {
+  resource_id: number;
+  title: string;
+  type: string;
+  type_label: string;
+  url: string | null;
+  summary: string | null;
+  read_minutes: number;
+  status: string;
+}
+
+export function useResources(courseId: number) {
+  return useQuery({
+    queryKey: ["resources", courseId],
+    queryFn: () => api.get<{ items: ResourceRow[] }>("/api/courses/" + courseId + "/resources"),
+  });
+}
+
+export function useCreateResource(courseId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      title: string; type: string; url?: string; summary?: string; read_minutes?: number;
+    }) =>
+      api.post<{ resource_id: number }>("/api/courses/" + courseId + "/resources", payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["resources", courseId] }),
+  });
+}
+
+export function useDisableResource(courseId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (resourceId: number) =>
+      api.post<{ linked_concepts: number }>("/api/resources/" + resourceId + "/disable"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["resources", courseId] }),
+  });
+}
+
+export function useConceptResources(conceptId: number | null) {
+  return useQuery({
+    queryKey: ["concept-resources", conceptId ?? 0],
+    enabled: conceptId != null,
+    queryFn: () =>
+      api.get<{ items: ResourceRow[] }>("/api/concepts/" + conceptId + "/resources"),
+  });
+}
+
+export function useSetConceptResources(courseId = 1) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { conceptId: number; ids: number[] }) =>
+      api.request<{ linked: number }>("/api/concepts/" + args.conceptId + "/resources", {
+        method: "PUT",
+        body: JSON.stringify({ resource_ids: args.ids }),
+      }),
+    onSuccess: (_data, args) => {
+      qc.invalidateQueries({ queryKey: ["concept-resources", args.conceptId] });
+      qc.invalidateQueries({ queryKey: ["resources", courseId] });
+    },
+  });
+}
+
 export function usePatchCourse() {
   const qc = useQueryClient();
   return useMutation({

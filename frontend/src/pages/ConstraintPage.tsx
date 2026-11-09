@@ -35,6 +35,8 @@ export function ConstraintPage() {
   const [candidates, setCandidates] = useState<{ concept_id: number; name: string }[]>([]);
   const [modeText, setModeText] = useState("");
   const [dailyLimit, setDailyLimit] = useState<number | null>(null);
+  const [turns, setTurns] = useState<{ mine: string; reply: string }[]>([]);
+  const [filled, setFilled] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     const data = saved.data;
@@ -72,11 +74,20 @@ export function ConstraintPage() {
       toast.push("先创建一份学习计划", "error");
       return;
     }
-    extract.mutate({ utterance, filled: {} }, {
+    const said = utterance;
+    extract.mutate({ utterance, filled }, {
       onSuccess: (data) => {
         setModeText(data.mode);
         setQuestions(data.questions);
         setCandidates(data.candidates);
+        setFilled((prev) => ({ ...prev, ...data.fields }));
+        setTurns((prev) => [...prev, {
+          mine: said,
+          reply: data.questions.length
+            ? "还差：" + data.questions.join("；")
+            : "字段齐了，可以保存。",
+        }]);
+        setUtterance("");
         if (typeof data.fields.target_concept_id === "number") setTarget(data.fields.target_concept_id);
         if (typeof data.fields.deadline === "string") setDeadline(data.fields.deadline);
         setDailyLimit(typeof data.fields.daily_limit === "number" ? data.fields.daily_limit : null);
@@ -121,6 +132,22 @@ export function ConstraintPage() {
                 解析这句话
               </button>
             </div>
+
+            {turns.length ? (
+              <div className="space-y-2">
+                <p className="faint text-xs">逐轮补全（最多问两项，答不上来就先放下）</p>
+                <ul className="space-y-1 text-xs">
+                  {turns.map((turn, index) => (
+                    <li key={index} className="border-b pb-1" style={{ borderColor: "var(--rule)" }}>
+                      <span className="muted">你：{turn.mine}</span>
+                      <span className="block" style={{ color: "var(--ink-2)" }}>
+                        系统：{turn.reply}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
 
             {dailyLimit ? (
               <p className="faint text-xs">

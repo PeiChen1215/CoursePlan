@@ -3,12 +3,107 @@ import { Layout } from "../components/Layout";
 import { TaskCard } from "../components/TaskCard";
 import { TimetableGrid } from "../components/TimetableGrid";
 import { IssueList } from "../components/IssueList";
+import { StatusBadge } from "../components/StatusBadge";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
 import { useBoard, usePlans, useSubmitEvent } from "../hooks/queries";
 import type { BoardTask } from "../hooks/queries";
 import { formatMinutes } from "../lib/format";
 import { addDays, toISODate, weekStartOf } from "../lib/timetable";
+
+function todayISO(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+}
+
+function TodayList({ tasks, onSelect }: {
+  tasks: BoardTask[]; onSelect: (task: BoardTask) => void;
+}) {
+  const iso = todayISO();
+  const mine = tasks.filter((task) => task.start.startsWith(iso));
+  const pending = mine.filter((task) => !task.done);
+  const totalMinutes = pending.reduce((sum, task) => sum + task.minutes, 0);
+
+  if (!mine.length) {
+    return (
+      <p className="empty">
+        今天（{iso}）没有排任务。切到「全部」看看后面几天，或者去「调整」重排。
+      </p>
+    );
+  }
+  return (
+    <section className="sheet sheet-pad">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="display text-sm">今天要做的事（{iso}）</h3>
+        <span className="faint text-xs">
+          还剩 <span className="num">{pending.length}</span> 个任务，
+          约 <span className="num">{formatMinutes(totalMinutes)}</span>
+        </span>
+      </div>
+      <ul className="mt-3">
+        {mine.map((task) => (
+          <li key={task.task_id + task.start} className="border-b py-2" style={{ borderColor: "var(--rule)" }}>
+            <button className="flex w-full items-baseline gap-3 text-left" onClick={() => onSelect(task)}>
+              <span className="num faint text-xs" style={{ width: "5.5rem" }}>
+                {task.start.slice(11)}–{task.end.slice(11)}
+              </span>
+              <span className="text-sm">
+                {task.concept_name}
+                <span className="faint"> · {task.kind === "study" ? "学习" : "练习"}</span>
+              </span>
+              <span className="num faint ml-auto text-xs">{formatMinutes(task.minutes)}</span>
+              <StatusBadge done={task.done} overdue={task.overdue}
+                           conflict={task.issue_codes.length > 0} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function AllList({ tasks, onSelect }: {
+  tasks: BoardTask[]; onSelect: (task: BoardTask) => void;
+}) {
+  const groups = new Map<string, BoardTask[]>();
+  for (const task of tasks) {
+    const day = task.start.slice(0, 10);
+    groups.set(day, [...(groups.get(day) ?? []), task]);
+  }
+  return (
+    <section className="sheet sheet-pad">
+      <h3 className="display text-sm">全周期（{groups.size} 天，{tasks.length} 个任务）</h3>
+      <div className="mt-3 space-y-4">
+        {[...groups.entries()].map(([day, list]) => (
+          <div key={day}>
+            <p className="num text-xs" style={{ color: "var(--ink-2)" }}>
+              {day}
+              <span className="faint"> · {formatMinutes(list.reduce((s, t) => s + t.minutes, 0))}</span>
+            </p>
+            <ul className="mt-1">
+              {list.map((task) => (
+                <li key={task.task_id + task.start}
+                    className="border-b py-1.5" style={{ borderColor: "var(--rule)" }}>
+                  <button className="flex w-full items-baseline gap-3 text-left" onClick={() => onSelect(task)}>
+                    <span className="num faint text-xs" style={{ width: "4.5rem" }}>
+                      {task.start.slice(11)}
+                    </span>
+                    <span className="text-sm">{task.concept_name}</span>
+                    <span className="faint text-xs">{task.kind === "study" ? "学习" : "练习"}</span>
+                    <span className="num faint ml-auto text-xs">{formatMinutes(task.minutes)}</span>
+                    <StatusBadge done={task.done} overdue={task.overdue}
+                                 conflict={task.issue_codes.length > 0} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export function BoardPage() {
   const toast = useToast();
@@ -17,6 +112,7 @@ export function BoardPage() {
   const board = useBoard(plan?.plan_id ?? null);
   const submit = useSubmitEvent(plan?.plan_id ?? 0);
 
+  const [view, setView] = useState<"today" | "week" | "all">("week");
   const [weekOffset, setWeekOffset] = useState(0);
   const [selected, setSelected] = useState<BoardTask | null>(null);
 
@@ -44,16 +140,35 @@ export function BoardPage() {
               每格是一小时；块的高度就是任务时长。点块可打卡、更正或写备注。
             </p>
           </div>
-          <div className="flex items-baseline gap-3">
-            <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v - 1)}>
-              上一周
-            </button>
-            <button className="btn-link text-sm" onClick={() => setWeekOffset(0)}>
-              回到本周
-            </button>
-            <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v + 1)}>
-              下一周
-            </button>
+          <div className="flex items-baseline gap-4">
+            <span className="flex items-baseline gap-2 text-sm">
+              {(["today", "week", "all"] as const).map((item) => (
+                <button
+                  key={item}
+                  className="btn-link"
+                  style={{
+                    borderBottomColor: view === item ? "var(--ink)" : "var(--rule-strong)",
+                    color: view === item ? "var(--ink)" : "var(--ink-2)",
+                  }}
+                  onClick={() => setView(item)}
+                >
+                  {item === "today" ? "今天" : item === "week" ? "本周" : "全部"}
+                </button>
+              ))}
+            </span>
+            {view === "week" ? (
+              <span className="flex items-baseline gap-3">
+                <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v - 1)}>
+                  上一周
+                </button>
+                <button className="btn-link text-sm" onClick={() => setWeekOffset(0)}>
+                  回到本周
+                </button>
+                <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v + 1)}>
+                  下一周
+                </button>
+              </span>
+            ) : null}
           </div>
         </section>
 
@@ -93,8 +208,16 @@ export function BoardPage() {
           </p>
         ) : null}
 
-        {data && data.tasks.length > 0 ? (
+        {data && data.tasks.length > 0 && view === "week" ? (
           <TimetableGrid tasks={data.tasks} monday={monday} onSelect={setSelected} />
+        ) : null}
+
+        {data && view === "today" ? (
+          <TodayList tasks={data.tasks} onSelect={setSelected} />
+        ) : null}
+
+        {data && view === "all" ? (
+          <AllList tasks={data.tasks} onSelect={setSelected} />
         ) : null}
 
         {data?.adjust_hint ? (

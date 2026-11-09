@@ -3,7 +3,8 @@ import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
 import {
-  useConcepts, useCourses, useCreateConcept, useDisableCourse, usePatchCourse, usePrereqs,
+  useConcepts, useCourses, useCreateConcept, useCreateResource, useDisableCourse,
+  useDisableResource, usePatchCourse, usePrereqs, useResources, useSetConceptResources,
   useSubmitPrereqs,
 } from "../hooks/queries";
 
@@ -28,6 +29,18 @@ export function AdminPage() {
   const [minutes, setMinutes] = useState(60);
   const [fromId, setFromId] = useState<number | "">("");
   const [toId, setToId] = useState<number | "">("");
+
+  const resources = useResources(courseId);
+  const createResource = useCreateResource(courseId);
+  const disableResource = useDisableResource(courseId);
+  const setConceptResources = useSetConceptResources(courseId);
+  const [resTitle, setResTitle] = useState("");
+  const [resType, setResType] = useState("document");
+  const [resUrl, setResUrl] = useState("");
+  const [resSummary, setResSummary] = useState("");
+  const [resMinutes, setResMinutes] = useState(0);
+  const [linkTarget, setLinkTarget] = useState<number | "">("");
+  const [linkIds, setLinkIds] = useState<number[]>([]);
 
   const list = concepts.data?.items ?? [];
   const edges = prereqs.data?.items ?? [];
@@ -188,6 +201,146 @@ export function AdminPage() {
               ))}
             </tbody>
           </table>
+        </section>
+
+        <section className="sheet sheet-pad">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="display text-sm">课程资料（{resources.data?.items.length ?? 0}）</h3>
+            <span className="faint text-xs">资料只有关联到知识点，学生才会在任务里看到</span>
+          </div>
+          <div className="mt-2 grid gap-3 sm:grid-cols-4">
+            <div className="field-row">
+              <label htmlFor="res-title">标题</label>
+              <input id="res-title" className="input" value={resTitle}
+                     onChange={(event) => setResTitle(event.target.value)} />
+            </div>
+            <div className="field-row">
+              <label htmlFor="res-type">类型</label>
+              <select id="res-type" className="input" value={resType}
+                      onChange={(event) => setResType(event.target.value)}>
+                <option value="document">文档</option>
+                <option value="video">视频</option>
+                <option value="exercise">练习</option>
+                <option value="link">链接</option>
+              </select>
+            </div>
+            <div className="field-row">
+              <label htmlFor="res-url">网址</label>
+              <input id="res-url" className="input" placeholder="https://…" value={resUrl}
+                     onChange={(event) => setResUrl(event.target.value)} />
+            </div>
+            <div className="field-row">
+              <label htmlFor="res-min">阅读分钟</label>
+              <input id="res-min" type="number" min={0} max={240} className="input num"
+                     value={resMinutes}
+                     onChange={(event) => setResMinutes(Number(event.target.value))} />
+            </div>
+          </div>
+          <div className="field-row mt-1">
+            <label htmlFor="res-summary">摘要</label>
+            <input id="res-summary" className="input" value={resSummary}
+                   placeholder="没网址时必填"
+                   onChange={(event) => setResSummary(event.target.value)} />
+          </div>
+          <div className="mt-3">
+            <button className="btn" disabled={!resTitle || createResource.isPending}
+                    onClick={() => createResource.mutate(
+                      { title: resTitle, type: resType, url: resUrl || undefined,
+                        summary: resSummary || undefined, read_minutes: resMinutes },
+                      {
+                        onSuccess: () => {
+                          toast.push("资料已新增", "success");
+                          setResTitle(""); setResUrl(""); setResSummary(""); setResMinutes(0);
+                        },
+                        onError: (error) =>
+                          toast.push(error instanceof Error ? error.message : "新增失败", "error"),
+                      },
+                    )}>
+              新增资料
+            </button>
+          </div>
+
+          <table className="ledger mt-4">
+            <thead>
+              <tr>
+                <th>标题</th><th>类型</th><th>链接</th><th>分钟</th><th>状态</th><th />
+              </tr>
+            </thead>
+            <tbody>
+              {(resources.data?.items ?? []).map((item) => (
+                <tr key={item.resource_id}>
+                  <td>
+                    {item.title}
+                    {item.summary ? (
+                      <span className="faint block text-xs">{item.summary}</span>
+                    ) : null}
+                  </td>
+                  <td>{item.type_label}</td>
+                  <td className="faint text-xs">
+                    {item.url ? (
+                      <a href={item.url} target="_blank" rel="noreferrer"
+                         style={{ textDecoration: "underline" }}>
+                        {item.url.slice(0, 28)}…
+                      </a>
+                    ) : "—"}
+                  </td>
+                  <td className="num">{item.read_minutes}</td>
+                  <td style={{ color: item.status === "enabled" ? "var(--moss)" : "var(--ink-3)" }}>
+                    {item.status === "enabled" ? "启用" : "停用"}
+                  </td>
+                  <td>
+                    <button className="btn-link text-xs"
+                            onClick={() => setLinkIds((prev) =>
+                              prev.includes(item.resource_id)
+                                ? prev.filter((id) => id !== item.resource_id)
+                                : [...prev, item.resource_id])}>
+                      {linkIds.includes(item.resource_id) ? "已选中" : "选为关联"}
+                    </button>
+                    <button className="btn-link ml-3 text-xs"
+                            disabled={item.status === "disabled" || disableResource.isPending}
+                            onClick={() => disableResource.mutate(item.resource_id, {
+                              onSuccess: (data) =>
+                                toast.push("已停用，解除了 " + data.linked_concepts + " 处关联", "success"),
+                              onError: (error) =>
+                                toast.push(error instanceof Error ? error.message : "停用失败", "error"),
+                            })}>
+                      停用
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {(resources.data?.items ?? []).length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="faint py-3 text-center text-sm">还没有资料</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+
+          <div className="mt-4 flex flex-wrap items-end gap-3">
+            <div className="field-row" style={{ minWidth: "16rem" }}>
+              <label htmlFor="link-target">关联到知识点</label>
+              <select id="link-target" className="input" value={linkTarget}
+                      onChange={(event) => setLinkTarget(event.target.value === "" ? "" : Number(event.target.value))}>
+                <option value="">请选择</option>
+                {list.map((item) => (
+                  <option key={item.concept_id} value={item.concept_id}>{item.name}</option>
+                ))}
+              </select>
+            </div>
+            <button className="btn" disabled={linkTarget === "" || setConceptResources.isPending}
+                    onClick={() => setConceptResources.mutate(
+                      { conceptId: Number(linkTarget), ids: linkIds },
+                      {
+                        onSuccess: (data) => toast.push("已关联 " + data.linked + " 条资料", "success"),
+                        onError: (error) =>
+                          toast.push(error instanceof Error ? error.message : "关联失败", "error"),
+                      },
+                    )}>
+              保存关联
+            </button>
+            <span className="faint text-xs">已选 {linkIds.length} 条</span>
+          </div>
         </section>
 
         <section className="sheet sheet-pad">

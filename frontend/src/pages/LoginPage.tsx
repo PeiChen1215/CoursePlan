@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { ApiError } from "../lib/api";
 import { ErrorBox } from "../components/ErrorBox";
 
 export function LoginPage() {
@@ -10,6 +11,13 @@ export function LoginPage() {
   const [password, setPassword] = useState("Passw0rd!");
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [lockedFor, setLockedFor] = useState(0);
+
+  useEffect(() => {
+    if (lockedFor <= 0) return;
+    const timer = window.setInterval(() => setLockedFor((v) => Math.max(0, v - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [lockedFor > 0]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -20,6 +28,10 @@ export function LoginPage() {
       navigate("/board");
     } catch (err) {
       setError(err);
+      if (err instanceof ApiError) {
+        const detail = err.detail as { lock_remaining_seconds?: number } | undefined;
+        if (detail?.lock_remaining_seconds) setLockedFor(detail.lock_remaining_seconds);
+      }
     } finally {
       setBusy(false);
     }
@@ -46,9 +58,18 @@ export function LoginPage() {
                  autoComplete="current-password"
                  onChange={(event) => setPassword(event.target.value)} />
         </div>
-        <button className="btn w-full" disabled={busy}>
-          {busy ? "验证中…" : "进入"}
+        <button className="btn w-full" disabled={busy || lockedFor > 0}>
+          {lockedFor > 0
+            ? "已锁定，" + Math.ceil(lockedFor / 60) + " 分钟内不能登录"
+            : busy
+              ? "验证中…"
+              : "进入"}
         </button>
+        {lockedFor > 0 ? (
+          <p className="text-xs" style={{ color: "var(--rust)" }}>
+            输错次数太多，还剩 {lockedFor} 秒。到期后可重试。
+          </p>
+        ) : null}
         <p className="faint text-xs">
           账号不存在与口令错误返回同一提示，避免被人试出哪些账号存在。
         </p>

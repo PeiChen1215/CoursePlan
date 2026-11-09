@@ -41,6 +41,14 @@ export function setToken(token: string | null): void {
 
 const BASE = "";
 
+let unauthorizedHandler: (() => void) | null = null;
+
+/** 401 统一处理：清凭证并回登录页（避免每个页面各写一遍）。 */
+export function onUnauthorized(handler: () => void): void {
+  unauthorizedHandler = handler;
+}
+
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
@@ -48,6 +56,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetch(BASE + path, { ...init, headers });
+  if (response.status === 401) {
+    setToken(null);
+    if (unauthorizedHandler) unauthorizedHandler();
+  }
   const text = await response.text();
   let body: Envelope<T> | null = null;
   try {
