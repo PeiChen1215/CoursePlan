@@ -1,8 +1,7 @@
 import { useState } from "react";
 import type { BoardTask } from "../hooks/queries";
 import { useConceptResources } from "../hooks/queries";
-import { formatMinutes } from "../lib/format";
-import { StatusBadge } from "./StatusBadge";
+import { Icon } from "./ui";
 
 interface Props {
   task: BoardTask;
@@ -13,90 +12,90 @@ interface Props {
   busy?: boolean;
 }
 
-/** 打卡/更正的抽屉内容（外部用 .sheet-pop 定位）。 */
+/** 任务操作面板内容（外部用 .pop 定位）。 */
 export function TaskCard({ task, readonly, onDone, onCorrection, onNote, busy }: Props) {
   const [minutes, setMinutes] = useState(String(task.minutes));
   const [note, setNote] = useState("");
-  const conflict = task.issue_codes.length > 0;
   const resources = useConceptResources(task.concept_id);
   const links = (resources.data?.items ?? []).filter((item) => item.status === "enabled");
+  const conflict = task.issue_codes.length > 0;
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="display text-base">{task.concept_name}</h3>
-          <p className="faint num text-xs">
-            {task.kind === "study" ? "学习" : "练习"} · {formatMinutes(task.minutes)} ·{" "}
-            {task.start.slice(11)}–{task.end.slice(11)}
-          </p>
-        </div>
-        <StatusBadge done={task.done} overdue={task.overdue} conflict={conflict}
-                     extra={conflict ? task.issue_codes[0] : undefined} />
+    <div className="stack" style={{ gap: 14 }}>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+        <span className="chip" data-tone={task.kind === "study" ? "study" : "practice"}>
+          {task.kind === "study" ? "学习" : "练习"}
+        </span>
+        {task.done ? <span className="chip" data-tone="done">已完成</span> : null}
+        {task.overdue ? <span className="chip" data-tone="danger">逾期</span> : null}
+        {conflict ? <span className="chip" data-tone="warn">{task.issue_codes[0]}</span> : null}
+        {task.slice_total > 1 ? (
+          <span className="chip">
+            第 {task.slice_no} / {task.slice_total} 片
+          </span>
+        ) : null}
       </div>
 
       {links.length ? (
-        <>
-          <div>
-            <p className="faint text-xs">这个知识点的资料</p>
-            <ul className="mt-1 space-y-1">
-              {links.map((item) => (
-                <li key={item.resource_id} className="text-xs">
-                  {item.url ? (
-                    <a href={item.url} target="_blank" rel="noreferrer"
-                       className="btn-link" style={{ borderBottomColor: "var(--rule-strong)" }}>
-                      {item.title}
-                    </a>
-                  ) : (
-                    item.title
-                  )}
-                  <span className="faint"> · {item.type_label} · {item.read_minutes} 分钟</span>
-                </li>
-              ))}
-            </ul>
+        <div>
+          <p className="field-hint" style={{ marginBottom: 6 }}>这个知识点的资料</p>
+          <div className="stack" style={{ gap: 6 }}>
+            {links.map((item) => (
+              <a
+                key={item.resource_id}
+                href={item.url ?? undefined}
+                target={item.url ? "_blank" : undefined}
+                rel="noreferrer"
+                className="row-item"
+                style={{ textDecoration: "none", padding: "6px 0", gap: 8 }}
+              >
+                <span className="chip" data-tone="brand">{item.type_label}</span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className="row-title" style={{ display: "block" }}>{item.title}</span>
+                  <span className="row-sub">{item.read_minutes} 分钟</span>
+                </span>
+                {item.url ? <Icon name="chevron" size={14} /> : null}
+              </a>
+            ))}
           </div>
-          <hr className="hairline" />
-        </>
+        </div>
       ) : null}
 
-      <hr className="hairline" />
-
       {readonly ? (
-        <p className="muted text-xs italic">历史版本，只读</p>
+        <p className="sub">历史版本，只读</p>
       ) : (
-        <div className="space-y-3">
-          <div className="field-row" style={{ gridTemplateColumns: "5rem 1fr" }}>
+        <>
+          <div className="field">
             <label htmlFor="actual-minutes">实际用时</label>
-            <div className="flex items-baseline gap-2">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <input
                 id="actual-minutes"
                 aria-label="实际用时（分钟）"
                 className="input num"
-                style={{ width: "5rem" }}
+                style={{ width: 96 }}
                 value={minutes}
                 onChange={(event) => setMinutes(event.target.value)}
                 inputMode="numeric"
               />
-              <span className="faint text-xs">分钟</span>
+              <span className="row-sub">分钟</span>
             </div>
           </div>
 
           {!task.done ? (
-            <button className="btn w-full" disabled={busy}
-                    onClick={() => onDone(task.task_id, toMinutes(minutes))}>
+            <button className="btn btn-block" disabled={busy} onClick={() => onDone(task.task_id, toMinutes(minutes))}>
+              <Icon name="check" size={15} />
               标记完成
             </button>
           ) : (
-            <button className="btn w-full" disabled={busy}
-                    onClick={() => onCorrection(task.task_id, toMinutes(minutes))}>
-              更正用时
-            </button>
+            <>
+              <button className="btn btn-block" disabled={busy} onClick={() => onCorrection(task.task_id, toMinutes(minutes))}>
+                更正用时
+              </button>
+              <p className="field-hint">重复打卡会被拒绝，改用时请用「更正用时」。</p>
+            </>
           )}
-          {task.done ? (
-            <p className="faint text-xs">重复打卡会被拒绝，改用时请用“更正用时”。</p>
-          ) : null}
 
-          <div className="field-row" style={{ gridTemplateColumns: "5rem 1fr" }}>
+          <div className="field">
             <label htmlFor="task-note">备注</label>
             <input
               id="task-note"
@@ -108,7 +107,7 @@ export function TaskCard({ task, readonly, onDone, onCorrection, onNote, busy }:
             />
           </div>
           <button
-            className="btn btn-quiet w-full"
+            className="btn btn-ghost btn-block"
             disabled={busy || !note.trim()}
             onClick={() => {
               onNote(task.task_id, note.trim());
@@ -117,7 +116,7 @@ export function TaskCard({ task, readonly, onDone, onCorrection, onNote, busy }:
           >
             记下备注
           </button>
-        </div>
+        </>
       )}
     </div>
   );

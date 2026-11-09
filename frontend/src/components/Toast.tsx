@@ -13,7 +13,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useCallback((text: string, tone: Tone = "info") => {
     const id = Date.now() + Math.random();
     setItems((prev) => [...prev, { id, text, tone }]);
-    window.setTimeout(() => setItems((prev) => prev.filter((item) => item.id !== id)), 3400);
+    window.setTimeout(() => setItems((prev) => prev.filter((item) => item.id !== id)), 3600);
   }, []);
 
   const api = useMemo(() => ({ push }), [push]);
@@ -21,7 +21,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div className="pointer-events-none fixed bottom-5 left-1/2 z-50 flex w-[26rem] -translate-x-1/2 flex-col gap-2">
+      <div className="pointer-events-none fixed bottom-6 left-1/2 z-[60] flex w-[24rem] -translate-x-1/2 flex-col gap-2">
         {items.map((item) => (
           <div key={item.id} role="status" className="toast" data-tone={item.tone}>
             {item.text}

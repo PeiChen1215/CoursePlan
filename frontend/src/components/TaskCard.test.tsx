@@ -24,7 +24,8 @@ describe("TaskCard", () => {
   it("未完成时显示“标记完成”", () => {
     renderWithProviders(<TaskCard task={task} readonly={false} onDone={vi.fn()} onCorrection={vi.fn()} onNote={vi.fn()} />);
     expect(screen.getByText("标记完成")).toBeInTheDocument();
-    expect(screen.getByText("指针")).toBeInTheDocument();
+    // 名称由弹层头部显示，卡片里给出类型标签
+    expect(screen.getByText("学习")).toBeInTheDocument();
   });
 
   it("只读时不显示任何打卡按钮", () => {

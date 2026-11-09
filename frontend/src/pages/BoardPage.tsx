@@ -3,106 +3,17 @@ import { Layout } from "../components/Layout";
 import { TaskCard } from "../components/TaskCard";
 import { TimetableGrid } from "../components/TimetableGrid";
 import { IssueList } from "../components/IssueList";
-import { StatusBadge } from "../components/StatusBadge";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
+import { Card, CardHead, EmptyState, Icon, Ring, Segmented, Stat } from "../components/ui";
+import { StatusBadge } from "../components/StatusBadge";
 import { useBoard, usePlans, useSubmitEvent } from "../hooks/queries";
 import type { BoardTask } from "../hooks/queries";
 import { formatMinutes } from "../lib/format";
 import { addDays, toISODate, weekStartOf } from "../lib/timetable";
 
 function todayISO(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
-}
-
-function TodayList({ tasks, onSelect }: {
-  tasks: BoardTask[]; onSelect: (task: BoardTask) => void;
-}) {
-  const iso = todayISO();
-  const mine = tasks.filter((task) => task.start.startsWith(iso));
-  const pending = mine.filter((task) => !task.done);
-  const totalMinutes = pending.reduce((sum, task) => sum + task.minutes, 0);
-
-  if (!mine.length) {
-    return (
-      <p className="empty">
-        今天（{iso}）没有排任务。切到「全部」看看后面几天，或者去「调整」重排。
-      </p>
-    );
-  }
-  return (
-    <section className="sheet sheet-pad">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="display text-sm">今天要做的事（{iso}）</h3>
-        <span className="faint text-xs">
-          还剩 <span className="num">{pending.length}</span> 个任务，
-          约 <span className="num">{formatMinutes(totalMinutes)}</span>
-        </span>
-      </div>
-      <ul className="mt-3">
-        {mine.map((task) => (
-          <li key={task.task_id + task.start} className="border-b py-2" style={{ borderColor: "var(--rule)" }}>
-            <button className="flex w-full items-baseline gap-3 text-left" onClick={() => onSelect(task)}>
-              <span className="num faint text-xs" style={{ width: "5.5rem" }}>
-                {task.start.slice(11)}–{task.end.slice(11)}
-              </span>
-              <span className="text-sm">
-                {task.concept_name}
-                <span className="faint"> · {task.kind === "study" ? "学习" : "练习"}</span>
-              </span>
-              <span className="num faint ml-auto text-xs">{formatMinutes(task.minutes)}</span>
-              <StatusBadge done={task.done} overdue={task.overdue}
-                           conflict={task.issue_codes.length > 0} />
-            </button>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function AllList({ tasks, onSelect }: {
-  tasks: BoardTask[]; onSelect: (task: BoardTask) => void;
-}) {
-  const groups = new Map<string, BoardTask[]>();
-  for (const task of tasks) {
-    const day = task.start.slice(0, 10);
-    groups.set(day, [...(groups.get(day) ?? []), task]);
-  }
-  return (
-    <section className="sheet sheet-pad">
-      <h3 className="display text-sm">全周期（{groups.size} 天，{tasks.length} 个任务）</h3>
-      <div className="mt-3 space-y-4">
-        {[...groups.entries()].map(([day, list]) => (
-          <div key={day}>
-            <p className="num text-xs" style={{ color: "var(--ink-2)" }}>
-              {day}
-              <span className="faint"> · {formatMinutes(list.reduce((s, t) => s + t.minutes, 0))}</span>
-            </p>
-            <ul className="mt-1">
-              {list.map((task) => (
-                <li key={task.task_id + task.start}
-                    className="border-b py-1.5" style={{ borderColor: "var(--rule)" }}>
-                  <button className="flex w-full items-baseline gap-3 text-left" onClick={() => onSelect(task)}>
-                    <span className="num faint text-xs" style={{ width: "4.5rem" }}>
-                      {task.start.slice(11)}
-                    </span>
-                    <span className="text-sm">{task.concept_name}</span>
-                    <span className="faint text-xs">{task.kind === "study" ? "学习" : "练习"}</span>
-                    <span className="num faint ml-auto text-xs">{formatMinutes(task.minutes)}</span>
-                    <StatusBadge done={task.done} overdue={task.overdue}
-                                 conflict={task.issue_codes.length > 0} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+  return toISODate(new Date());
 }
 
 export function BoardPage() {
@@ -123,158 +34,267 @@ export function BoardPage() {
   }, [board.data, weekOffset]);
 
   const data = board.data;
-  const rate = data ? Math.round(data.progress.completion_rate * 100) : 0;
-  const overdue = data?.progress.overdue_tasks.length ?? 0;
+  const progress = data?.progress;
+  const rate = progress ? progress.completion_rate : 0;
+  const today = todayISO();
+  const todayTasks = (data?.tasks ?? []).filter((task) => task.start.startsWith(today));
+  const todayLeft = todayTasks.filter((task) => !task.done);
+  const todayMinutes = todayLeft.reduce((sum, task) => sum + task.minutes, 0);
 
   function notifyError(err: unknown) {
     toast.push(err instanceof Error ? err.message : String(err), "error");
   }
 
+  function quickDone(task: BoardTask) {
+    submit.mutate({ taskId: task.task_id, type: "done", minutes: task.minutes }, {
+      onSuccess: () => toast.push("已打卡：" + task.concept_name, "success"),
+      onError: notifyError,
+    });
+  }
+
   return (
     <Layout>
-      <div className="space-y-5">
-        <section className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="display text-xl">本周课表</h2>
-            <p className="faint mt-1 text-xs">
-              每格是一小时；块的高度就是任务时长。点块可打卡、更正或写备注。
-            </p>
-          </div>
-          <div className="flex items-baseline gap-4">
-            <span className="flex items-baseline gap-2 text-sm">
-              {(["today", "week", "all"] as const).map((item) => (
-                <button
-                  key={item}
-                  className="btn-link"
-                  style={{
-                    borderBottomColor: view === item ? "var(--ink)" : "var(--rule-strong)",
-                    color: view === item ? "var(--ink)" : "var(--ink-2)",
-                  }}
-                  onClick={() => setView(item)}
-                >
-                  {item === "today" ? "今天" : item === "week" ? "本周" : "全部"}
-                </button>
-              ))}
-            </span>
-            {view === "week" ? (
-              <span className="flex items-baseline gap-3">
-                <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v - 1)}>
-                  上一周
-                </button>
-                <button className="btn-link text-sm" onClick={() => setWeekOffset(0)}>
-                  回到本周
-                </button>
-                <button className="btn-link text-sm" onClick={() => setWeekOffset((v) => v + 1)}>
-                  下一周
-                </button>
-              </span>
-            ) : null}
-          </div>
-        </section>
+      <header className="page-head">
+        <div>
+          <h1 className="h1">看板</h1>
+          <p className="sub">
+            {plan ? plan.course_name : "还没有学习计划"}
+            {progress
+              ? " · 共 " + progress.total_tasks + " 个任务，已完成 " + progress.done_tasks
+              : ""}
+          </p>
+        </div>
+        <div className="page-head-actions">
+          <Segmented
+            value={view}
+            onChange={setView}
+            options={[
+              { value: "today", label: "今天" },
+              { value: "week", label: "本周" },
+              { value: "all", label: "全部" },
+            ]}
+          />
+          {view === "week" ? (
+            <div style={{ display: "flex", gap: 6 }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset((v) => v - 1)}>
+                上一周
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(0)}>
+                本周
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset((v) => v + 1)}>
+                下一周
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </header>
 
-        {data ? (
-          <section className="flex flex-wrap items-baseline gap-6 text-sm">
-            <span>
-              完成 <span className="num">{data.progress.done_tasks}</span> /{" "}
-              <span className="num">{data.progress.total_tasks}</span>
-            </span>
-            <span className="muted">
-              计划 <span className="num">{formatMinutes(data.progress.planned_minutes)}</span>
-            </span>
-            <span className="muted">
-              实际 <span className="num">{formatMinutes(data.progress.actual_minutes)}</span>
-            </span>
-            {overdue ? (
-              <span style={{ color: "var(--rust)" }}>
-                逾期 <span className="num">{overdue}</span> 个任务
-              </span>
-            ) : null}
-            <span className="ml-auto flex items-center gap-2">
-              <span className="faint text-xs">完成率</span>
-              <span className="num text-lg">{rate}%</span>
-            </span>
-          </section>
-        ) : null}
+      <div className="stack">
+        <div className="stat-strip">
+          <Stat
+            label="完成进度"
+            value={progress ? progress.done_tasks + " / " + progress.total_tasks : "—"}
+            ratio={rate}
+          />
+          <Stat
+            label="计划投入"
+            value={progress ? formatMinutes(progress.planned_minutes) : "—"}
+          />
+          <Stat
+            label="实际投入"
+            value={progress ? formatMinutes(progress.actual_minutes) : "—"}
+          />
+          <Stat
+            label="今日待办"
+            value={todayLeft.length}
+            unit={todayMinutes ? " · " + formatMinutes(todayMinutes) : ""}
+          />
+        </div>
 
         {board.error ? <ErrorBox error={board.error} /> : null}
 
         {plan == null ? (
-          <p className="empty">还没有学习计划。先去「填写约束」，填完会自动生成一份草案。</p>
-        ) : null}
-
-        {data && data.tasks.length === 0 ? (
-          <p className="empty">
-            这个版本还没有排入任何任务。回到「填写约束」检查可用时间与截止日期。
-          </p>
-        ) : null}
-
-        {data && data.tasks.length > 0 && view === "week" ? (
-          <TimetableGrid tasks={data.tasks} monday={monday} onSelect={setSelected} />
-        ) : null}
-
-        {data && view === "today" ? (
-          <TodayList tasks={data.tasks} onSelect={setSelected} />
-        ) : null}
-
-        {data && view === "all" ? (
-          <AllList tasks={data.tasks} onSelect={setSelected} />
+          <EmptyState
+            title="还没有学习计划"
+            hint="先填写约束（目标、截止日期、可用时间），系统会生成第一份草案。"
+            action={
+              <a className="btn" href="/constraint" style={{ marginTop: 6 }}>
+                去填写约束
+              </a>
+            }
+          />
         ) : null}
 
         {data?.adjust_hint ? (
-          <section
-            className="sheet sheet-pad"
-            style={{ borderColor: "var(--rust)" }}
-            role="status"
-          >
-            <p className="text-sm" style={{ color: "var(--rust)" }}>
-              {data.adjust_hint.message}
-            </p>
-            <p className="faint mt-1 text-xs">
-              逾期超过 {data.adjust_hint.threshold_hours} 小时，建议重排一次；
-              已完成的记录不会被改动。
-            </p>
-            <a className="btn mt-3 inline-flex" href="/adjust">
-              去调整计划
-            </a>
-          </section>
+          <Card className="card-pad" quiet>
+            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+              <span className="chip" data-tone="danger">
+                <Icon name="alert" size={13} />
+                进度提醒
+              </span>
+              <div style={{ flex: 1 }}>
+                <p className="h3">{data.adjust_hint.message}</p>
+                <p className="sub" style={{ marginTop: 2 }}>
+                  逾期超过 {data.adjust_hint.threshold_hours} 小时，建议重排一次；已完成的记录不会被改动。
+                </p>
+              </div>
+              <a className="btn btn-ghost btn-sm" href="/adjust">去调整</a>
+            </div>
+          </Card>
         ) : null}
 
-        {data?.unscheduled.length ? (
-          <section className="sheet sheet-pad">
-            <h3 className="display text-sm">未排入</h3>
-            <p className="faint mt-1 text-xs">
-              这些任务没找到放得下的时段，需要放宽约束或减少目标。
-            </p>
-            <ul className="mt-2">
-              {data.unscheduled.map((row) => (
-                <li key={row.task_id + row.kind} className="issue" data-level="ERROR">
-                  <span className="issue-code">{row.concept_name}</span>
-                  <span>
-                    {row.kind === "study" ? "学习" : "练习"} · {formatMinutes(row.minutes)}
-                    <span className="faint">（{row.reason}）</span>
+        <Card>
+            <CardHead
+              title={view === "today" ? "今天" : view === "all" ? "全周期" : "本周课表"}
+              hint={
+                view === "week"
+                  ? "块的高度就是时长，点击可打卡、更正或看资料"
+                  : view === "today"
+                    ? "今天要做的事，勾掉即打卡"
+                    : "按日期列出全部任务"
+              }
+            />
+            <div className="card-body" style={{ paddingTop: 10 }}>
+              {data && data.tasks.length === 0 ? (
+                <EmptyState
+                  title="这个版本还没有排入任务"
+                  hint="回到填写约束，检查可用时间与截止日期后重新生成。"
+                />
+              ) : null}
+
+              {data && data.tasks.length > 0 && view === "week" ? (
+                <TimetableGrid tasks={data.tasks} monday={monday} onSelect={setSelected} />
+              ) : null}
+
+              {data && view === "today" ? (
+                <TodayList tasks={todayTasks} onSelect={setSelected} />
+              ) : null}
+
+              {data && view === "all" ? (
+                <AllList tasks={data.tasks} onSelect={setSelected} />
+              ) : null}
+            </div>
+          </Card>
+
+        <div className="grid-3">
+            <Card className="card-pad">
+              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                <Ring percent={rate * 100} caption="完成率" />
+                <div style={{ minWidth: 0 }}>
+                  <p className="h3">整体节奏</p>
+                  <p className="sub" style={{ marginTop: 4 }}>
+                    已完成 {progress?.done_tasks ?? 0} 个，还有{" "}
+                    {(progress?.total_tasks ?? 0) - (progress?.done_tasks ?? 0)} 个。
+                  </p>
+                  <p className="sub">
+                    计划 {progress ? formatMinutes(progress.planned_minutes) : "—"}，
+                    实际 {progress ? formatMinutes(progress.actual_minutes) : "—"}。
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <CardHead
+                title="今天"
+                hint={today}
+                action={
+                  <span className="chip" data-tone="brand">
+                    {todayLeft.length} 项待做
                   </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+                }
+              />
+              <div className="card-body" style={{ paddingTop: 4 }}>
+                {todayTasks.length === 0 ? (
+                  <p className="sub" style={{ padding: "8px 0" }}>
+                    今天没有排任务，可以提前看看「全部」里的后续安排。
+                  </p>
+                ) : (
+                  todayTasks.map((task) => (
+                    <div key={task.task_id + task.start} className="row-item">
+                      <button
+                        className="check-round"
+                        data-done={task.done}
+                        aria-label={task.done ? "已完成" : "标记完成"}
+                        disabled={task.done || submit.isPending}
+                        onClick={() => quickDone(task)}
+                      >
+                        {task.done ? <Icon name="check" size={11} /> : null}
+                      </button>
+                      <button
+                        style={{
+                          flex: 1, minWidth: 0, textAlign: "left",
+                          background: "none", border: 0, padding: 0, cursor: "pointer",
+                        }}
+                        onClick={() => setSelected(task)}
+                      >
+                        <p
+                          className="row-title"
+                          style={{ textDecoration: task.done ? "line-through" : "none" }}
+                        >
+                          {task.concept_name}
+                        </p>
+                        <p className="row-sub num">
+                          {task.start.slice(11)}–{task.end.slice(11)} · {formatMinutes(task.minutes)}
+                        </p>
+                      </button>
+                      <span className="chip" data-tone={task.kind === "study" ? "study" : "practice"}>
+                        {task.kind === "study" ? "学习" : "练习"}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
 
-        {data?.issues.length ? (
-          <section className="sheet sheet-pad">
-            <h3 className="display text-sm">校验提示</h3>
-            <div className="mt-2">
-              <IssueList issues={data.issues} />
-            </div>
-          </section>
-        ) : null}
+            {data?.unscheduled.length ? (
+              <Card>
+                <CardHead
+                  title="未排入"
+                  hint="这些任务没找到放得下的时段"
+                  action={<span className="chip" data-tone="danger">{data.unscheduled.length}</span>}
+                />
+                <div className="card-body" style={{ paddingTop: 4 }}>
+                  {data.unscheduled.map((row) => (
+                    <div key={row.task_id + row.kind} className="row-item">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p className="row-title">{row.concept_name}</p>
+                        <p className="row-sub">
+                          {row.kind === "study" ? "学习" : "练习"} · {formatMinutes(row.minutes)} · {row.reason}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ) : null}
 
-        {selected ? (
-          <div className="sheet-pop" role="dialog" aria-label="任务操作">
-            <div className="mb-2 flex justify-end">
-              <button className="btn-link text-xs" onClick={() => setSelected(null)}>
-                关闭
-              </button>
+            {data?.issues.length ? (
+              <Card>
+                <CardHead title="校验提示" action={<span className="chip">{data.issues.length}</span>} />
+                <div className="card-body" style={{ paddingTop: 4 }}>
+                  <IssueList issues={data.issues} />
+                </div>
+              </Card>
+            ) : null}
+          </div>
+      </div>
+
+      {selected ? (
+        <div className="pop">
+          <div className="pop-head">
+            <div>
+              <p className="h3">{selected.concept_name}</p>
+              <p className="row-sub num">
+                {selected.start.slice(11)}–{selected.end.slice(11)} · {formatMinutes(selected.minutes)}
+              </p>
             </div>
+            <button className="btn btn-quiet btn-sm" onClick={() => setSelected(null)} aria-label="关闭">
+              <Icon name="close" size={15} />
+            </button>
+          </div>
+          <div className="pop-body">
             <TaskCard
               task={selected}
               readonly={data?.readonly ?? false}
@@ -305,8 +325,97 @@ export function BoardPage() {
               }
             />
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </Layout>
+  );
+}
+
+function TodayList({ tasks, onSelect }: {
+  tasks: BoardTask[]; onSelect: (task: BoardTask) => void;
+}) {
+  if (!tasks.length) {
+    return (
+      <EmptyState
+        title="今天没有排任务"
+        hint="可以切到「全部」看看后续安排，或去「调整」重排时间。"
+      />
+    );
+  }
+  return (
+    <div>
+      {tasks.map((task) => (
+        <div key={task.task_id + task.start} className="row-item">
+          <span className="mono-sm" style={{ width: 96 }}>
+            {task.start.slice(11)}–{task.end.slice(11)}
+          </span>
+          <button
+            style={{
+              flex: 1, minWidth: 0, textAlign: "left",
+              background: "none", border: 0, padding: 0, cursor: "pointer",
+            }}
+            onClick={() => onSelect(task)}
+          >
+            <p className="row-title">{task.concept_name}</p>
+            <p className="row-sub">
+              {task.kind === "study" ? "学习" : "练习"} · {formatMinutes(task.minutes)}
+            </p>
+          </button>
+          <StatusBadge
+            done={task.done}
+            overdue={task.overdue}
+            conflict={task.issue_codes.length > 0}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function AllList({ tasks, onSelect }: {
+  tasks: BoardTask[]; onSelect: (task: BoardTask) => void;
+}) {
+  const groups = new Map<string, BoardTask[]>();
+  for (const task of tasks) {
+    const day = task.start.slice(0, 10);
+    groups.set(day, [...(groups.get(day) ?? []), task]);
+  }
+  const today = todayISO();
+  return (
+    <div>
+      {[...groups.entries()].map(([day, list]) => (
+        <div key={day} style={{ marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "4px 0 8px" }}>
+            <span className="h3 num">{day}</span>
+            {day === today ? <span className="chip" data-tone="brand">今天</span> : null}
+            <span className="mono-sm">
+              {list.length} 个 · {formatMinutes(list.reduce((s, t) => s + t.minutes, 0))}
+            </span>
+          </div>
+          {list.map((task) => (
+            <div key={task.task_id + task.start} className="row-item">
+              <span className="mono-sm" style={{ width: 64 }}>{task.start.slice(11)}</span>
+              <button
+                style={{
+                  flex: 1, minWidth: 0, textAlign: "left",
+                  background: "none", border: 0, padding: 0, cursor: "pointer",
+                }}
+                onClick={() => onSelect(task)}
+              >
+                <p className="row-title">{task.concept_name}</p>
+                <p className="row-sub">
+                  {task.kind === "study" ? "学习" : "练习"} · {formatMinutes(task.minutes)}
+                </p>
+              </button>
+              <StatusBadge
+                done={task.done}
+                overdue={task.overdue}
+                conflict={task.issue_codes.length > 0}
+              />
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 }

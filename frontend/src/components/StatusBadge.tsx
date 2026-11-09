@@ -13,10 +13,10 @@ export function StatusBadge({ done, overdue, conflict, extra }: Props) {
   const status: TaskStatus = pickStatus({ done, overdue, conflict });
   const style = STATUS_STYLES[status];
   return (
-    <span className="badge" data-status={status}>
+    <span className="badge-soft" data-status={status}>
       <span aria-hidden>{style.icon}</span>
       {style.label}
-      {extra ? <span className="faint">· {extra}</span> : null}
+      {extra ? <span style={{ opacity: 0.7 }}>· {extra}</span> : null}
     </span>
   );
 }

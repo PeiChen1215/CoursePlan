@@ -3,6 +3,7 @@ import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { IssueList } from "../components/IssueList";
 import { useToast } from "../components/Toast";
+import { Card, CardHead, Field, Icon, Stat } from "../components/ui";
 import {
   useConfirmDraft, useConstraint, useGenerateDraft, usePlans, useSaveConstraint, useVersions,
 } from "../hooks/queries";
@@ -24,8 +25,8 @@ export function AdjustPage() {
   const plans = usePlans();
   const plan = plans.data?.items?.[0] ?? null;
   const planId = plan?.plan_id ?? 0;
-  const versions = useVersions(planId || null);
   const constraint = useConstraint(planId || null);
+  const versions = useVersions(planId || null);
   const saveConstraint = useSaveConstraint(planId);
   const generate = useGenerateDraft(planId);
   const confirm = useConfirmDraft(planId);
@@ -38,6 +39,13 @@ export function AdjustPage() {
   const current = constraint.data;
   const effectiveDeadline = newDeadline || current?.deadline || "";
   const deadlineChanged = Boolean(current && newDeadline && newDeadline !== current.deadline);
+
+  const draft = generate.data ?? null;
+  const blocked = draft ? draft.report.issues.some((i) => i.level === "ERROR") : true;
+  const diff = draft?.diff;
+  const diffCount = diff
+    ? diff.added.length + diff.removed.length + diff.moved.length + diff.resized.length
+    : 0;
 
   async function replan() {
     if (deadlineChanged && current) {
@@ -58,189 +66,202 @@ export function AdjustPage() {
     });
   }
 
-  const draft = generate.data ?? null;
-  const blocked = draft ? draft.report.issues.some((i) => i.level === "ERROR") : true;
-  const diff = draft?.diff;
-  const diffCount = diff
-    ? diff.added.length + diff.removed.length + diff.moved.length + diff.resized.length
-    : 0;
-
   return (
     <Layout>
-      <div className="space-y-6">
-        <section>
-          <h2 className="display text-xl">调整计划</h2>
-          <p className="faint mt-1 text-xs">
-            先说清为什么调整，再重新生成。确认后会产生新版本，旧版本转只读。
-          </p>
-        </section>
-
-        <section className="sheet sheet-pad">
-          <h3 className="display text-sm">为什么调整</h3>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {REASONS.map((item) => (
-              <label
-                key={item.value}
-                className="flex cursor-pointer items-start gap-2 rounded-sm border p-2 text-sm"
-                style={{
-                  borderColor: reason === item.value ? "var(--ink)" : "var(--rule)",
-                  background: reason === item.value ? "rgba(228,240,140,.18)" : "transparent",
-                }}
-              >
-                <input
-                  type="radio"
-                  name="reason"
-                  value={item.value}
-                  checked={reason === item.value}
-                  onChange={() => setReason(item.value)}
-                  className="mt-1"
-                />
-                <span>
-                  <span className="font-medium">{item.label}</span>
-                  <span className="faint block text-xs">{item.hint}</span>
-                </span>
-              </label>
-            ))}
-          </div>
-          <div className="field-row mt-3">
-            <label htmlFor="adj-deadline">新的截止日期</label>
-            <div className="flex items-baseline gap-3">
-              <input
-                id="adj-deadline"
-                type="date"
-                className="input num"
-                style={{ width: "12rem" }}
-                value={effectiveDeadline}
-                onChange={(event) => setNewDeadline(event.target.value)}
-              />
-              <span className="faint text-xs">
-                {deadlineChanged ? "改完会先更新约束，再重排" : "不改就按原截止日期重排"}
-              </span>
-            </div>
-          </div>
-          <div className="field-row mt-3">
-            <label htmlFor="adj-note">补充说明</label>
-            <input
-              id="adj-note"
-              className="input"
-              placeholder="例如：工作量大，截止日期延后到 12-20"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-            />
-          </div>
-          <div className="mt-3 flex items-center gap-3">
-            <button className="btn" disabled={!planId || generate.isPending || saveConstraint.isPending}
-                    onClick={replan}>
-              重排并预览
-            </button>
-            <span className="faint text-xs">
-              {plan?.current_version ? "当前生效：v" + plan.current_version : "还没有生效版本"}
-            </span>
-          </div>
-        </section>
-
-        {!planId ? <p className="empty">还没有学习计划，先去「填写约束」。</p> : null}
-        <ErrorBox error={generate.error ?? confirm.error ?? saveConstraint.error} />
-
-        {draft ? (
-          <>
-            <section className="sheet sheet-pad">
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <h3 className="display text-sm">与当前版本对比</h3>
-                <span className="faint text-xs">
-                  {diffCount === 0
-                    ? "和当前版本没有差别"
-                    : "共 " + diffCount + " 处变化"}
-                </span>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {(["added", "removed", "moved", "resized"] as const).map((key) => (
-                  <div key={key}>
-                    <p className="text-xs" style={{ color: key === "removed" ? "var(--crimson)" : "var(--ink-2)" }}>
-                      {LABEL[key]} <span className="num">{diff?.[key].length ?? 0}</span>
-                    </p>
-                    <p className="faint mt-1 text-xs">
-                      {diff && diff[key].length ? diff[key].join("、") : "无"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="sheet sheet-pad">
-              <h3 className="display text-sm">新的容量情况</h3>
-              <dl className="mt-2 grid grid-cols-2 gap-x-8 gap-y-1 text-sm sm:grid-cols-4">
-                <div>
-                  <dt className="faint text-xs">任务总时长 T</dt>
-                  <dd className="num">{formatMinutes(draft.metrics.total_minutes)}</dd>
-                </div>
-                <div>
-                  <dt className="faint text-xs">可排容量 C′</dt>
-                  <dd className="num">{formatMinutes(draft.metrics.usable_minutes)}</dd>
-                </div>
-                <div>
-                  <dt className="faint text-xs">缺口 D</dt>
-                  <dd className="num">{formatMinutes(draft.metrics.deficit_minutes)}</dd>
-                </div>
-                <div>
-                  <dt className="faint text-xs">利用率 U</dt>
-                  <dd className="num">{(draft.metrics.utilization * 100).toFixed(1)}%</dd>
-                </div>
-              </dl>
-            </section>
-
-            <section className="sheet sheet-pad">
-              <h3 className="display text-sm">校验</h3>
-              <div className="mt-2">
-                <IssueList issues={draft.report.issues} />
-              </div>
-            </section>
-
-            <div className="flex items-center gap-3">
-              <button
-                className="btn"
-                disabled={blocked || confirm.isPending}
-                onClick={() =>
-                  confirm.mutate(
-                    { revision: draft.revision, confirmKey, reason, note: note || undefined },
-                    {
-                      onSuccess: (data) =>
-                        toast.push(
-                          "已生成 v" + data.version_no + "（" +
-                            (REASONS.find((r) => r.value === reason)?.label ?? "调整") + "）",
-                          "success",
-                        ),
-                      onError: (error) =>
-                        toast.push(error instanceof Error ? error.message : "确认失败", "error"),
-                    },
-                  )
-                }
-              >
-                确认这次调整
-              </button>
-              <button className="btn-link text-xs" onClick={() => generate.reset()}>
-                取消
-              </button>
-              {blocked ? (
-                <span className="text-xs" style={{ color: "var(--crimson)" }}>
-                  有错误项，先改约束再重排
-                </span>
-              ) : null}
-            </div>
-
-            <section className="sheet sheet-pad">
-              <h3 className="display text-sm">历史留痕</h3>
-              <ul className="mt-2 text-xs muted">
-                {(versions.data?.items ?? []).slice(-3).reverse().map((row) => (
-                  <li key={row.version_no} className="border-b py-1" style={{ borderColor: "var(--rule)" }}>
-                    v{row.version_no} · {row.change_reason} · {row.change_note}
-                  </li>
-                ))}
-                {versions.data?.items.length ? null : <li className="faint">还没有历史版本</li>}
-              </ul>
-            </section>
-          </>
+      <header className="page-head">
+        <div>
+          <h1 className="h1">调整计划</h1>
+          <p className="sub">先说清为什么调整，再重新生成。确认后会产生新版本，旧版本转只读。</p>
+        </div>
+        {plan?.current_version ? (
+          <span className="chip" data-tone="brand">当前 v{plan.current_version}</span>
         ) : null}
+      </header>
+
+      <div className="grid-2">
+        <div className="stack">
+          <Card>
+            <CardHead title="为什么调整" hint="原因会写进版本记录" />
+            <div className="card-body">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {REASONS.map((item) => (
+                  <label
+                    key={item.value}
+                    className="check"
+                    data-on={reason === item.value}
+                    style={{ alignItems: "flex-start", padding: "10px 12px" }}
+                  >
+                    <input
+                      type="radio"
+                      name="reason"
+                      value={item.value}
+                      checked={reason === item.value}
+                      onChange={() => setReason(item.value)}
+                      style={{ marginTop: 3 }}
+                    />
+                    <span>
+                      <span style={{ display: "block", fontWeight: 550 }}>{item.label}</span>
+                      <span className="field-hint">{item.hint}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="stack" style={{ gap: 12, marginTop: 14 }}>
+                <Field label="新的截止日期" hint={deadlineChanged ? "改完会先更新约束，再重排" : "不改就按原截止日期重排"}>
+                  <input
+                    className="input num"
+                    style={{ width: 180 }}
+                    type="date"
+                    value={effectiveDeadline}
+                    onChange={(event) => setNewDeadline(event.target.value)}
+                  />
+                </Field>
+                <Field label="补充说明">
+                  <input
+                    className="input"
+                    placeholder="例如：工作量大，截止日期延后到 12-20"
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <div style={{ marginTop: 14 }}>
+                <button className="btn" disabled={!planId || generate.isPending || saveConstraint.isPending}
+                        onClick={replan}>
+                  <Icon name="spark" size={15} />
+                  重排并预览
+                </button>
+              </div>
+            </div>
+          </Card>
+
+          {!planId ? <p className="empty">还没有学习计划，先去「填写约束」。</p> : null}
+
+          {planId && !draft ? (
+            <Card className="card-pad" quiet>
+              <p className="h3">接下来会发生什么</p>
+              <ol className="sub" style={{ margin: "8px 0 0", paddingLeft: 18, lineHeight: 1.9 }}>
+                <li>选一个原因，必要时改截止日期</li>
+                <li>重排后先看差异与新容量，不会立即生效</li>
+                <li>确认之后才生成新版本，旧版本整份转只读</li>
+              </ol>
+            </Card>
+          ) : null}
+          <ErrorBox error={generate.error ?? confirm.error ?? saveConstraint.error} />
+
+          {draft ? (
+            <>
+              <Card>
+                <CardHead
+                  title="与当前版本对比"
+                  hint={diffCount === 0 ? "和当前版本没有差别" : "共 " + diffCount + " 处变化"}
+                />
+                <div className="card-body">
+                  <div className="grid-3" style={{ gap: 12 }}>
+                    {(["added", "removed", "moved", "resized"] as const).map((key) => (
+                      <div key={key} className="card card-quiet card-pad" style={{ padding: "12px 14px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span className="h3">{LABEL[key]}</span>
+                          <span className="chip" data-tone={key === "removed" ? "danger" : "brand"}>
+                            {diff?.[key].length ?? 0}
+                          </span>
+                        </div>
+                        <p className="row-sub" style={{ marginTop: 6 }}>
+                          {diff && diff[key].length ? diff[key].join("、") : "无"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+
+              <div className="stat-strip">
+                <Stat label="任务总时长 T" value={formatMinutes(draft.metrics.total_minutes)} />
+                <Stat label="可排容量 C′" value={formatMinutes(draft.metrics.usable_minutes)} />
+                <Stat label="缺口 D" value={formatMinutes(draft.metrics.deficit_minutes)} />
+                <Stat
+                  label="利用率 U"
+                  value={(draft.metrics.utilization * 100).toFixed(1) + "%"}
+                  ratio={draft.metrics.utilization}
+                />
+              </div>
+
+              <Card>
+                <CardHead
+                  title="校验"
+                  action={
+                    <span className="chip" data-tone={blocked ? "danger" : "done"}>
+                      {blocked ? "有错误项" : "通过"}
+                    </span>
+                  }
+                />
+                <div className="card-body" style={{ paddingTop: 6 }}>
+                  <IssueList issues={draft.report.issues} />
+                </div>
+              </Card>
+
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <button
+                  className="btn"
+                  disabled={blocked || confirm.isPending}
+                  onClick={() =>
+                    confirm.mutate(
+                      { revision: draft.revision, confirmKey, reason, note: note || undefined },
+                      {
+                        onSuccess: (data) =>
+                          toast.push(
+                            "已生成 v" + data.version_no + "（" +
+                              (REASONS.find((r) => r.value === reason)?.label ?? "调整") + "）",
+                            "success",
+                          ),
+                        onError: (error) =>
+                          toast.push(error instanceof Error ? error.message : "确认失败", "error"),
+                      },
+                    )
+                  }
+                >
+                  确认这次调整
+                </button>
+                <button className="link-btn" onClick={() => generate.reset()}>取消</button>
+                {blocked ? (
+                  <span className="field-hint" style={{ color: "var(--danger)" }}>
+                    有错误项，先改约束再重排
+                  </span>
+                ) : null}
+              </div>
+            </>
+          ) : null}
+        </div>
+
+        <div className="stack">
+          <Card>
+            <CardHead title="历史留痕" hint="最近三个版本" />
+            <div className="card-body" style={{ paddingTop: 4 }}>
+              {(versions.data?.items ?? []).slice(-3).reverse().map((row) => (
+                <div key={row.version_no} className="row-item" style={{ alignItems: "flex-start" }}>
+                  <span className="chip" data-tone="brand">v{row.version_no}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p className="row-title">{row.change_reason}</p>
+                    <p className="row-sub">{row.change_note}</p>
+                  </div>
+                </div>
+              ))}
+              {versions.data?.items.length ? null : (
+                <p className="sub">还没有历史版本</p>
+              )}
+            </div>
+          </Card>
+
+          <Card className="card-pad" quiet>
+            <p className="h3">调整会保留什么</p>
+            <p className="sub" style={{ marginTop: 6 }}>
+              已完成的打卡记录不会改动；旧版本整份转只读，随时可以对比。
+              只有确认之后，新版本才会生效。
+            </p>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

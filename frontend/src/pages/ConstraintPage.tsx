@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
+import { Card, CardHead, Field, Icon } from "../components/ui";
 import {
   useConcepts, useConstraint, useCreatePlan, useExtract, usePlans, usePreviewCapacity,
   useSaveConstraint,
@@ -100,216 +101,233 @@ export function ConstraintPage() {
 
   const summary = preview.data ?? save.data ?? null;
   const course = concepts.data?.items ?? [];
+  const totalCells = cells.size;
 
   return (
     <Layout>
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-6">
-          <section>
-            <h2 className="display text-xl">填写约束</h2>
-            <p className="faint mt-1 text-xs">
-              先用一句话说清楚，系统抽出字段；抽不出的会问，最多问两项。
-            </p>
-          </section>
+      <header className="page-head">
+        <div>
+          <h1 className="h1">填写约束</h1>
+          <p className="sub">先用一句话说清楚，系统抽出字段；抽不出的会问，最多问两项。</p>
+        </div>
+        <div className="page-head-actions">
+          {plan ? null : (
+            <button className="btn btn-ghost" disabled={createPlan.isPending}
+                    onClick={() =>
+                      createPlan.mutate(1, {
+                        onSuccess: () => toast.push("学习计划已创建", "success"),
+                        onError: (error) =>
+                          toast.push(error instanceof Error ? error.message : "创建失败", "error"),
+                      })
+                    }>
+              创建学习计划
+            </button>
+          )}
+          <button className="btn btn-ghost" disabled={preview.isPending || !plan}
+                  onClick={() => preview.mutate(payload, {
+                    onError: (error) =>
+                      toast.push(error instanceof Error ? error.message : "预览失败", "error"),
+                  })}>
+            预览容量
+          </button>
+          <button className="btn" disabled={save.isPending || !plan}
+                  onClick={() => save.mutate(payload, {
+                    onSuccess: () => toast.push("约束已保存", "success"),
+                    onError: (error) =>
+                      toast.push(error instanceof Error ? error.message : "保存失败", "error"),
+                  })}>
+            保存约束
+          </button>
+        </div>
+      </header>
 
-          <section className="sheet sheet-pad space-y-3">
-            <div className="field-row">
-              <label htmlFor="utterance">一句话</label>
-              <input
-                id="utterance"
-                className="input"
-                placeholder="我想学指针，10 天后，每天两小时"
-                value={utterance}
-                onChange={(event) => setUtterance(event.target.value)}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="faint text-xs">
-                {modeText ? "解析方式：" + modeText : "规则优先，模型兜底"}
-                {dailyLimit ? " · 说到每天 " + dailyLimit + " 分钟" : ""}
-              </span>
-              <button className="btn" disabled={!utterance || extract.isPending} onClick={runExtract}>
-                解析这句话
-              </button>
-            </div>
+      <div className="grid-2">
+        <div className="stack">
+          <Card>
+            <CardHead
+              title="用一句话描述"
+              hint={modeText ? "解析方式：" + modeText : "规则优先，模型兜底"}
+            />
+            <div className="card-body">
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  className="input"
+                  placeholder="我想学指针，10 天后，每天两小时"
+                  value={utterance}
+                  onChange={(event) => setUtterance(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && utterance && !extract.isPending) runExtract();
+                  }}
+                />
+                <button className="btn" disabled={!utterance || extract.isPending} onClick={runExtract}>
+                  解析
+                </button>
+              </div>
 
-            {turns.length ? (
-              <div className="space-y-2">
-                <p className="faint text-xs">逐轮补全（最多问两项，答不上来就先放下）</p>
-                <ul className="space-y-1 text-xs">
+              {turns.length ? (
+                <div className="stack" style={{ gap: 8, marginTop: 14 }}>
                   {turns.map((turn, index) => (
-                    <li key={index} className="border-b pb-1" style={{ borderColor: "var(--rule)" }}>
-                      <span className="muted">你：{turn.mine}</span>
-                      <span className="block" style={{ color: "var(--ink-2)" }}>
-                        系统：{turn.reply}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            {dailyLimit ? (
-              <p className="faint text-xs">
-                每日上限已识别为 {dailyLimit} 分钟。本期排程按可用时段总量计算，这一项仅作提醒。
-              </p>
-            ) : null}
-
-            {questions.length ? (
-              <ul className="rule-bottom space-y-1 pb-2 text-sm" style={{ color: "var(--rust)" }}>
-                {questions.map((question) => (
-                  <li key={question}>还差一点：{question}</li>
-                ))}
-              </ul>
-            ) : null}
-
-            {candidates.length ? (
-              <div className="text-sm">
-                <p className="faint text-xs">没匹配到唯一知识点，选一个：</p>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {candidates.map((item) => (
-                    <button key={item.concept_id} className="btn btn-quiet"
-                            onClick={() => setTarget(item.concept_id)}>
-                      {item.name}
-                    </button>
+                    <div key={index} className="card card-quiet card-pad" style={{ padding: "10px 12px" }}>
+                      <p className="row-sub">你：{turn.mine}</p>
+                      <p style={{ fontSize: 13, marginTop: 2 }}>{turn.reply}</p>
+                    </div>
                   ))}
                 </div>
-              </div>
-            ) : null}
-          </section>
+              ) : null}
 
-          <section className="sheet sheet-pad">
-            <div className="field-row">
-              <label htmlFor="target">主目标</label>
-              <select id="target" className="input" value={target}
-                      onChange={(event) => setTarget(event.target.value === "" ? "" : Number(event.target.value))}>
-                <option value="">请选择</option>
-                {course.filter((item) => item.status === "enabled").map((item) => (
-                  <option key={item.concept_id} value={item.concept_id}>
-                    {item.name}（{item.reference_minutes} 分钟，{item.chapter}）
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field-row">
-              <label htmlFor="deadline">截止日期</label>
-              <input id="deadline" type="date" className="input num" value={deadline}
-                     onChange={(event) => setDeadline(event.target.value)} />
-            </div>
-            <div className="field-row">
-              <label htmlFor="excluded">排除日期</label>
-              <input id="excluded" className="input" placeholder="2026-11-15, 2026-11-16"
-                     value={excludedText} onChange={(event) => setExcludedText(event.target.value)} />
-            </div>
-          </section>
-
-          <section className="sheet sheet-pad">
-            <h3 className="display text-sm">每周可用时间</h3>
-            <p className="faint mt-1 mb-3 text-xs">
-              点亮格子即可。每天最多三段、合计不超过八小时。
-            </p>
-            <div className="avail-grid">
-              <div />
-              {DAY_LABEL.map((label) => (
-                <div key={label} className="tt-head" style={{ padding: "4px 0" }}>
-                  周{label}
+              {candidates.length ? (
+                <div style={{ marginTop: 12 }}>
+                  <p className="field-hint">没匹配到唯一知识点，选一个：</p>
+                  <div className="tag-list" style={{ marginTop: 6 }}>
+                    {candidates.map((item) => (
+                      <button key={item.concept_id} className="chip" data-tone="brand"
+                              style={{ border: 0, cursor: "pointer", height: 26 }}
+                              onClick={() => setTarget(item.concept_id)}>
+                        {item.name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              ))}
-              {HOURS.map((hour) => (
-                <Row key={hour} hour={hour} cells={cells} onToggle={toggle} />
-              ))}
-            </div>
-          </section>
+              ) : null}
 
-          <section className="sheet sheet-pad">
-            <h3 className="display text-sm">已经会的知识点</h3>
-            <p className="faint mt-1 mb-2 text-xs">
-              勾上就不再排任务，也不计入目标路径时长；先修内容也可以勾。
-            </p>
-            <div className="flex flex-wrap gap-x-5 gap-y-2">
-              {course.map((item) => (
-                <label key={item.concept_id} className="flex items-center gap-1.5 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={mastered.includes(item.concept_id)}
-                    onChange={(event) =>
-                      setMastered((prev) =>
-                        event.target.checked
-                          ? [...prev, item.concept_id]
-                          : prev.filter((id) => id !== item.concept_id),
-                      )
-                    }
-                  />
-                  {item.name}
-                </label>
-              ))}
-            </div>
-          </section>
+              {questions.length ? (
+                <p className="field-hint" style={{ marginTop: 10, color: "var(--warn)" }}>
+                  还需要：{questions.join("；")}
+                </p>
+              ) : null}
 
-          <div className="flex items-center gap-3">
-            {plan ? null : (
-              <button className="btn" disabled={createPlan.isPending}
-                      onClick={() =>
-                        createPlan.mutate(1, {
-                          onSuccess: () => toast.push("学习计划已创建", "success"),
-                          onError: (error) =>
-                            toast.push(error instanceof Error ? error.message : "创建失败", "error"),
-                        })
-                      }>
-                先创建学习计划
-              </button>
-            )}
-            <button className="btn btn-quiet" disabled={preview.isPending || !plan}
-                    onClick={() => preview.mutate(payload, {
-                      onError: (error) =>
-                        toast.push(error instanceof Error ? error.message : "预览失败", "error"),
-                    })}>
-              预览容量
-            </button>
-            <button className="btn" disabled={save.isPending || !plan}
-                    onClick={() => save.mutate(payload, {
-                      onSuccess: () => toast.push("约束已保存", "success"),
-                      onError: (error) =>
-                        toast.push(error instanceof Error ? error.message : "保存失败", "error"),
-                    })}>
-              保存约束
-            </button>
-          </div>
+              {dailyLimit ? (
+                <p className="field-hint" style={{ marginTop: 8 }}>
+                  每日上限识别为 {dailyLimit} 分钟（本期按可用时段总量计算，此项仅作提醒）。
+                </p>
+              ) : null}
+            </div>
+          </Card>
+
+          <Card>
+            <CardHead title="目标与期限" />
+            <div className="card-body stack" style={{ gap: 14 }}>
+              <Field label="主目标">
+                <select className="select" value={target}
+                        onChange={(event) => setTarget(event.target.value === "" ? "" : Number(event.target.value))}>
+                  <option value="">请选择</option>
+                  {course.filter((item) => item.status === "enabled").map((item) => (
+                    <option key={item.concept_id} value={item.concept_id}>
+                      {item.name}（{item.reference_minutes} 分钟 · {item.chapter}）
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <div className="grid-3" style={{ gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <Field label="截止日期">
+                  <input type="date" className="input num" value={deadline}
+                         onChange={(event) => setDeadline(event.target.value)} />
+                </Field>
+                <Field label="排除日期" hint="逗号分隔，如 2026-11-15">
+                  <input className="input" placeholder="2026-11-15, 2026-11-16"
+                         value={excludedText} onChange={(event) => setExcludedText(event.target.value)} />
+                </Field>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHead
+              title="每周可用时间"
+              hint="点亮格子即可，每天最多三段"
+              action={<span className="chip" data-tone="brand">{totalCells} 小时</span>}
+            />
+            <div className="card-body">
+              <div className="avail">
+                <div />
+                {DAY_LABEL.map((label) => (
+                  <div key={label} className="cal-dow" style={{ textAlign: "center", padding: "6px 0" }}>
+                    周{label}
+                  </div>
+                ))}
+                {HOURS.map((hour) => (
+                  <Row key={hour} hour={hour} cells={cells} onToggle={toggle} />
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <CardHead title="已经会的知识点" hint="勾上就不再排任务，也不计入目标路径时长" />
+            <div className="card-body">
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {course.map((item) => (
+                  <label key={item.concept_id} className="check" data-on={mastered.includes(item.concept_id)}>
+                    <input
+                      type="checkbox"
+                      checked={mastered.includes(item.concept_id)}
+                      onChange={(event) =>
+                        setMastered((prev) =>
+                          event.target.checked
+                            ? [...prev, item.concept_id]
+                            : prev.filter((id) => id !== item.concept_id),
+                        )
+                      }
+                    />
+                    {item.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </Card>
 
           <ErrorBox error={preview.error ?? save.error} />
         </div>
 
-        <aside className="space-y-4">
-          <section className="sheet sheet-pad">
-            <h3 className="display text-sm">容量</h3>
-            {summary ? (
-              <>
-                <dl className="mt-2">
-                  <SumRow label="原始容量 C" value={formatMinutes(summary.C)} />
-                  <SumRow label="缓冲 B" value={formatMinutes(summary.B)} />
-                  <SumRow label="可排 C′" value={formatMinutes(summary.C_prime)} />
-                  <SumRow label="目标路径" value={formatMinutes(summary.path_minutes)} />
-                  <SumRow label="可用时段" value={summary.slots + " 段"} />
-                </dl>
-                {summary.reject_reason ? (
-                  <p className="mt-2 text-sm" style={{ color: "var(--rust)" }}>
-                    排不下：{summary.reject_reason}
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <p className="faint mt-2 text-xs">填完点「预览容量」，这里给出 C / B / C′。</p>
-            )}
-          </section>
+        <div className="stack">
+          <Card>
+            <CardHead title="容量" hint="C 是截止前所有可用时段之和" />
+            <div className="card-body">
+              {summary ? (
+                <div className="stack" style={{ gap: 10 }}>
+                  <div className="stat-strip" style={{ gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+                    <div className="stat" style={{ padding: "10px 12px" }}>
+                      <p className="stat-label">原始容量 C</p>
+                      <p className="stat-value" style={{ fontSize: 17 }}>{formatMinutes(summary.C)}</p>
+                    </div>
+                    <div className="stat" style={{ padding: "10px 12px" }}>
+                      <p className="stat-label">可排 C′</p>
+                      <p className="stat-value" style={{ fontSize: 17 }}>{formatMinutes(summary.C_prime)}</p>
+                    </div>
+                    <div className="stat" style={{ padding: "10px 12px" }}>
+                      <p className="stat-label">缓冲 B</p>
+                      <p className="stat-value" style={{ fontSize: 17 }}>{formatMinutes(summary.B)}</p>
+                    </div>
+                    <div className="stat" style={{ padding: "10px 12px" }}>
+                      <p className="stat-label">目标路径</p>
+                      <p className="stat-value" style={{ fontSize: 17 }}>{formatMinutes(summary.path_minutes)}</p>
+                    </div>
+                  </div>
+                  <p className="field-hint">可用时段 {summary.slots} 段</p>
+                  {summary.reject_reason ? (
+                    <p className="sub" style={{ color: "var(--danger)" }}>
+                      排不下：{summary.reject_reason}
+                    </p>
+                  ) : (
+                    <p className="sub" style={{ color: "var(--done)" }}>时间够用，可以保存并生成草案。</p>
+                  )}
+                </div>
+              ) : (
+                <p className="sub">填完点「预览容量」，这里给出 C / B / C′。</p>
+              )}
+            </div>
+          </Card>
 
-          <section className="sheet sheet-pad">
-            <h3 className="display text-sm">怎么算的</h3>
-            <p className="muted mt-2 text-xs leading-relaxed">
+          <Card className="card-pad" quiet>
+            <div style={{ display: "flex", gap: 10 }}>
+              <span className="chip" data-tone="brand"><Icon name="spark" size={12} />怎么算的</span>
+            </div>
+            <p className="sub" style={{ marginTop: 8 }}>
               C 是截止前所有可用时段之和；B 取 C 的 10% 作为缓冲；C′ = C − B 才是能排的上限。
               目标路径只统计闭包内还没掌握的知识点。
             </p>
-          </section>
-        </aside>
+          </Card>
+        </div>
       </div>
     </Layout>
   );
@@ -320,7 +338,7 @@ function Row({ hour, cells, onToggle }: {
 }) {
   return (
     <>
-      <div className="tt-hour-label" style={{ position: "static", textAlign: "right", paddingRight: 4 }}>
+      <div className="mono-sm" style={{ display: "grid", placeItems: "center", borderRight: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
         {String(hour).padStart(2, "0")}
       </div>
       {DAY_KEYS.map((day) => (
@@ -333,14 +351,5 @@ function Row({ hour, cells, onToggle }: {
         />
       ))}
     </>
-  );
-}
-
-function SumRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between border-b py-1.5" style={{ borderColor: "var(--rule)" }}>
-      <dt className="muted text-xs">{label}</dt>
-      <dd className="num text-sm">{value}</dd>
-    </div>
   );
 }

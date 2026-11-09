@@ -119,6 +119,28 @@ def seed_resources(db: Database) -> int:
     return len(RESOURCES)
 
 
+def seed_events(db: Database, cfg, plan_id: int, student_id: int) -> int:
+    """给演示计划补一条打卡与一条更正，让「记录」页有内容可看。"""
+    from app.services.progress import ProgressService
+
+    row = db.query(
+        "SELECT vt.task_id FROM version_task vt"
+        " JOIN plan_version v ON v.version_id = vt.version_id"
+        " WHERE v.plan_id = ? AND vt.schedule_state = 'scheduled'"
+        " ORDER BY vt.task_id LIMIT 1", (plan_id,))
+    if not row:
+        return 0
+    task_id = int(row[0]["task_id"])
+    svc = ProgressService(db, cfg)
+    first = svc.submit(plan_id, student_id, task_id, "done", "seed-done-1",
+                       datetime(2026, 11, 9, 21, 40, tzinfo=timezone.utc),
+                       actual_minutes=88, note="读完第 2 章，列了需求清单")
+    svc.submit(plan_id, student_id, task_id, "correction", "seed-correction-1",
+               datetime(2026, 11, 9, 21, 52, tzinfo=timezone.utc),
+               actual_minutes=95, corrects_event_id=first.event_id)
+    return 2
+
+
 def seed_plan(db: Database, cfg, ids: dict) -> dict:
     alice = db.scalar("SELECT user_id FROM app_user WHERE username='alice'")
     with db.connect() as conn:
@@ -183,8 +205,11 @@ def main() -> int:
 
     if not args.no_plan:
         info = seed_plan(db, cfg, ids)
+        alice = db.query("SELECT user_id FROM app_user WHERE username = 'alice'")[0]
+        events = seed_events(db, cfg, info["plan_id"], int(alice["user_id"]))
         print("演示计划：plan_id=%d，v%d 生效，%d 个任务 / %d 片（学生 alice）"
               % (info["plan_id"], info["version_no"], info["tasks"], info["slices"]))
+        print("学习记录：%d 条（1 次打卡 + 1 次更正）" % events)
 
     counts = {t: db.scalar("SELECT COUNT(*) FROM %s" % t)
               for t in ("app_user", "course", "concept", "prerequisite", "resource",
