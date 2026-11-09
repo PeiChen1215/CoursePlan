@@ -119,9 +119,12 @@ export function LoginPage() {
               <label htmlFor="username">账号</label>
               <input
                 id="username"
+                name="username"
                 className="input"
                 value={username}
                 autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
                 onChange={(event) => setUsername(event.target.value)}
               />
             </div>
@@ -129,6 +132,7 @@ export function LoginPage() {
               <label htmlFor="password">口令</label>
               <input
                 id="password"
+                name="password"
                 type="password"
                 className="input"
                 value={password}

@@ -1,4 +1,5 @@
 import type { BoardTask } from "../hooks/queries";
+import { formatClock } from "../lib/format";
 import { dailyMinutes, hourWindow, maxOf, toBlock, weekDays } from "../lib/timetable";
 import type { DayHeader } from "../lib/timetable";
 
@@ -21,9 +22,26 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
   const nowPct =
     (now.getHours() + now.getMinutes() / 60 - win.start) / (win.end - win.start);
 
+  const summary = days
+    .map((day) => {
+      const count = tasks.filter((task) => task.start.startsWith(day.iso)).length;
+      return count ? day.label + " " + count + " 个任务" : null;
+    })
+    .filter(Boolean)
+    .join("，");
+
   return (
     <div>
-      <div className="cal" style={{ ["--hour-h" as string]: ROW_H + "px" }}>
+      <p className="sr-only">
+        本周课表：{summary || "没有任务"}。用 Tab 可逐个查看每个任务块。
+      </p>
+      <div className="cal-wrap">
+      <div
+        className="cal"
+        role="group"
+        aria-label="本周课表"
+        style={{ ["--hour-h" as string]: ROW_H + "px" }}
+      >
         <div className="cal-head" aria-hidden />
         {days.map((day) => (
           <div key={day.iso} className="cal-head" data-today={day.isToday}>
@@ -74,8 +92,15 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
                     data-compact={compact}
                     style={{ top: block.topPct + "%", height: block.heightPct + "%" }}
                     onClick={() => onSelect(task)}
+                    aria-label={
+                      day.label + " " + formatClock(task.start) + " 到 " + formatClock(task.end) +
+                      "，" + task.concept_name + "，" +
+                      (task.kind === "study" ? "学习" : "练习") + "，" +
+                      task.minutes + " 分钟" +
+                      (task.done ? "，已完成" : task.overdue ? "，已逾期" : "")
+                    }
                     title={
-                      task.concept_name + " · " + task.start.slice(11) + "–" + task.end.slice(11)
+                      task.concept_name + " · " + formatClock(task.start) + "–" + formatClock(task.end)
                     }
                   >
                     <span className="ev-title">
@@ -89,7 +114,7 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
                     </span>
                     {compact ? null : (
                       <span className="ev-meta">
-                        {task.start.slice(11)}–{task.end.slice(11)}
+                        {formatClock(task.start)}–{formatClock(task.end)}
                       </span>
                     )}
                     {status === "done" ? <span className="ev-flag">✓</span> : null}
@@ -101,6 +126,7 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
             </div>
           );
         })}
+      </div>
       </div>
 
       <div className="load-row">

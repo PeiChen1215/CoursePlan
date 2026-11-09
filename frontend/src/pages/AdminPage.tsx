@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
-import { Card, CardHead, Field } from "../components/ui";
+import { Card, CardHead, Field, VisuallyHidden } from "../components/ui";
 import {
   useConcepts, useCourses, useCreateConcept, useCreateResource, useDisableCourse,
   useDisableResource, usePatchCourse, usePrereqs, useResources, useSetConceptResources,
@@ -24,6 +24,14 @@ export function AdminPage() {
 
   const [courseName, setCourseName] = useState("");
   const [courseHours, setCourseHours] = useState("");
+  const [confirmingDisable, setConfirmingDisable] = useState(false);
+
+  // 课程信息加载后回填，避免用 placeholder 冒充当前值
+  useEffect(() => {
+    if (!course) return;
+    setCourseName((prev) => prev || course.name);
+    setCourseHours((prev) => prev || String(course.total_hours));
+  }, [course?.course_id, course?.name, course?.total_hours]);
   const [name, setName] = useState("");
   const [chapter, setChapter] = useState("第1章");
   const [difficulty, setDifficulty] = useState(3);
@@ -69,12 +77,12 @@ export function AdminPage() {
           <div className="card-body">
             <div className="grid-3" style={{ gridTemplateColumns: "1.2fr 0.6fr auto", gap: 12, alignItems: "end" }}>
               <Field label="课程名称">
-                <input className="input" placeholder={course?.name ?? ""} value={courseName}
+                <input className="input" name="course_name" value={courseName}
                        onChange={(event) => setCourseName(event.target.value)} />
               </Field>
               <Field label="总学时">
-                <input className="input num" placeholder={course ? String(course.total_hours) : ""}
-                       value={courseHours} inputMode="numeric"
+                <input className="input num" name="course_hours" value={courseHours}
+                       inputMode="numeric"
                        onChange={(event) => setCourseHours(event.target.value)} />
               </Field>
               <div style={{ display: "flex", gap: 8 }}>
@@ -98,20 +106,41 @@ export function AdminPage() {
                 >
                   保存
                 </button>
-                <button
-                  className="btn btn-ghost"
-                  disabled={disableCourse.isPending || course?.status === "disabled"}
-                  onClick={() => {
-                    if (!window.confirm("停用后无法新建学习计划，历史计划仍可打开。确认停用？")) return;
-                    disableCourse.mutate(courseId, {
-                      onSuccess: () => toast.push("课程已停用", "success"),
-                      onError: (error) =>
-                        toast.push(error instanceof Error ? error.message : "停用失败", "error"),
-                    });
-                  }}
-                >
-                  停用课程
-                </button>
+                {confirmingDisable ? (
+                  <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span className="row-sub" style={{ maxWidth: 180 }}>
+                      停用后不能新建计划，历史计划仍可打开。
+                    </span>
+                    <button
+                      className="btn btn-ghost"
+                      style={{ color: "var(--danger)", borderColor: "var(--danger)" }}
+                      disabled={disableCourse.isPending}
+                      onClick={() =>
+                        disableCourse.mutate(courseId, {
+                          onSuccess: () => {
+                            toast.push("课程已停用", "success");
+                            setConfirmingDisable(false);
+                          },
+                          onError: (error) =>
+                            toast.push(error instanceof Error ? error.message : "停用失败", "error"),
+                        })
+                      }
+                    >
+                      确认停用
+                    </button>
+                    <button className="link-btn" onClick={() => setConfirmingDisable(false)}>
+                      取消
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    className="btn btn-ghost"
+                    disabled={course?.status === "disabled"}
+                    onClick={() => setConfirmingDisable(true)}
+                  >
+                    停用课程
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -122,6 +151,7 @@ export function AdminPage() {
         <Card>
           <CardHead title={"知识点（" + list.length + "）"} hint="按章节顺序排列" />
           <div className="card-body" style={{ paddingTop: 0, paddingLeft: 8, paddingRight: 8 }}>
+            <div className="table-scroll">
             <table className="table">
               <thead>
                 <tr>
@@ -145,6 +175,7 @@ export function AdminPage() {
                 ))}
               </tbody>
             </table>
+              </div>
           </div>
         </Card>
 
@@ -157,14 +188,17 @@ export function AdminPage() {
               </Field>
               <div className="grid-2" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
                 <Field label="章节">
-                  <input className="input" value={chapter} onChange={(event) => setChapter(event.target.value)} />
+                  <input className="input" name="concept_chapter" value={chapter}
+                         onChange={(event) => setChapter(event.target.value)} />
                 </Field>
                 <Field label="难度">
-                  <input className="input num" type="number" min={1} max={5} value={difficulty}
+                  <input className="input num" name="concept_difficulty" type="number"
+                         min={1} max={5} value={difficulty}
                          onChange={(event) => setDifficulty(Number(event.target.value))} />
                 </Field>
                 <Field label="参考时长">
-                  <input className="input num" type="number" min={5} max={600} value={minutes}
+                  <input className="input num" name="concept_minutes" type="number"
+                         min={5} max={600} value={minutes}
                          onChange={(event) => setMinutes(Number(event.target.value))} />
                 </Field>
               </div>
@@ -235,7 +269,8 @@ export function AdminPage() {
           <div className="card-body stack" style={{ gap: 12 }}>
             <div className="grid-3" style={{ gridTemplateColumns: "1.4fr 0.8fr 1.6fr 0.6fr", gap: 10 }}>
               <Field label="标题">
-                <input className="input" value={resTitle} onChange={(event) => setResTitle(event.target.value)} />
+                <input className="input" name="resource_title" value={resTitle}
+                       onChange={(event) => setResTitle(event.target.value)} />
               </Field>
               <Field label="类型">
                 <select className="select" value={resType} onChange={(event) => setResType(event.target.value)}>
@@ -246,18 +281,21 @@ export function AdminPage() {
                 </select>
               </Field>
               <Field label="网址">
-                <input className="input" placeholder="https://…" value={resUrl}
+                <input className="input" name="resource_url" type="url"
+                       placeholder="https://…" value={resUrl}
+                       spellCheck={false}
                        onChange={(event) => setResUrl(event.target.value)} />
               </Field>
               <Field label="分钟">
-                <input className="input num" type="number" min={0} max={240} value={resMinutes}
+                <input className="input num" name="resource_minutes" type="number"
+                       min={0} max={240} value={resMinutes}
                        onChange={(event) => setResMinutes(Number(event.target.value))} />
               </Field>
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
               <div className="field" style={{ flex: 1 }}>
                 <label>摘要（没网址时必填）</label>
-                <input className="input" value={resSummary}
+                <input className="input" name="resource_summary" value={resSummary}
                        onChange={(event) => setResSummary(event.target.value)} />
               </div>
               <button className="btn" disabled={!resTitle || createResource.isPending}
@@ -277,9 +315,15 @@ export function AdminPage() {
               </button>
             </div>
 
+            <div className="table-scroll">
             <table className="table">
               <thead>
-                <tr><th>标题</th><th>类型</th><th>链接</th><th>分钟</th><th>状态</th><th /></tr>
+                <tr>
+                  <th>标题</th><th>类型</th><th>链接</th><th>分钟</th><th>状态</th>
+                  <th>
+                    <VisuallyHidden>操作</VisuallyHidden>
+                  </th>
+                </tr>
               </thead>
               <tbody>
                 {(resources.data?.items ?? []).map((item) => (
@@ -339,6 +383,7 @@ export function AdminPage() {
                 ) : null}
               </tbody>
             </table>
+            </div>
 
             <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
               <div className="field" style={{ width: 240 }}>

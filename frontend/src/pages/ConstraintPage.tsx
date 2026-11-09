@@ -152,7 +152,9 @@ export function ConstraintPage() {
               <div style={{ display: "flex", gap: 8 }}>
                 <input
                   className="input"
-                  placeholder="我想学指针，10 天后，每天两小时"
+                  name="utterance"
+                  aria-label="用一句话描述目标、期限和可用时间"
+                  placeholder="例如：我想学指针，10 天后，每天两小时"
                   value={utterance}
                   onChange={(event) => setUtterance(event.target.value)}
                   onKeyDown={(event) => {
@@ -341,15 +343,20 @@ function Row({ hour, cells, onToggle }: {
       <div className="mono-sm" style={{ display: "grid", placeItems: "center", borderRight: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
         {String(hour).padStart(2, "0")}
       </div>
-      {DAY_KEYS.map((day) => (
-        <button
-          key={day + hour}
-          className="avail-cell"
-          data-on={cells.has(cellId(day, hour))}
-          aria-label={day + " " + hour + " 点"}
-          onClick={() => onToggle(day, hour)}
-        />
-      ))}
+      {DAY_KEYS.map((day) => {
+        const on = cells.has(cellId(day, hour));
+        return (
+          <button
+            key={day + hour}
+            type="button"
+            className="avail-cell"
+            data-on={on}
+            aria-pressed={on}
+            aria-label={day + " " + hour + " 点" + (on ? "，已选" : "，未选")}
+            onClick={() => onToggle(day, hour)}
+          />
+        );
+      })}
     </>
   );
 }

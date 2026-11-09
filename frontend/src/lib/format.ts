@@ -10,6 +10,17 @@ export function formatMinutes(minutes: number): string {
   return `${m} 分钟`;
 }
 
+/** 后端给的是本地墙钟字符串（无时区），这里只做展示格式化，不做时区换算。 */
+export function formatClock(iso: string): string {
+  return iso.length >= 16 ? iso.slice(11, 16) : iso;
+}
+
+/** "11-09 19:00"：日期与时间都用同一套切片，避免各页面各写一份。 */
+export function formatDateTime(iso: string): string {
+  if (iso.length < 16) return iso;
+  return iso.slice(5, 16).replace("T", " ");
+}
+
 export function formatRange(start: string, end: string): string {
   const s = new Date(start);
   const e = new Date(end);

@@ -20,6 +20,9 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main">
+        跳到主要内容
+      </a>
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark">径</span>
@@ -81,7 +84,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="main">{children}</main>
+      <main className="main" id="main">{children}</main>
     </div>
   );
 }

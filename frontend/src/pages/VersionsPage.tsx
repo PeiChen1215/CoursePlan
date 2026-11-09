@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
-import { Card, CardHead, EmptyState } from "../components/ui";
+import { Card, CardHead, EmptyState, VisuallyHidden } from "../components/ui";
+import { formatDateTime } from "../lib/format";
 import { useDiff, usePlans, useVersions } from "../hooks/queries";
 
 export function VersionsPage() {
@@ -9,8 +10,16 @@ export function VersionsPage() {
   const plan = plans.data?.items?.[0] ?? null;
   const planId = plan?.plan_id ?? 0;
   const versions = useVersions(planId || null);
-  const [from, setFrom] = useState<number | null>(null);
-  const [to, setTo] = useState<number | null>(null);
+  const [params, setParams] = useSearchParams();
+  const from = Number(params.get("from") ?? 0) || null;
+  const to = Number(params.get("to") ?? 0) || null;
+
+  function compare(versionNo: number) {
+    const search = new URLSearchParams(params);
+    search.set("from", String(versionNo));
+    if (plan?.current_version) search.set("to", String(plan.current_version));
+    setParams(search, { replace: true });
+  }
   const diff = useDiff(planId, from, to);
 
   const items = versions.data?.items ?? [];
@@ -35,6 +44,7 @@ export function VersionsPage() {
           <Card>
             <CardHead title="版本历史" />
             <div className="card-body" style={{ paddingTop: 0, paddingLeft: 8, paddingRight: 8 }}>
+              <div className="table-scroll">
               <table className="table">
                 <thead>
                   <tr>
@@ -44,7 +54,9 @@ export function VersionsPage() {
                     <th>任务</th>
                     <th>片</th>
                     <th>确认时间</th>
-                    <th />
+                    <th>
+                      <VisuallyHidden>操作</VisuallyHidden>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -60,17 +72,9 @@ export function VersionsPage() {
                       <td className="row-sub">{row.change_note}</td>
                       <td className="num">{row.tasks}</td>
                       <td className="num">{row.slices}</td>
-                      <td className="row-sub num">
-                        {row.created_at.slice(5, 16).replace("T", " ")}
-                      </td>
+                      <td className="row-sub num">{formatDateTime(row.created_at)}</td>
                       <td>
-                        <button
-                          className="link-btn"
-                          onClick={() => {
-                            setFrom(row.version_no);
-                            setTo(current);
-                          }}
-                        >
+                        <button className="link-btn" onClick={() => compare(row.version_no)}>
                           与当前对比
                         </button>
                       </td>
@@ -78,6 +82,7 @@ export function VersionsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </Card>
         )}

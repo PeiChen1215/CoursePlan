@@ -2,7 +2,7 @@ import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { Card, CardHead, EmptyState } from "../components/ui";
 import { useEvents, usePlans } from "../hooks/queries";
-import { formatMinutes } from "../lib/format";
+import { formatDateTime, formatMinutes } from "../lib/format";
 
 const TONE: Record<string, "done" | "brand" | "warn"> = {
   done: "done",
@@ -43,7 +43,7 @@ export function TimelinePage() {
               {items.map((row) => (
                 <div key={row.event_id} className="row-item" style={{ alignItems: "flex-start" }}>
                   <span className="mono-sm" style={{ width: 108, flex: "none" }}>
-                    {row.occurred_at.slice(5, 16).replace("T", " ")}
+                    {formatDateTime(row.occurred_at)}
                   </span>
                   <span className="chip" data-tone={TONE[row.event_type] ?? "brand"}>{row.label}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>

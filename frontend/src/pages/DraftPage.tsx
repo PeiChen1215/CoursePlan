@@ -130,6 +130,7 @@ export function DraftPage() {
                 }
               />
               <div className="card-body" style={{ paddingTop: 0, paddingLeft: 8, paddingRight: 8 }}>
+                <div className="table-scroll">
                 <table className="table">
                   <thead>
                     <tr>
@@ -180,6 +181,7 @@ export function DraftPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             </Card>
           </>

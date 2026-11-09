@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { cloneElement, isValidElement, useId } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 /* ---------------- 图标：内联 SVG，避免引入图标库 ---------------- */
 type IconName =
@@ -136,13 +137,17 @@ export function Stat({
   return (
     <div className="stat">
       <p className="stat-label">{label}</p>
-      <p className="stat-value">
+      <p className="stat-value num">
         {value}
         {unit ? <small>{unit}</small> : null}
       </p>
       {ratio === undefined ? null : (
         <div className="stat-track">
-          <span style={{ width: Math.min(100, Math.max(0, ratio * 100)) + "%" }} />
+          <span
+            style={{
+              transform: "scaleX(" + Math.min(1, Math.max(0, ratio)).toFixed(3) + ")",
+            }}
+          />
         </div>
       )}
     </div>
@@ -190,12 +195,12 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div className="seg" role="tablist">
+    <div className="seg" role="group" aria-label="视图切换">
       {options.map((item) => (
         <button
           key={item.value}
-          role="tab"
-          aria-selected={value === item.value}
+          type="button"
+          aria-pressed={value === item.value}
           data-on={value === item.value}
           onClick={() => onChange(item.value)}
         >
@@ -212,11 +217,22 @@ export function Field({
 }: {
   label: string; hint?: string; children: ReactNode;
 }) {
+  const id = useId();
+  const control =
+    isValidElement(children) && typeof children.type === "string"
+      ? cloneElement(children as ReactElement<{ id?: string }>, { id })
+      : children;
+
   return (
     <div className="field">
-      <label>{label}</label>
-      {children}
+      <label htmlFor={id}>{label}</label>
+      {control}
       {hint ? <span className="field-hint">{hint}</span> : null}
     </div>
   );
+}
+
+/** 只给读屏用的文本（表头、跳转提示等）。 */
+export function VisuallyHidden({ children }: { children: ReactNode }) {
+  return <span className="sr-only">{children}</span>;
 }

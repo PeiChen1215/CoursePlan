@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { TaskCard } from "../components/TaskCard";
 import { TimetableGrid } from "../components/TimetableGrid";
@@ -9,7 +10,7 @@ import { Card, CardHead, EmptyState, Icon, Ring, Segmented, Stat } from "../comp
 import { StatusBadge } from "../components/StatusBadge";
 import { useBoard, usePlans, useSubmitEvent } from "../hooks/queries";
 import type { BoardTask } from "../hooks/queries";
-import { formatMinutes } from "../lib/format";
+import { formatClock, formatMinutes } from "../lib/format";
 import { addDays, toISODate, weekStartOf } from "../lib/timetable";
 
 function todayISO(): string {
@@ -23,9 +24,65 @@ export function BoardPage() {
   const board = useBoard(plan?.plan_id ?? null);
   const submit = useSubmitEvent(plan?.plan_id ?? 0);
 
-  const [view, setView] = useState<"today" | "week" | "all">("week");
-  const [weekOffset, setWeekOffset] = useState(0);
+  // 视图与周偏移放进 URL：刷新、后退、分享都能回到同一屏
+  const [params, setParams] = useSearchParams();
+  const rawView = params.get("view");
+  const view: "today" | "week" | "all" =
+    rawView === "today" || rawView === "all" ? rawView : "week";
+  const weekOffset = Number(params.get("week") ?? 0) || 0;
+
+  function setView(next: "today" | "week" | "all") {
+    const search = new URLSearchParams(params);
+    if (next === "week") search.delete("view");
+    else search.set("view", next);
+    setParams(search, { replace: true });
+  }
+
+  function setWeekOffset(next: number) {
+    const search = new URLSearchParams(params);
+    if (next === 0) search.delete("week");
+    else search.set("week", String(next));
+    setParams(search, { replace: true });
+  }
+
   const [selected, setSelected] = useState<BoardTask | null>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+
+  // 抽屉：Esc 关闭、焦点进抽屉、关闭后回到原来的块、背景不滚动
+  useEffect(() => {
+    if (!selected) return;
+    const previous = document.activeElement as HTMLElement | null;
+    popRef.current?.focus();
+    document.body.style.overflow = "hidden";
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setSelected(null);
+        return;
+      }
+      if (event.key !== "Tab" || !popRef.current) return;
+      const focusable = popRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+      previous?.focus?.();
+    };
+  }, [selected]);
 
   const monday = useMemo(() => {
     const tasks = board.data?.tasks ?? [];
@@ -76,13 +133,13 @@ export function BoardPage() {
           />
           {view === "week" ? (
             <div style={{ display: "flex", gap: 6 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset((v) => v - 1)}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(weekOffset - 1)}>
                 上一周
               </button>
               <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(0)}>
                 本周
               </button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset((v) => v + 1)}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(weekOffset + 1)}>
                 下一周
               </button>
             </div>
@@ -119,9 +176,9 @@ export function BoardPage() {
             title="还没有学习计划"
             hint="先填写约束（目标、截止日期、可用时间），系统会生成第一份草案。"
             action={
-              <a className="btn" href="/constraint" style={{ marginTop: 6 }}>
+              <Link className="btn" to="/constraint" style={{ marginTop: 6 }}>
                 去填写约束
-              </a>
+              </Link>
             }
           />
         ) : null}
@@ -139,7 +196,7 @@ export function BoardPage() {
                   逾期超过 {data.adjust_hint.threshold_hours} 小时，建议重排一次；已完成的记录不会被改动。
                 </p>
               </div>
-              <a className="btn btn-ghost btn-sm" href="/adjust">去调整</a>
+              <Link className="btn btn-ghost btn-sm" to="/adjust">去调整</Link>
             </div>
           </Card>
         ) : null}
@@ -236,7 +293,7 @@ export function BoardPage() {
                           {task.concept_name}
                         </p>
                         <p className="row-sub num">
-                          {task.start.slice(11)}–{task.end.slice(11)} · {formatMinutes(task.minutes)}
+                          {formatClock(task.start)}–{formatClock(task.end)} · {formatMinutes(task.minutes)}
                         </p>
                       </button>
                       <span className="chip" data-tone={task.kind === "study" ? "study" : "practice"}>
@@ -282,7 +339,14 @@ export function BoardPage() {
       </div>
 
       {selected ? (
-        <div className="pop">
+        <div
+          className="pop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="任务操作"
+          tabIndex={-1}
+          ref={popRef}
+        >
           <div className="pop-head">
             <div>
               <p className="h3">{selected.concept_name}</p>
@@ -347,7 +411,7 @@ function TodayList({ tasks, onSelect }: {
       {tasks.map((task) => (
         <div key={task.task_id + task.start} className="row-item">
           <span className="mono-sm" style={{ width: 96 }}>
-            {task.start.slice(11)}–{task.end.slice(11)}
+            {formatClock(task.start)}–{formatClock(task.end)}
           </span>
           <button
             style={{
@@ -394,7 +458,7 @@ function AllList({ tasks, onSelect }: {
           </div>
           {list.map((task) => (
             <div key={task.task_id + task.start} className="row-item">
-              <span className="mono-sm" style={{ width: 64 }}>{task.start.slice(11)}</span>
+              <span className="mono-sm" style={{ width: 64 }}>{formatClock(task.start)}</span>
               <button
                 style={{
                   flex: 1, minWidth: 0, textAlign: "left",
