@@ -9,11 +9,12 @@ interface Props {
   onSelect: (task: BoardTask) => void;
 }
 
-const ROW_H = 38;
+const ROW_H = 52;
 
 export function TimetableGrid({ tasks, monday, onSelect }: Props) {
   const days: DayHeader[] = weekDays(monday);
-  const loads = dailyMinutes(tasks);
+  const weekTasks = tasks.filter((task) => days.some((day) => task.start.startsWith(day.iso)));
+  const loads = dailyMinutes(weekTasks);
   const heaviest = maxOf(loads);
   const win = hourWindow(tasks);
   const hours = Array.from({ length: win.end - win.start }, (_, i) => win.start + i);
@@ -75,7 +76,7 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
               {dayTasks.map((task) => {
                 const block = toBlock(task, index, win);
                 const pixels = (block.heightPct / 100) * gridHeight;
-                const compact = pixels < 34;
+                const compact = pixels < 42;
                 const status = task.done
                   ? "done"
                   : task.overdue
@@ -127,7 +128,6 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
           );
         })}
       </div>
-      </div>
 
       <div className="load-row">
         <div className="load-cell" />
@@ -142,6 +142,7 @@ export function TimetableGrid({ tasks, monday, onSelect }: Props) {
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

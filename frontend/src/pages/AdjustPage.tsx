@@ -71,7 +71,7 @@ export function AdjustPage() {
       <header className="page-head">
         <div>
           <h1 className="h1">调整计划</h1>
-          <p className="sub">先说清为什么调整，再重新生成。确认后会产生新版本，旧版本转只读。</p>
+          <p className="sub">{plan?.course_name ?? "我的课程"} · 让计划跟上你的节奏</p>
         </div>
         {plan?.current_version ? (
           <span className="chip" data-tone="brand">当前 v{plan.current_version}</span>

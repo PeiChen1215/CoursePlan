@@ -97,6 +97,10 @@ export function BoardPage() {
   const todayTasks = (data?.tasks ?? []).filter((task) => task.start.startsWith(today));
   const todayLeft = todayTasks.filter((task) => !task.done);
   const todayMinutes = todayLeft.reduce((sum, task) => sum + task.minutes, 0);
+  const now = new Date();
+  const localNow = today + "T" + String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+  const nextTask = todayLeft.find((task) => task.end > localNow) ?? todayLeft[0];
+  const milestones = [...new Set((data?.tasks ?? []).map((task) => task.concept_name))];
 
   function notifyError(err: unknown) {
     toast.push(err instanceof Error ? err.message : String(err), "error");
@@ -113,7 +117,7 @@ export function BoardPage() {
     <Layout>
       <header className="page-head">
         <div>
-          <h1 className="h1">看板</h1>
+          <h1 className="h1">学习看板</h1>
           <p className="sub">
             {plan ? plan.course_name : "还没有学习计划"}
             {progress
@@ -131,23 +135,32 @@ export function BoardPage() {
               { value: "all", label: "全部" },
             ]}
           />
-          {view === "week" ? (
-            <div style={{ display: "flex", gap: 6 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(weekOffset - 1)}>
-                上一周
-              </button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(0)}>
-                本周
-              </button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(weekOffset + 1)}>
-                下一周
-              </button>
-            </div>
-          ) : null}
         </div>
       </header>
 
       <div className="stack">
+        {data && plan ? (
+          <section className="learning-overview" aria-label="课程学习概览">
+            <div className="overview-main">
+              <p className="overview-label"><Icon name="book" />正在学习 <span>v{plan.current_version}</span></p>
+              <h2>{plan.course_name}</h2>
+              <div className="course-path" aria-label="知识点进度">
+                {milestones.map((name, index) => {
+                  const tasks = data.tasks.filter((task) => task.concept_name === name);
+                  const done = tasks.every((task) => task.done);
+                  return <span className="path-step" data-done={done} data-active={name === nextTask?.concept_name} key={name} title={name + (done ? " · 已完成" : " · 待学习")}><i>{done ? <Icon name="check" size={10} /> : String(index + 1).padStart(2, "0")}</i><span>{name}</span></span>;
+                })}
+              </div>
+              <p className="overview-caption">{milestones.length} 个知识点<span>已完成 {progress?.done_tasks ?? 0} 项任务</span></p>
+            </div>
+            <div className="overview-focus">
+              <p className="overview-label"><Icon name="clock" />今日下一步</p>
+              <h3>{nextTask ? nextTask.concept_name : "今日任务已完成"}</h3>
+              <p>{nextTask ? formatClock(nextTask.start) + " · " + formatMinutes(nextTask.minutes) + " · " + (nextTask.kind === "study" ? "学习" : "练习") : "保持节奏，明天继续。"}</p>
+              {nextTask ? <button className="focus-action" onClick={() => setSelected(nextTask)}>查看任务<Icon name="chevron" /></button> : <button className="focus-action" onClick={() => setView("all")}>查看后续安排<Icon name="chevron" /></button>}
+            </div>
+          </section>
+        ) : null}
         <div className="stat-strip">
           <Stat
             label="完成进度"
@@ -203,16 +216,18 @@ export function BoardPage() {
 
         <Card>
             <CardHead
-              title={view === "today" ? "今天" : view === "all" ? "全周期" : "本周课表"}
-              hint={
-                view === "week"
-                  ? "块的高度就是时长，点击可打卡、更正或看资料"
-                  : view === "today"
-                    ? "今天要做的事，勾掉即打卡"
-                    : "按日期列出全部任务"
-              }
+              title={view === "today" ? "今日安排" : view === "all" ? "全部任务" : "每周课表"}
+              action={view === "week" ? (
+                <div className="week-navigation">
+                  <span className="week-range">{monday.getMonth() + 1}月{monday.getDate()}日 – {addDays(monday, 6).getMonth() + 1}月{addDays(monday, 6).getDate()}日</span>
+                  <button className="btn btn-ghost btn-sm btn-icon icon-prev" title="上一周" aria-label="上一周" onClick={() => setWeekOffset(weekOffset - 1)}><Icon name="chevron" /></button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setWeekOffset(0)}>本周</button>
+                  <button className="btn btn-ghost btn-sm btn-icon" title="下一周" aria-label="下一周" onClick={() => setWeekOffset(weekOffset + 1)}><Icon name="chevron" /></button>
+                </div>
+              ) : null}
             />
             <div className="card-body" style={{ paddingTop: 10 }}>
+              {board.isPending && plan ? <div className="skeleton board-loading" role="status" aria-label="正在加载课表" /> : null}
               {data && data.tasks.length === 0 ? (
                 <EmptyState
                   title="这个版本还没有排入任务"
@@ -221,7 +236,10 @@ export function BoardPage() {
               ) : null}
 
               {data && data.tasks.length > 0 && view === "week" ? (
-                <TimetableGrid tasks={data.tasks} monday={monday} onSelect={setSelected} />
+                <>
+                  <TimetableGrid tasks={data.tasks} monday={monday} onSelect={setSelected} />
+                  <div className="legend"><span><i />学习</span><span><i />练习</span><span><i />已完成</span></div>
+                </>
               ) : null}
 
               {data && view === "today" ? (
@@ -234,7 +252,7 @@ export function BoardPage() {
             </div>
           </Card>
 
-        <div className="grid-3">
+        <div className="board-summary">
             <Card className="card-pad">
               <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                 <Ring percent={rate * 100} caption="完成率" />
@@ -339,6 +357,8 @@ export function BoardPage() {
       </div>
 
       {selected ? (
+        <>
+        <div className="dialog-backdrop" onClick={() => setSelected(null)} aria-hidden="true" />
         <div
           className="pop"
           role="dialog"
@@ -390,6 +410,7 @@ export function BoardPage() {
             />
           </div>
         </div>
+        </>
       ) : null}
     </Layout>
   );

@@ -1,6 +1,6 @@
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
-import { Card, CardHead, EmptyState } from "../components/ui";
+import { Card, CardHead, EmptyState, Segmented } from "../components/ui";
 import { useEvents, usePlans } from "../hooks/queries";
 import { formatDateTime, formatMinutes } from "../lib/format";
 
@@ -15,6 +15,8 @@ export function TimelinePage() {
   const plan = plans.data?.items?.[0] ?? null;
   const events = useEvents(plan?.plan_id ?? null);
   const items = events.data?.items ?? [];
+  const [filter, setFilter] = useState("all");
+  const visible = filter === "all" ? items : items.filter((item) => item.event_type === filter);
 
   return (
     <Layout>
@@ -22,7 +24,7 @@ export function TimelinePage() {
         <div>
           <h1 className="h1">学习记录</h1>
           <p className="sub">
-            打卡、更正、备注都记在这里。事件只追加，不删除；更正会指向被更正的那一条。
+            {plan?.course_name ?? "我的课程"} · 每一步努力都有迹可循
           </p>
         </div>
         <span className="chip">{items.length} 条记录</span>
@@ -30,6 +32,10 @@ export function TimelinePage() {
 
       <div className="stack">
         {events.error ? <ErrorBox error={events.error} /> : null}
+        <Segmented value={filter} onChange={setFilter} options={[
+          { value: "all", label: "全部" }, { value: "done", label: "打卡" },
+          { value: "correction", label: "更正" }, { value: "note", label: "备注" },
+        ]} />
 
         {items.length === 0 ? (
           <EmptyState
@@ -38,10 +44,11 @@ export function TimelinePage() {
           />
         ) : (
           <Card>
-            <CardHead title="按时间倒序" hint="最近的记录在最上面" />
+            <CardHead title="学习足迹" action={<span className="mono-sm">{visible.length} 条</span>} />
             <div className="card-body" style={{ paddingTop: 4 }}>
-              {items.map((row) => (
-                <div key={row.event_id} className="row-item" style={{ alignItems: "flex-start" }}>
+              {!visible.length ? <EmptyState title="暂无此类记录" /> : null}
+              {visible.map((row) => (
+                <div key={row.event_id} className="row-item timeline-event" data-type={row.event_type} style={{ alignItems: "flex-start" }}>
                   <span className="mono-sm" style={{ width: 108, flex: "none" }}>
                     {formatDateTime(row.occurred_at)}
                   </span>
@@ -74,3 +81,4 @@ export function TimelinePage() {
     </Layout>
   );
 }
+import { useState } from "react";

@@ -1,20 +1,23 @@
 import type { ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { usePlans } from "../hooks/queries";
 import { Icon } from "./ui";
 
 const LEARN = [
-  { to: "/board", label: "看板", icon: "board" as const },
-  { to: "/draft", label: "草案", icon: "draft" as const },
-  { to: "/adjust", label: "调整", icon: "adjust" as const },
-  { to: "/timeline", label: "记录", icon: "history" as const },
-  { to: "/versions", label: "版本", icon: "version" as const },
+  { to: "/board", label: "学习看板", icon: "board" as const },
+  { to: "/draft", label: "计划草案", icon: "draft" as const },
+  { to: "/adjust", label: "计划调整", icon: "adjust" as const },
+  { to: "/timeline", label: "学习记录", icon: "history" as const },
+  { to: "/versions", label: "版本历史", icon: "version" as const },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {
   const { me, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const current = LEARN.find((item) => item.to === location.pathname)?.label
+    ?? (location.pathname === "/admin" ? "课程内容" : "学习偏好");
   const plans = usePlans();
   const plan = plans.data?.items?.[0];
 
@@ -32,7 +35,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <nav className="nav-group">
+        <nav className="nav-group" aria-label="学习导航">
           <span className="nav-label">学习</span>
           {LEARN.map((item) => (
             <NavLink key={item.to} to={item.to} className="nav-item">
@@ -42,11 +45,11 @@ export function Layout({ children }: { children: ReactNode }) {
           ))}
         </nav>
 
-        <nav className="nav-group">
+        <nav className="nav-group" aria-label="设置导航">
           <span className="nav-label">设置</span>
           <NavLink to="/constraint" className="nav-item">
             <Icon name="sliders" />
-            填写约束
+            学习偏好
           </NavLink>
           {me?.role === "admin" ? (
             <NavLink to="/admin" className="nav-item">
@@ -84,7 +87,13 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="main" id="main">{children}</main>
+      <div className="workspace">
+        <div className="workspace-bar">
+          <span><span className="faint">我的学习</span><span className="breadcrumb-divider">/</span>{current}</span>
+          <time dateTime={new Date().toISOString()}>{new Intl.DateTimeFormat("zh-CN", { month: "long", day: "numeric", weekday: "long" }).format(new Date())}</time>
+        </div>
+        <main className="main" id="main">{children}</main>
+      </div>
     </div>
   );
 }

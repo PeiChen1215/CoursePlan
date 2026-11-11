@@ -1,9 +1,14 @@
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { Card, CardHead, EmptyState, VisuallyHidden } from "../components/ui";
 import { formatDateTime } from "../lib/format";
 import { useDiff, usePlans, useVersions } from "../hooks/queries";
+
+const REASON_LABELS: Record<string, string> = {
+  initial: "首次规划", delay: "进度延后", goal_change: "目标调整",
+  availability_change: "时间调整", duration_change: "时长调整",
+};
 
 export function VersionsPage() {
   const plans = usePlans();
@@ -29,14 +34,18 @@ export function VersionsPage() {
     <Layout>
       <header className="page-head">
         <div>
-          <h1 className="h1">版本</h1>
-          <p className="sub">已确认的版本只读。差异按稳定任务 ID 比对，分新增、移除、移动、时长变化四类。</p>
+          <h1 className="h1">版本历史</h1>
+          <p className="sub">{plan?.course_name ?? "我的课程"} · 每一次计划的变化</p>
         </div>
-        {current ? <span className="chip" data-tone="brand">当前 v{current}</span> : null}
+        <div className="page-head-actions">
+          {current ? <span className="chip" data-tone="brand">当前 v{current}</span> : null}
+          <Link className="btn btn-ghost" to="/adjust">调整计划</Link>
+        </div>
       </header>
 
       <div className="stack">
         {versions.error ? <ErrorBox error={versions.error} /> : null}
+        {diff.error ? <ErrorBox error={diff.error} /> : null}
 
         {items.length === 0 ? (
           <EmptyState title="还没有确认过的版本" hint="在「草案」里生成并确认一次，就会产生 v1。" />
@@ -68,7 +77,7 @@ export function VersionsPage() {
                           <span className="chip" data-tone="brand" style={{ marginLeft: 8 }}>当前</span>
                         ) : null}
                       </td>
-                      <td>{row.change_reason}</td>
+                      <td>{REASON_LABELS[row.change_reason] ?? row.change_reason}</td>
                       <td className="row-sub">{row.change_note}</td>
                       <td className="num">{row.tasks}</td>
                       <td className="num">{row.slices}</td>
@@ -87,16 +96,6 @@ export function VersionsPage() {
           </Card>
         )}
 
-        {items.length <= 1 ? (
-          <Card className="card-pad" quiet>
-            <p className="h3">怎么产生第二个版本</p>
-            <p className="sub" style={{ marginTop: 6 }}>
-              去「调整」选一个原因（比如进度落后），重排后确认，就会生成 v2；
-              这里可以按类别看到新增、移除、移动和时长变化。
-            </p>
-          </Card>
-        ) : null}
-
         {diff.data ? (
           <Card>
             <CardHead title={"v" + from + " → v" + to} hint="按类别列出变化的任务" />
@@ -108,7 +107,7 @@ export function VersionsPage() {
                   ["移动", diff.data.moved, "warn"],
                   ["时长变化", diff.data.resized, "brand"],
                 ] as const).map(([label, ids, tone]) => (
-                  <div key={label} className="card card-quiet card-pad" style={{ padding: "12px 14px" }}>
+                  <div key={label} className="diff-category" style={{ padding: "12px 14px" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <span className="h3">{label}</span>
                       <span className="chip" data-tone={tone}>{ids.length}</span>

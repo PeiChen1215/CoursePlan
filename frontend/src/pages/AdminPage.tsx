@@ -61,7 +61,7 @@ export function AdminPage() {
         <div>
           <h1 className="h1">课程内容</h1>
           <p className="sub">
-            先修关系整批提交：成环时整批拒绝并返回环路；被版本引用的知识点只能停用。
+            {course?.name ?? "课程管理"} · 知识点、先修关系与学习资料
           </p>
         </div>
         {course ? (
@@ -75,7 +75,7 @@ export function AdminPage() {
         <Card>
           <CardHead title="课程信息" hint={course?.semester ?? ""} />
           <div className="card-body">
-            <div className="grid-3" style={{ gridTemplateColumns: "1.2fr 0.6fr auto", gap: 12, alignItems: "end" }}>
+            <div className="admin-course-grid">
               <Field label="课程名称">
                 <input className="input" name="course_name" value={courseName}
                        onChange={(event) => setCourseName(event.target.value)} />
@@ -85,7 +85,7 @@ export function AdminPage() {
                        inputMode="numeric"
                        onChange={(event) => setCourseHours(event.target.value)} />
               </Field>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div className="admin-inline">
                 <button
                   className="btn"
                   disabled={patchCourse.isPending || (!courseName && !courseHours)}
@@ -107,7 +107,7 @@ export function AdminPage() {
                   保存
                 </button>
                 {confirmingDisable ? (
-                  <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span className="admin-inline">
                     <span className="row-sub" style={{ maxWidth: 180 }}>
                       停用后不能新建计划，历史计划仍可打开。
                     </span>
@@ -222,8 +222,8 @@ export function AdminPage() {
           <Card>
             <CardHead title={"先修关系（" + edges.length + "）"} hint="先修 → 后继" />
             <div className="card-body stack" style={{ gap: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <select className="select" value={fromId}
+              <div className="admin-prereqs">
+                <select className="select" value={fromId} aria-label="先修知识点"
                         onChange={(event) => setFromId(event.target.value === "" ? "" : Number(event.target.value))}>
                   <option value="">先修</option>
                   {list.map((item) => (
@@ -231,7 +231,7 @@ export function AdminPage() {
                   ))}
                 </select>
                 <span className="faint">→</span>
-                <select className="select" value={toId}
+                <select className="select" value={toId} aria-label="后继知识点"
                         onChange={(event) => setToId(event.target.value === "" ? "" : Number(event.target.value))}>
                   <option value="">后继</option>
                   {list.map((item) => (
@@ -267,7 +267,7 @@ export function AdminPage() {
             hint="资料只有关联到知识点，学生才会在任务里看到"
           />
           <div className="card-body stack" style={{ gap: 12 }}>
-            <div className="grid-3" style={{ gridTemplateColumns: "1.4fr 0.8fr 1.6fr 0.6fr", gap: 10 }}>
+            <div className="admin-resource-grid">
               <Field label="标题">
                 <input className="input" name="resource_title" value={resTitle}
                        onChange={(event) => setResTitle(event.target.value)} />
@@ -385,10 +385,10 @@ export function AdminPage() {
             </table>
             </div>
 
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
-              <div className="field" style={{ width: 240 }}>
-                <label>关联到知识点</label>
-                <select className="select" value={linkTarget}
+            <div className="admin-inline">
+              <div className="field" style={{ width: 240, maxWidth: "100%" }}>
+                <label htmlFor="link-concept">关联到知识点</label>
+                <select id="link-concept" className="select" value={linkTarget}
                         onChange={(event) => setLinkTarget(event.target.value === "" ? "" : Number(event.target.value))}>
                   <option value="">请选择</option>
                   {list.map((item) => (

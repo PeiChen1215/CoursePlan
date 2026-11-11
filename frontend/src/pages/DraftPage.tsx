@@ -28,8 +28,8 @@ export function DraftPage() {
     <Layout>
       <header className="page-head">
         <div>
-          <h1 className="h1">草案</h1>
-          <p className="sub">按约束生成一份草案，校验通过才能确认。确认后草案作废，版本不可再改。</p>
+          <h1 className="h1">计划草案</h1>
+          <p className="sub">{plan?.course_name ?? "我的课程"} · 待确认的学习安排</p>
         </div>
         <div className="page-head-actions">
           <button className="btn btn-ghost" disabled={!planId || generate.isPending}

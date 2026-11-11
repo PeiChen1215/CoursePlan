@@ -13,6 +13,7 @@ htmlcov/
 
 # ---------- Node / 前端 ----------
 node_modules/
+.npm-cache/
 dist/
 dist-ssr/
 .vite/

@@ -107,8 +107,8 @@ export function ConstraintPage() {
     <Layout>
       <header className="page-head">
         <div>
-          <h1 className="h1">填写约束</h1>
-          <p className="sub">先用一句话说清楚，系统抽出字段；抽不出的会问，最多问两项。</p>
+          <h1 className="h1">学习偏好</h1>
+          <p className="sub">{plan?.course_name ?? "我的课程"} · 目标、期限与学习时间</p>
         </div>
         <div className="page-head-actions">
           {plan ? null : (
