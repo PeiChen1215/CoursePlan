@@ -36,6 +36,8 @@ export function ConstraintPage() {
   const [candidates, setCandidates] = useState<{ concept_id: number; name: string }[]>([]);
   const [dailyLimit, setDailyLimit] = useState<number | null>(null);
   const [turns, setTurns] = useState<{ mine: string; reply: string }[]>([]);
+  // 记录这次抽取是谁做的：llm（真模型）/ local（规则）/ mock
+  const [mode, setMode] = useState<string>("");
   const [filled, setFilled] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
@@ -77,6 +79,7 @@ export function ConstraintPage() {
     const said = utterance;
     extract.mutate({ utterance, filled }, {
       onSuccess: (data) => {
+        setMode(data.mode);
         setQuestions(data.questions);
         setCandidates(data.candidates);
         setFilled((prev) => ({ ...prev, ...data.fields }));
@@ -144,7 +147,14 @@ export function ConstraintPage() {
           <Card>
             <CardHead
               title="用一句话描述"
-              hint={extract.isPending ? "正在整理…" : undefined}
+              hint={extract.isPending ? "正在整理…" : "抽不出的字段会一次问两项"}
+              action={
+                mode ? (
+                  <span className="chip" data-tone={mode === "llm" ? "brand" : "warn"}>
+                    {mode === "llm" ? "模型解析" : mode === "local" ? "规则解析" : "本地模拟"}
+                  </span>
+                ) : null
+              }
             />
             <div className="card-body">
               <div style={{ display: "flex", gap: 8 }}>

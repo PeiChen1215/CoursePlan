@@ -17,7 +17,8 @@
   --link: #58b6f5;
   --sidebar-bg: #111214;
 }
-* { letter-spacing: 0 !important; }
+/* 字距默认归零，但允许组件按需覆盖（不要再写 !important） */
+:root { letter-spacing: normal; }
 body { overflow-x: clip; font-size: 15px; background: var(--bg); }
 button, input, select, textarea { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
@@ -45,7 +46,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .guide-trigger:hover { background: var(--subtle); color: var(--ink); }
 .sidebar-foot > p { display: none; }
 .user-card { padding: 12px 8px; gap: 10px; }
-.user-card .row-title { font-size: 14px !important; font-weight: 750; }
+.user-card .row-title { font-size: 14px; font-weight: 750; }
 .avatar { width: 32px; height: 32px; background: var(--ink); color: var(--button-ink); font-size: 12px; font-weight: 700; }
 .user-card .btn { padding: 0; width: 32px; height: 32px; }
 .workspace { min-width: 0; border-left: 1px solid var(--line); }
@@ -102,7 +103,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .stat-track > span { background: var(--ink); }
 .empty { border: 0; background: transparent; padding: 60px 24px; gap: 12px; }
 .empty-icon { display: none; }
-.empty .h2 { font-size: 22px !important; font-weight: 800; }
+.empty .h2 { font-size: 22px; font-weight: 800; }
 .empty .sub { color: var(--ink-2); }
 .badge-soft { background: transparent; padding: 0; font-size: 11px; }
 .badge-soft[data-status="pending"] { color: var(--ink-2); background: transparent; }
@@ -290,7 +291,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .welcome-progress span[data-active="true"] { background: var(--ink); }
 .welcome-content { padding: 28px; min-height: 330px; animation: content-in 150ms ease-out; }
 .welcome-step { font-size: 11px; color: var(--ink-2); margin-bottom: 10px; font-variant-numeric: tabular-nums; }
-.welcome-content h2 { font-size: 24px; line-height: 1.4; font-weight: 700; margin-bottom: 24px; outline: none; }
+.welcome-content h2 { font-size: 24px; line-height: 1.4; font-weight: 700; margin-bottom: 24px; }
 .welcome-options { border: 0; padding: 0; margin: 0; }
 .welcome-options legend { font-size: 12px; color: var(--ink-2); margin-bottom: 12px; }
 .welcome-options label { display: flex; align-items: center; gap: 12px; padding: 14px 12px; margin-bottom: 8px; border: 1px solid var(--line-strong); border-radius: 6px; cursor: pointer; font-size: 14px; }
