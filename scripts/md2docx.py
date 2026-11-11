@@ -46,7 +46,7 @@ COVER = {
     ],
 }
 
-CAPTION_RE = re.compile(r"^表\s*\d+\.\d+")
+CAPTION_RE = re.compile(r"^表\s*[0-9A-Z]+\.\d+")
 FIG_CAP_RE = re.compile(r"^图\s*\d+-\d+\s")
 IMG_RE = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)$")
 CHAPTER_RE = re.compile(r"^##\s+\d+\s")
@@ -418,8 +418,9 @@ def add_table(doc, rows):
         ratio = [0.22, 0.15, 0.34, 0.29]
         widths = [usable * r for r in ratio]
 
-    # 最小列宽约束，避免三字姓名被拆行
-    minimum = float(Cm(1.9))
+    # 最小列宽约束，避免三字姓名被拆行；
+    # 列数多时上限按列均分收窄，否则总宽会超过版心导致负宽度
+    minimum = min(float(Cm(1.9)), usable / cols * 0.9)
     for _ in range(6):
         deficit = sum(max(0.0, minimum - w) for w in widths)
         if deficit <= 0:
@@ -432,7 +433,11 @@ def add_table(doc, rows):
             for w in widths
         ]
 
-    widths = [int(w) for w in widths]
+    # 兜底：裁掉负值并整体缩放到版心宽度
+    widths = [max(0.0, w) for w in widths]
+    scale = usable / sum(widths) if sum(widths) > 0 else 1.0
+    widths = [int(w * scale) for w in widths]
+
     for j, width in enumerate(widths):
         table.columns[j].width = width
 
