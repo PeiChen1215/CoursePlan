@@ -56,3 +56,7 @@ desktop.ini
 
 # ---------- 渲染临时目录 ----------
 .dsh-office-*/
+
+# ---------- 构建缓存与截图 ----------
+*.tsbuildinfo
+frontend/shots/
