@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { ApiError } from "../lib/api";
 import { ErrorBox } from "../components/ErrorBox";
 import { Icon } from "../components/ui";
+import { AppearanceMenu } from "../components/AppearanceMenu";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -42,15 +43,14 @@ export function LoginPage() {
 
   return (
     <main className="login-shell">
-      <header className="login-brand brand">
-        <span className="brand-mark">径</span>
+      <header className="login-header"><div className="login-brand brand">
+        <span className="brand-mark"><Icon name="path" size={30} /></span>
         <div><div className="brand-name">学径</div><div className="brand-sub">StudyPath</div></div>
-      </header>
+      </div><AppearanceMenu /></header>
       <section className="login-content" aria-labelledby="login-title">
-        <span className="login-symbol"><Icon name="book" size={28} /></span>
-        <p className="login-eyebrow">STUDYPATH</p>
+        <span className="login-symbol"><Icon name="path" size={38} /></span>
         <h1 id="login-title">欢迎回到学径</h1>
-        <p className="sub">从今天开始，走好学习的每一步。</p>
+        <p className="sub">你的目标，你的节奏。</p>
         <form className="stack login-form" onSubmit={submit}>
           <div className="field">
             <label htmlFor="username">课程账号</label>

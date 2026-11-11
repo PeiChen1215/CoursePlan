@@ -34,7 +34,6 @@ export function ConstraintPage() {
   const [mastered, setMastered] = useState<number[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [candidates, setCandidates] = useState<{ concept_id: number; name: string }[]>([]);
-  const [modeText, setModeText] = useState("");
   const [dailyLimit, setDailyLimit] = useState<number | null>(null);
   const [turns, setTurns] = useState<{ mine: string; reply: string }[]>([]);
   const [filled, setFilled] = useState<Record<string, unknown>>({});
@@ -78,7 +77,6 @@ export function ConstraintPage() {
     const said = utterance;
     extract.mutate({ utterance, filled }, {
       onSuccess: (data) => {
-        setModeText(data.mode);
         setQuestions(data.questions);
         setCandidates(data.candidates);
         setFilled((prev) => ({ ...prev, ...data.fields }));
@@ -146,7 +144,7 @@ export function ConstraintPage() {
           <Card>
             <CardHead
               title="用一句话描述"
-              hint={modeText ? "解析方式：" + modeText : "规则优先，模型兜底"}
+              hint={extract.isPending ? "正在整理…" : undefined}
             />
             <div className="card-body">
               <div style={{ display: "flex", gap: 8 }}>
@@ -154,7 +152,7 @@ export function ConstraintPage() {
                   className="input"
                   name="utterance"
                   aria-label="用一句话描述目标、期限和可用时间"
-                  placeholder="例如：我想学指针，10 天后，每天两小时"
+                  placeholder="例如：12 月前学完单元测试，每周一、三晚上学习"
                   value={utterance}
                   onChange={(event) => setUtterance(event.target.value)}
                   onKeyDown={(event) => {

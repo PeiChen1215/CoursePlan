@@ -1,13 +1,15 @@
 import { cloneElement, isValidElement, useId } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { CalendarDays, FileText, SlidersHorizontal, History, GitBranch, Settings2,
-  BookOpen, Check, Clock, TriangleAlert, Sparkles, LogOut, Plus, X, ChevronRight, Eye, EyeOff } from "lucide-react";
+  BookOpen, Check, Clock, TriangleAlert, Sparkles, LogOut, Plus, X, ChevronRight, Eye, EyeOff, Route, ArrowUpRight, PencilLine, Sun, Moon, Monitor, PanelLeftClose, PanelLeftOpen, CircleHelp, Circle } from "lucide-react";
 
 const ICONS = {
   board: CalendarDays, draft: FileText, adjust: SlidersHorizontal, history: History,
   version: GitBranch, sliders: Settings2, book: BookOpen, check: Check, clock: Clock,
   alert: TriangleAlert, spark: Sparkles, logout: LogOut, plus: Plus, close: X,
-  chevron: ChevronRight, eye: Eye, eyeOff: EyeOff,
+  chevron: ChevronRight, eye: Eye, eyeOff: EyeOff, path: Route, arrow: ArrowUpRight, practice: PencilLine,
+  sun: Sun, moon: Moon, monitor: Monitor,
+  collapse: PanelLeftClose, expand: PanelLeftOpen, help: CircleHelp, circle: Circle,
 };
 
 export function Icon({ name, size = 16 }: { name: keyof typeof ICONS; size?: number }) {

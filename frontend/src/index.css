@@ -9,21 +9,21 @@
 /* ================= 设计令牌 ================= */
 :root {
   color-scheme: light;
-  --bg: #f7f9f8;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-2: #f5f8f7;
-  --line: #e4eae7;
-  --line-strong: #cbd6d0;
+  --surface-2: #f7f9f9;
+  --line: #eff3f4;
+  --line-strong: #cfd9de;
 
-  --ink: #1b2924;
-  --ink-2: #53645b;
-  --ink-3: #6e7e75;
+  --ink: #0f1419;
+  --ink-2: #536471;
+  --ink-3: #677681;
   --ink-4: #c4cbd8;
 
-  --brand: #167655;
-  --brand-dark: #0e5e42;
-  --brand-soft: #e5f2eb;
-  --brand-ring: rgba(22, 118, 85, 0.18);
+  --brand: #0f1419;
+  --brand-dark: #272c30;
+  --brand-soft: #eff3f4;
+  --brand-ring: rgba(29, 155, 240, 0.2);
 
   --study: #2563eb;
   --study-bg: #eff4ff;

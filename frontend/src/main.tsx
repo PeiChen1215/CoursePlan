@@ -7,6 +7,7 @@ import "./styles/product.css";
 import { App } from "./App";
 import { AuthProvider } from "./hooks/useAuth";
 import { ToastProvider } from "./components/Toast";
+import { ThemeProvider } from "./hooks/useTheme";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,6 +17,7 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ToastProvider>
@@ -25,5 +27,6 @@ createRoot(document.getElementById("root")!).render(
         </ToastProvider>
       </BrowserRouter>
     </QueryClientProvider>
+    </ThemeProvider>
   </StrictMode>,
 );
