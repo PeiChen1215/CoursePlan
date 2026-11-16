@@ -17,6 +17,7 @@ export interface PlanRow {
   course_semester?: string | null;
   course_total_hours?: number | null;
   course_description?: string | null;
+  course_status?: string | null;
 }
 
 export interface BoardTask {
@@ -67,6 +68,36 @@ export interface BoardData {
     threshold_hours: number;
     message: string;
   } | null;
+}
+
+/** 当前选中的计划（多课程下可能有多个计划，选中项存在 localStorage）。 */
+const CURRENT_PLAN_KEY = "studypath.current_plan";
+
+export function readCurrentPlanId(): number | null {
+  const raw = localStorage.getItem(CURRENT_PLAN_KEY);
+  const id = raw === null ? NaN : Number(raw);
+  return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+export function writeCurrentPlanId(planId: number | null) {
+  if (planId === null) localStorage.removeItem(CURRENT_PLAN_KEY);
+  else localStorage.setItem(CURRENT_PLAN_KEY, String(planId));
+}
+
+export function useCurrentPlan() {
+  const plans = usePlans();
+  const items = plans.data?.items ?? [];
+  const stored = readCurrentPlanId();
+  const plan = items.find((item) => item.plan_id === stored) ?? items[0] ?? null;
+  return {
+    plan,
+    items,
+    isPending: plans.isPending,
+    error: plans.error,
+    /** 计划多于一个时，界面才需要显示切换器 */
+    multiple: items.length > 1,
+    select: (planId: number) => writeCurrentPlanId(planId),
+  };
 }
 
 export function usePlans() {
@@ -220,6 +251,29 @@ export function usePatchCourse() {
     mutationFn: (args: { courseId: number; patch: Record<string, unknown> }) =>
       api.request<{ course_id: number }>("/api/courses/" + args.courseId,
         { method: "PATCH", body: JSON.stringify(args.patch) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.courses }),
+  });
+}
+
+export function useCreateCourse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      name: string;
+      semester: string;
+      total_hours: number;
+      description?: string;
+    }) => api.post<{ course_id: number }>("/api/courses", body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.courses }),
+  });
+}
+
+export function useEnableCourse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (courseId: number) =>
+      api.post<{ course_id: number; status: string }>(
+        "/api/courses/" + courseId + "/enable"),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.courses }),
   });
 }

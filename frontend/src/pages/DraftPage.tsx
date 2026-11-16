@@ -5,14 +5,12 @@ import { IssueList } from "../components/IssueList";
 import { useToast } from "../components/Toast";
 import { Card, CardHead, EmptyState, Icon, Stat } from "../components/ui";
 import {
-  useConfirmDraft, useGenerateDraft, useOverrideTasks, usePlans,
-} from "../hooks/queries";
+  useConfirmDraft, useGenerateDraft, useOverrideTasks, useCurrentPlan } from "../hooks/queries";
 import { formatMinutes } from "../lib/format";
 
 export function DraftPage() {
   const toast = useToast();
-  const plans = usePlans();
-  const plan = plans.data?.items?.[0] ?? null;
+  const plan = useCurrentPlan().plan;
   const planId = plan?.plan_id ?? 0;
   const generate = useGenerateDraft(planId);
   const confirm = useConfirmDraft(planId);

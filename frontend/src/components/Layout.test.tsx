@@ -6,7 +6,18 @@ import { ThemeProvider } from "../hooks/useTheme";
 import { Layout } from "./Layout";
 
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ me: { user_id: 42, username: "alice", role: "student" }, logout: vi.fn() }) }));
-vi.mock("../hooks/queries", () => ({ usePlans: () => ({ data: { items: [{ current_version: 1, course_name: "软件工程" }] } }) }));
+vi.mock("../hooks/queries", () => ({
+  useCurrentPlan: () => ({
+    plan: { plan_id: 1, current_version: 1, course_name: "软件工程" },
+    items: [{ plan_id: 1, current_version: 1, course_name: "软件工程" }],
+    isPending: false,
+    error: null,
+    multiple: false,
+    select: vi.fn(),
+  }),
+  writeCurrentPlanId: vi.fn(),
+  readCurrentPlanId: () => null,
+}));
 
 beforeEach(() => {
   localStorage.clear();

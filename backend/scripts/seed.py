@@ -48,6 +48,23 @@ CONCEPTS = [
     ("代码评审", "第5章", 12, 3, 90),
 ]
 
+# 第二门课程：用于演示"多课程 + 学生选课"（v1.2 起支持）
+SECOND_COURSE = {
+    "name": "软件测试技术",
+    "semester": "2027 春",
+    "total_hours": 32,
+    "description": "面向测试岗位的核心方法：从测试用例设计到自动化与缺陷管理。",
+    "concepts": [
+        ("测试基础", "第1章", 1, 2, 80),
+        ("等价类与边界值", "第2章", 2, 3, 100),
+        ("判定表与场景法", "第2章", 3, 3, 110),
+        ("白盒覆盖", "第3章", 4, 4, 130),
+        ("接口测试", "第4章", 5, 3, 120),
+        ("自动化与持续测试", "第5章", 6, 4, 140),
+    ],
+    "prereqs": [(1, 2), (2, 3), (1, 4), (4, 5), (5, 6)],
+}
+
 # (先修 → 后继)
 PREREQS = [
     (1, 2), (2, 3), (3, 4),          # 需求主线
@@ -83,8 +100,33 @@ def seed_content(db: Database) -> dict:
     for u, v in PREREQS:
         conn.execute("INSERT INTO prerequisite(course_id,from_concept_id,to_concept_id)"
                      " VALUES(1,?,?)", (u, v))
+    # 第二门课程（多课程演示）
+    second = SECOND_COURSE
+    cur = conn.execute(
+        "INSERT INTO course(maintainer_id,name,description,semester,total_hours,status)"
+        " VALUES(?,?,?,?,?,'enabled')",
+        (admin_id, second["name"], second["description"], second["semester"],
+         second["total_hours"]))
+    second_id = int(cur.lastrowid)
+    second_ids = {}
+    for name, chapter, order, difficulty, minutes in second["concepts"]:
+        row = conn.execute(
+            "INSERT INTO concept(course_id,name,chapter,difficulty,reference_minutes,"
+            "sort_order,status) VALUES(?,?,?,?,?,?,'enabled')",
+            (second_id, name, chapter, difficulty, minutes, order))
+        second_ids[name] = int(row.lastrowid)
+    # 先修关系里的 1/2/3 是本课程的局部序号，需换成真实知识点 ID
+    local_names = [name for name, *_ in second["concepts"]]
+    for u, v in second["prereqs"]:
+        conn.execute("INSERT INTO prerequisite(course_id,from_concept_id,to_concept_id)"
+                     " VALUES(?,?,?)",
+                     (second_id, second_ids[local_names[u - 1]],
+                      second_ids[local_names[v - 1]]))
+
     conn.commit()
     conn.close()
+    ids["__second_course_id__"] = second_id
+    ids["__second_ids__"] = second_ids
     return ids
 
 

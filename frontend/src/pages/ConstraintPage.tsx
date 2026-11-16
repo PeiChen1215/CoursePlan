@@ -4,8 +4,8 @@ import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
 import { Card, CardHead, Field, Icon, Segmented } from "../components/ui";
 import {
-  useConcepts, useConstraint, useCreatePlan, useExtract, usePlans, usePreviewCapacity,
-  useSaveConstraint,
+  useConcepts, useConstraint, useCourses, useCreatePlan, useCurrentPlan, useExtract,
+  usePreviewCapacity, useSaveConstraint, writeCurrentPlanId,
 } from "../hooks/queries";
 import { formatMinutes } from "../lib/format";
 import {
@@ -17,9 +17,26 @@ const DAY_LABEL = ["一", "二", "三", "四", "五", "六", "日"];
 
 export function ConstraintPage() {
   const toast = useToast();
-  const plans = usePlans();
-  const plan = plans.data?.items?.[0] ?? null;
-  const concepts = useConcepts(1);
+  const current = useCurrentPlan();
+  const courses = useCourses();
+  const [pickedCourseId, setPickedCourseId] = useState<number | null>(null);
+
+  // 可选课程：启用中的课程 + 自己已有计划的课程（即便已停用也能打开历史）
+  const courseOptions = useMemo(() => {
+    const all = courses.data?.items ?? [];
+    const withPlan = new Set(current.items.map((item) => item.course_id));
+    return all.filter((item) => item.status === "enabled" || withPlan.has(item.course_id));
+  }, [courses.data, current.items]);
+
+  const courseId =
+    pickedCourseId
+    ?? current.plan?.course_id
+    ?? courseOptions.find((item) => item.status === "enabled")?.course_id
+    ?? 0;
+  // 当前选中课程对应的计划（同课程只能有一个 active 计划）
+  const plan = current.items.find((item) => item.course_id === courseId) ?? null;
+
+  const concepts = useConcepts(courseId);
   const saved = useConstraint(plan?.plan_id ?? null);
   const createPlan = useCreatePlan();
   const extract = useExtract();
@@ -132,8 +149,12 @@ export function ConstraintPage() {
           {plan ? null : (
             <button className="btn btn-ghost" disabled={createPlan.isPending}
                     onClick={() =>
-                      createPlan.mutate(1, {
-                        onSuccess: () => toast.push("学习计划已创建", "success"),
+                      createPlan.mutate(courseId, {
+                        onSuccess: (data) => {
+                          writeCurrentPlanId(data.plan_id);
+                          setPickedCourseId(courseId);
+                          toast.push("学习计划已创建", "success");
+                        },
                         onError: (error) =>
                           toast.push(error instanceof Error ? error.message : "创建失败", "error"),
                       })
@@ -161,6 +182,30 @@ export function ConstraintPage() {
 
       <div className="grid-2">
         <div className="stack">
+          {courseOptions.length > 1 ? (
+            <Field label="课程">
+              <select
+                className="select"
+                name="course_pick"
+                value={courseId || ""}
+                onChange={(event) => {
+                  const next = Number(event.target.value);
+                  setPickedCourseId(next);
+                  const existing = current.items.find((item) => item.course_id === next);
+                  if (existing) writeCurrentPlanId(existing.plan_id);
+                }}
+              >
+                {courseOptions.map((item) => (
+                  <option key={item.course_id} value={item.course_id}>
+                    {item.name}（{item.semester}）
+                    {item.status === "enabled" ? "" : " · 已停用"}
+                    {current.items.some((row) => row.course_id === item.course_id) ? "" : " · 未建计划"}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          ) : null}
+
           {plan ? (
             <Card>
               <CardHead

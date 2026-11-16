@@ -3,7 +3,7 @@ import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { Card, CardHead, EmptyState, VisuallyHidden } from "../components/ui";
 import { formatDateTime } from "../lib/format";
-import { useDiff, usePlans, useVersions } from "../hooks/queries";
+import { useDiff, useVersions, useCurrentPlan } from "../hooks/queries";
 
 const REASON_LABELS: Record<string, string> = {
   initial: "首次规划", delay: "进度延后", goal_change: "目标调整",
@@ -11,8 +11,7 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 export function VersionsPage() {
-  const plans = usePlans();
-  const plan = plans.data?.items?.[0] ?? null;
+  const plan = useCurrentPlan().plan;
   const planId = plan?.plan_id ?? 0;
   const versions = useVersions(planId || null);
   const [params, setParams] = useSearchParams();

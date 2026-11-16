@@ -4,15 +4,24 @@ import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
 import { Card, CardHead, Field, VisuallyHidden } from "../components/ui";
 import {
-  useConcepts, useCourses, useCreateConcept, useCreateResource, useDisableCourse,
-  useDisableResource, usePatchCourse, usePrereqs, useResources, useSetConceptResources,
-  useSubmitPrereqs,
+  useConcepts, useCourses, useCreateConcept, useCreateCourse, useCreateResource,
+  useDisableCourse, useDisableResource, useEnableCourse, usePatchCourse, usePrereqs,
+  useResources, useSetConceptResources, useSubmitPrereqs,
 } from "../hooks/queries";
 
 export function AdminPage() {
   const toast = useToast();
-  const courseId = 1;
   const courses = useCourses();
+  const courseList = courses.data?.items ?? [];
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
+  const courseId =
+    selectedCourseId ?? courseList.find((item) => item.status === "enabled")?.course_id
+    ?? courseList[0]?.course_id ?? 0;
+  const createCourse = useCreateCourse();
+  const enableCourse = useEnableCourse();
+  const [newName, setNewName] = useState("");
+  const [newSemester, setNewSemester] = useState("2027 春");
+  const [newHours, setNewHours] = useState("32");
   const concepts = useConcepts(courseId);
   const prereqs = usePrereqs(courseId);
   const createConcept = useCreateConcept(courseId);
@@ -72,6 +81,97 @@ export function AdminPage() {
       </header>
 
       <div className="stack">
+        <Card>
+          <CardHead
+            title="课程库"
+            hint={`共 ${courseList.length} 门课程，可同时启用多门`}
+            action={
+              <span className="chip" data-tone="brand">
+                当前：{course?.name ?? "—"}
+              </span>
+            }
+          />
+          <div className="card-body stack" style={{ gap: 12 }}>
+            <div className="admin-course-grid">
+              <Field label="选择课程">
+                <select
+                  className="select"
+                  name="course_select"
+                  value={courseId || ""}
+                  onChange={(event) => setSelectedCourseId(Number(event.target.value))}
+                >
+                  {courseList.map((item) => (
+                    <option key={item.course_id} value={item.course_id}>
+                      {item.name}（{item.semester} · {item.total_hours} 学时
+                      {item.status === "enabled" ? "" : " · 已停用"}）
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <div className="admin-inline" style={{ alignSelf: "end" }}>
+                {course?.status === "enabled" ? (
+                  <span className="row-sub">该课程启用中，学生可以选它建计划</span>
+                ) : (
+                  <button
+                    className="btn btn-ghost"
+                    disabled={enableCourse.isPending}
+                    onClick={() =>
+                      enableCourse.mutate(courseId, {
+                        onSuccess: () => toast.push("课程已启用", "success"),
+                        onError: (error) =>
+                          toast.push(error instanceof Error ? error.message : "启用失败", "error"),
+                      })
+                    }
+                  >
+                    启用这门课
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <details className="admin-new-course">
+              <summary className="row-sub">＋ 新建一门课程</summary>
+              <div className="admin-course-grid" style={{ marginTop: 10 }}>
+                <Field label="课程名称">
+                  <input className="input" name="new_course_name" value={newName}
+                         onChange={(event) => setNewName(event.target.value)} />
+                </Field>
+                <Field label="学期">
+                  <input className="input" name="new_course_semester" value={newSemester}
+                         onChange={(event) => setNewSemester(event.target.value)} />
+                </Field>
+                <Field label="总学时">
+                  <input className="input num" name="new_course_hours" value={newHours}
+                         inputMode="numeric"
+                         onChange={(event) => setNewHours(event.target.value)} />
+                </Field>
+                <div className="admin-inline" style={{ alignSelf: "end" }}>
+                  <button
+                    className="btn"
+                    disabled={createCourse.isPending || !newName.trim()}
+                    onClick={() =>
+                      createCourse.mutate(
+                        { name: newName.trim(), semester: newSemester.trim() || "2027 春", total_hours: Number(newHours) || 32 },
+                        {
+                          onSuccess: (data) => {
+                            toast.push("课程已创建", "success");
+                            setNewName("");
+                            setSelectedCourseId(data.course_id);
+                          },
+                          onError: (error) =>
+                            toast.push(error instanceof Error ? error.message : "创建失败", "error"),
+                        },
+                      )
+                    }
+                  >
+                    创建课程
+                  </button>
+                </div>
+              </div>
+            </details>
+          </div>
+        </Card>
+
         <Card>
           <CardHead title="课程信息" hint={course?.semester ?? ""} />
           <div className="card-body">

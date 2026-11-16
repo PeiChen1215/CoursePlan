@@ -5,8 +5,7 @@ import { IssueList } from "../components/IssueList";
 import { useToast } from "../components/Toast";
 import { Card, CardHead, Field, Icon, Stat } from "../components/ui";
 import {
-  useConfirmDraft, useConstraint, useGenerateDraft, usePlans, useSaveConstraint, useVersions,
-} from "../hooks/queries";
+  useConfirmDraft, useConstraint, useGenerateDraft, useSaveConstraint, useVersions, useCurrentPlan } from "../hooks/queries";
 import { formatMinutes } from "../lib/format";
 
 const REASONS = [
@@ -22,8 +21,7 @@ const LABEL: Record<string, string> = {
 
 export function AdjustPage() {
   const toast = useToast();
-  const plans = usePlans();
-  const plan = plans.data?.items?.[0] ?? null;
+  const plan = useCurrentPlan().plan;
   const planId = plan?.plan_id ?? 0;
   const constraint = useConstraint(planId || null);
   const versions = useVersions(planId || null);

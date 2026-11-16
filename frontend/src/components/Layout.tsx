@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { usePlans } from "../hooks/queries";
+import { useCurrentPlan } from "../hooks/queries";
 import { Icon } from "./ui";
 import { AppearanceMenu } from "./AppearanceMenu";
 import { Onboarding } from "./Onboarding";
@@ -35,8 +35,8 @@ export function Layout({ children }: { children: ReactNode }) {
   useEffect(() => { window.scrollTo({ top: 0 }); }, [location.pathname]);
   const current = LEARN.find((item) => item.to === location.pathname)?.label
     ?? (location.pathname === "/admin" ? "课程内容" : "学习偏好");
-  const plans = usePlans();
-  const plan = plans.data?.items?.[0];
+  const currentPlan = useCurrentPlan();
+  const plan = currentPlan.plan;
 
   return (
     <div className="app-shell" data-collapsed={collapsed}>
@@ -88,6 +88,26 @@ export function Layout({ children }: { children: ReactNode }) {
               {plan.course_total_hours ? <> · {plan.course_total_hours} 学时</> : null}
               <span style={{ display: "block" }}>当前 v{plan.current_version ?? "—"}</span>
             </p>
+          ) : null}
+          {currentPlan.multiple ? (
+            <label className="sidebar-plan-switch">
+              <span className="row-sub">切换课程计划</span>
+              <select
+                className="select"
+                aria-label="切换课程计划"
+                value={plan.plan_id}
+                onChange={(event) => {
+                  currentPlan.select(Number(event.target.value));
+                  navigate("/board");
+                }}
+              >
+                {currentPlan.items.map((item) => (
+                  <option key={item.plan_id} value={item.plan_id}>
+                    {item.course_name}（v{item.current_version ?? "—"}）
+                  </option>
+                ))}
+              </select>
+            </label>
           ) : null}
           <div className="user-card">
             <span className="avatar">{(me?.username ?? "?").slice(0, 1).toUpperCase()}</span>

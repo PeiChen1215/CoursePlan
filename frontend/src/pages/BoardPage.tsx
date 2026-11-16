@@ -8,7 +8,7 @@ import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
 import { EmptyState, Icon, Segmented } from "../components/ui";
 import { StatusBadge } from "../components/StatusBadge";
-import { useBoard, useConstraint, usePlans, useSubmitEvent } from "../hooks/queries";
+import { useBoard, useConstraint, useSubmitEvent, useCurrentPlan } from "../hooks/queries";
 import type { BoardTask } from "../hooks/queries";
 import { formatClock, formatMinutes } from "../lib/format";
 import { addDays, toISODate, weekStartOf } from "../lib/timetable";
@@ -22,8 +22,8 @@ function todayISO(): string {
 
 export function BoardPage() {
   const toast = useToast();
-  const plans = usePlans();
-  const plan = plans.data?.items?.[0] ?? null;
+  const currentPlan = useCurrentPlan();
+  const plan = currentPlan.plan;
   const board = useBoard(plan?.plan_id ?? null);
   const submit = useSubmitEvent(plan?.plan_id ?? 0);
   const constraint = useConstraint(plan?.plan_id ?? null);
@@ -133,13 +133,13 @@ export function BoardPage() {
             ]} />
           </div>
 
-          {plans.error || board.error ? <ErrorBox error={plans.error ?? board.error} /> : null}
-          {plans.isPending || (plan && board.isPending) ? (
+          {currentPlan.error || board.error ? <ErrorBox error={currentPlan.error ?? board.error} /> : null}
+          {currentPlan.isPending || (plan && board.isPending) ? (
             <div className="feed-loading" role="status" aria-label="正在加载学习安排">
               {[0, 1, 2].map((item) => <div className="skeleton" key={item} />)}
             </div>
           ) : null}
-          {!plans.isPending && !plans.error && !plan ? (
+          {!currentPlan.isPending && !currentPlan.error && !plan ? (
             <EmptyState title="从一个目标开始" hint="还没有学习计划。"
               action={<Link className="btn" to="/constraint"><Icon name="plus" />制定计划</Link>} />
           ) : null}

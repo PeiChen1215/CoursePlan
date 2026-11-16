@@ -77,17 +77,21 @@ class ContentService:
         return rows[0]
 
     def create_course(self, maintainer_id: int, name: str, semester: str,
-                      total_hours: int) -> int:
+                      total_hours: int, description: str = "") -> int:
         if not name or len(name) > 100:
             raise ValidationError("E1001", "课程名长度需在 1–100 之间", field="name")
         if total_hours <= 0:
             raise ValidationError("E1001", "总学时需大于 0", field="total_hours")
-        if self.db.scalar("SELECT COUNT(*) FROM course"):
-            raise StateError("E1003", "系统只支持一门课程，请先归档现有课程")
+        duplicate = self.db.scalar(
+            "SELECT COUNT(*) FROM course WHERE name = ? AND semester = ?",
+            (name, semester))
+        if duplicate:
+            raise ValidationError("E1001", "同名同学期的课程已存在", field="name")
         with UnitOfWork(self.db) as uow:
             cur = uow.execute(
-                "INSERT INTO course(maintainer_id,name,semester,total_hours,status)"
-                " VALUES(?,?,?,?,'enabled')", (maintainer_id, name, semester, total_hours))
+                "INSERT INTO course(maintainer_id,name,description,semester,"
+                "total_hours,status) VALUES(?,?,?,?,?,'enabled')",
+                (maintainer_id, name, description, semester, total_hours))
             return int(cur.lastrowid)
 
     def update_course(self, course_id: int, name: Optional[str] = None,
@@ -121,6 +125,14 @@ class ContentService:
         self.get_course(course_id)
         with UnitOfWork(self.db) as uow:
             uow.execute("UPDATE course SET status = 'disabled' WHERE course_id = ?",
+                        (course_id,))
+        return self.get_course(course_id)
+
+    def enable_course(self, course_id: int) -> sqlite3.Row:
+        """重新启用课程（多课程下的可逆操作）。"""
+        self.get_course(course_id)
+        with UnitOfWork(self.db) as uow:
+            uow.execute("UPDATE course SET status = 'enabled' WHERE course_id = ?",
                         (course_id,))
         return self.get_course(course_id)
 

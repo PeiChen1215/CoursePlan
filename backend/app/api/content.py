@@ -47,6 +47,7 @@ class CourseIn(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     semester: str = Field(min_length=1, max_length=32)
     total_hours: int = Field(gt=0, le=200)
+    description: Optional[str] = Field(default=None, max_length=2000)
 
 
 @router.get("/courses")
@@ -59,7 +60,8 @@ def list_courses(request: Request, svc: ContentService = Depends(get_content)):
 def create_course(body: CourseIn, request: Request,
                   claims: Claims = Depends(_admin),
                   svc: ContentService = Depends(get_content)):
-    cid = svc.create_course(claims.sub, body.name, body.semester, body.total_hours)
+    cid = svc.create_course(claims.sub, body.name, body.semester, body.total_hours,
+                            body.description or "")
     return envelope("OK", "ok", {"course_id": cid}, request_id=_rid(request))
 
 
@@ -77,6 +79,14 @@ def patch_course(course_id: int, body: CoursePatch, request: Request,
     row = svc.update_course(course_id, body.name, body.description,
                             body.total_hours, body.semester)
     return envelope("OK", "ok", dict(row), request_id=_rid(request))
+
+
+@router.post("/courses/{course_id}/enable")
+def enable_course(course_id: int, request: Request,
+                  claims: Claims = Depends(_admin),
+                  svc: ContentService = Depends(get_content)):
+    data = svc.enable_course(course_id)
+    return envelope("OK", "ok", dict(data), request_id=_rid(request))
 
 
 @router.post("/courses/{course_id}/disable")

@@ -157,14 +157,17 @@ def test_http_create_course_and_list(client):
     assert [c["course_id"] for c in items] == [cid]
 
 
-def test_http_create_second_course_409(client):
+def test_http_create_second_course_ok(client):
+    """多课程：同一位管理员可以建第二门课，两门都处于启用状态。"""
     h = auth_headers(client)
-    client.post("/api/courses", headers=h,
-                json={"name": "第一门", "semester": "2026秋", "total_hours": 48})
-    r = client.post("/api/courses", headers=h,
-                    json={"name": "第二门", "semester": "2026秋", "total_hours": 48})
-    assert r.status_code == 400
-    assert r.json()["code"] == "E1003"
+    first = client.post("/api/courses", headers=h,
+                        json={"name": "第一门", "semester": "2026秋", "total_hours": 48})
+    second = client.post("/api/courses", headers=h,
+                         json={"name": "第二门", "semester": "2026秋", "total_hours": 48})
+    assert first.status_code == 200 and second.status_code == 200
+    items = client.get("/api/courses", headers=h).json()["data"]["items"]
+    enabled = [c for c in items if c["status"] == "enabled"]
+    assert len(enabled) >= 2
 
 
 def test_http_prereq_list_after_batch(client):

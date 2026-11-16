@@ -205,10 +205,27 @@ def test_create_course_ok(db):
     assert [c["name"] for c in svc.list_courses()] == ["新课程"]
 
 
-def test_second_course_rejected(seeded, svc):
-    with pytest.raises(StateError) as e:
-        svc.create_course(2, "另一门", "2027春", 36)
-    assert "只支持一门课程" in e.value.message
+def test_second_course_allowed(seeded, svc):
+    """v1.2 起多课程并存：第二门课程可以直接创建并处于启用状态。"""
+    cid = svc.create_course(1, "另一门课", "2027春", 36)
+    row = svc.get_course(cid)
+    assert row["status"] == "enabled"
+    assert row["name"] == "另一门课"
+
+
+def test_duplicate_course_name_and_semester_rejected(seeded, svc):
+    svc.create_course(1, "重复课", "2027春", 36)
+    with pytest.raises(ValidationError) as e:
+        svc.create_course(1, "重复课", "2027春", 40)
+    assert e.value.field == "name"
+
+
+def test_enable_course_restores_status(seeded, svc):
+    cid = svc.create_course(1, "可停可启", "2027春", 36)
+    svc.disable_course(cid)
+    assert svc.get_course(cid)["status"] == "disabled"
+    svc.enable_course(cid)
+    assert svc.get_course(cid)["status"] == "enabled"
 
 
 def test_create_course_rejects_bad_hours(svc):
@@ -265,3 +282,37 @@ def test_update_course_rejects_long_description(svc):
     with pytest.raises(ValidationError) as e:
         svc.update_course(1, description="x" * 2001)
     assert e.value.field == "description"
+
+
+# ---------------- 多课程（v1.2 起取消单课程约束）
+def test_multiple_courses_allowed(client):
+    """两门课可以同时启用，互不干扰。"""
+    h = auth(token_of(client))
+    first = client.post("/api/courses", headers=h,
+                        json={"name": "数据结构", "semester": "2027 春", "total_hours": 32})
+    second = client.post("/api/courses", headers=h,
+                         json={"name": "操作系统", "semester": "2027 春", "total_hours": 40})
+    assert first.status_code == 200, first.text
+    assert second.status_code == 200, second.text
+    items = client.get("/api/courses", headers=h).json()["data"]["items"]
+    enabled = [c for c in items if c["status"] == "enabled"]
+    assert len(enabled) >= 2
+
+
+def test_duplicate_course_name_rejected(client):
+    h = auth(token_of(client))
+    body = {"name": "编译原理", "semester": "2027 春", "total_hours": 32}
+    assert client.post("/api/courses", headers=h, json=body).status_code == 200
+    again = client.post("/api/courses", headers=h, json=body)
+    assert again.status_code == 400
+    assert "同名同学期" in again.json()["message"]
+
+
+def test_disable_then_enable_course(client):
+    h = auth(token_of(client))
+    body = {"name": "计算机网络", "semester": "2027 春", "total_hours": 32}
+    cid = client.post("/api/courses", headers=h, json=body).json()["data"]["course_id"]
+    assert client.post("/api/courses/%d/disable" % cid, headers=h).json()["data"]["status"] == "disabled"
+    enabled = client.post("/api/courses/%d/enable" % cid, headers=h)
+    assert enabled.status_code == 200
+    assert enabled.json()["data"]["status"] == "enabled"

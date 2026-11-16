@@ -59,11 +59,13 @@ def generate_draft(plan_id: int, request: Request,
     cfg = request.app.state.config
     draft = PlannerService(db, cfg).generate(plan_id, claims.sub, now_utc())
 
+    plan_row = db.query("SELECT course_id FROM study_plan WHERE plan_id = ?", (plan_id,))[0]
+    course_id = int(plan_row["course_id"])
     concepts = [Concept(int(r["concept_id"]), r["name"], r["chapter"],
                         int(r["sort_order"]), int(r["reference_minutes"]), r["status"])
-                for r in graph.load_concepts(db, 1, only_enabled=False)]
+                for r in graph.load_concepts(db, course_id, only_enabled=False)]
     by_id = {c.concept_id: c for c in concepts}
-    edges = graph.load_edges(db, 1)
+    edges = graph.load_edges(db, course_id)
     row = db.query("SELECT * FROM plan_constraint WHERE plan_id = ?", (plan_id,))[0]
     availability = normalize_availability(json.loads(row["availability_json"]))
     excluded = normalize_dates(json.loads(row["excluded_dates_json"]))
@@ -74,9 +76,8 @@ def generate_draft(plan_id: int, request: Request,
     raw = sum(s.minutes for s in slots)
     buffer = math.ceil(cfg.BUFFER_RATIO * raw)
     selected = {c for c in draft.order if c in by_id}
-    plan_row = db.query("SELECT course_id FROM study_plan WHERE plan_id = ?", (plan_id,))[0]
     course_row = db.query("SELECT total_hours FROM course WHERE course_id = ?",
-                          (int(plan_row["course_id"]),))
+                          (course_id,))
     total_hours = int(course_row[0]["total_hours"]) if course_row else None
     report = validate(draft.tasks, draft.slices, slots, raw - buffer, raw, deadline,
                       edges, [by_id[c] for c in selected], selected, cfg,
@@ -173,9 +174,12 @@ def override_tasks(plan_id: int, revision: int, body: OverridesIn, request: Requ
     db = get_db(request)
     draft = PlannerService(db, request.app.state.config).apply_overrides(
         plan_id, claims.sub, revision, overrides, now_utc())
+    plan_course = db.query("SELECT course_id FROM study_plan WHERE plan_id = ?",
+                           (plan_id,))[0]
     all_concepts = [Concept(int(r["concept_id"]), r["name"], r["chapter"],
                             int(r["sort_order"]), int(r["reference_minutes"]), r["status"])
-                    for r in graph.load_concepts(db, 1, only_enabled=False)]
+                    for r in graph.load_concepts(db, int(plan_course["course_id"]),
+                                                 only_enabled=False)]
     enabled = [c for c in all_concepts if c.status == "enabled"]
     touched = {t.concept_id for t in draft.tasks}
     covered = [c for c in enabled if c.concept_id in touched]

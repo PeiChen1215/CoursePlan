@@ -1,7 +1,7 @@
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { Card, CardHead, EmptyState, Segmented } from "../components/ui";
-import { useEvents, usePlans } from "../hooks/queries";
+import { useEvents, useCurrentPlan } from "../hooks/queries";
 import { formatDateTime, formatMinutes } from "../lib/format";
 
 const TONE: Record<string, "done" | "brand" | "warn"> = {
@@ -11,8 +11,7 @@ const TONE: Record<string, "done" | "brand" | "warn"> = {
 };
 
 export function TimelinePage() {
-  const plans = usePlans();
-  const plan = plans.data?.items?.[0] ?? null;
+  const plan = useCurrentPlan().plan;
   const events = useEvents(plan?.plan_id ?? null);
   const items = events.data?.items ?? [];
   const [filter, setFilter] = useState("all");

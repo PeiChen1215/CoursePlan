@@ -257,8 +257,9 @@ CREATE TABLE IF NOT EXISTS plan_draft (
 -- =====================================================================
 -- 索引（14 个显式索引；PK/UQ 产生的自动索引另计）
 -- =====================================================================
-CREATE UNIQUE INDEX IF NOT EXISTS ux_single_course
-  ON course ((1)) WHERE status = 'enabled';
+-- 多课程：允许同时存在多门启用课程（v1.2 起取消单课程约束）
+DROP INDEX IF EXISTS ux_single_course;
+CREATE INDEX IF NOT EXISTS ix_course_status ON course (status, course_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_current_plan
   ON study_plan (student_id, course_id) WHERE status IN ('active', 'completed');
