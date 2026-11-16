@@ -75,6 +75,21 @@ export function DraftPage() {
               />
             </div>
 
+            {draft.coverage ? (
+              <p className="sub" style={{ marginTop: -4 }}>
+                本次计划覆盖 <strong>{draft.coverage.covered_concepts}</strong> / {draft.coverage.total_concepts} 个知识点
+                （{formatMinutes(draft.coverage.covered_minutes)} / 课程参考总量{" "}
+                {formatMinutes(draft.coverage.course_minutes)}，
+                {draft.coverage.course_minutes
+                  ? Math.round((draft.coverage.covered_minutes / draft.coverage.course_minutes) * 100)
+                  : 0}
+                %）。
+                {draft.coverage.covered_concepts < draft.coverage.total_concepts
+                  ? '只排目标及其先修闭包；要学完整门课，回「学习偏好」把范围改成"整门课"。'
+                  : "已覆盖全部知识点。"}
+              </p>
+            ) : null}
+
             <Card>
               <CardHead
                 title="校验"

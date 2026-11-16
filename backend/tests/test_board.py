@@ -389,3 +389,27 @@ def test_draft_warns_when_plan_exceeds_course_hours(client):
     codes = [i["code"] for i in data["report"]["issues"]]
     assert "COURSE_BUDGET_EXCEEDED" in codes
     assert data["report"]["passed"] is True    # WARN 不阻断
+
+
+def test_draft_returns_coverage(client):
+    """草案要给出覆盖度，否则学生看不出"为什么只有 3 个知识点"。"""
+    h, uid = login(client)
+    pid = make_plan(client, h)
+    set_constraint(client, h, pid)
+    data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    cov = data["coverage"]
+    assert cov["total_concepts"] >= cov["covered_concepts"] >= 1
+    assert cov["course_minutes"] >= cov["covered_minutes"] > 0
+
+
+def test_draft_extra_targets_expand_closure(client):
+    """「整门课」= 全部知识点作为附加目标，闭包应覆盖全部启用知识点。"""
+    h, uid = login(client)
+    pid = make_plan(client, h)
+    concepts = client.get("/api/courses/1/concepts", headers=h).json()["data"]["items"]
+    ids = [c["concept_id"] for c in concepts if c["status"] == "enabled"]
+    set_constraint(client, h, pid, target_concept_id=ids[0],
+                   extra_concept_ids=ids[1:])
+    data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    cov = data["coverage"]
+    assert cov["covered_concepts"] == cov["total_concepts"] == len(ids)

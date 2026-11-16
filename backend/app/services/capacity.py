@@ -18,6 +18,8 @@ WEEKDAY_ALIASES = {
 MAX_SEGMENTS_PER_DAY = 3
 MAX_DAILY_MINUTES = 8 * 60
 MAX_EXCLUDED_DATES = 30
+# 目标上限：单门课的"整门课"也要能排进来（演示库 12 个知识点）
+MAX_GOAL_CONCEPTS = 50
 MIN_DEADLINE_DAYS = 1
 MAX_DEADLINE_DAYS_CAP = 180
 
@@ -204,8 +206,8 @@ def normalize(raw: ConstraintInput, today: date) -> NormalizedConstraint:
     extras = [int(x) for x in raw.extra_concept_ids or []]
     goals = [target] + [x for x in extras if x != target]
     goals = list(dict.fromkeys(goals))
-    if len(goals) > 11:
-        raise ValidationError("E1001", "目标数量过多（主目标 + 最多 10 个附加）",
+    if len(goals) > MAX_GOAL_CONCEPTS:
+        raise ValidationError("E1001", "目标数量过多（最多 %d 个知识点）" % MAX_GOAL_CONCEPTS,
                               field="extra_concept_ids")
 
     mastered = list(dict.fromkeys(int(x) for x in raw.mastered_concept_ids or []))

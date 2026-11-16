@@ -77,8 +77,16 @@ export interface Issue {
   detail?: unknown;
 }
 
+export interface DraftCoverage {
+  covered_concepts: number;
+  total_concepts: number;
+  covered_minutes: number;
+  course_minutes: number;
+}
+
 export interface DraftDetail {
   revision: number;
+  coverage?: DraftCoverage;
   tasks: TaskItem[];
   slices: SliceItem[];
   unscheduled: UnscheduledItem[];

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
-import { Card, CardHead, Field, Icon } from "../components/ui";
+import { Card, CardHead, Field, Icon, Segmented } from "../components/ui";
 import {
   useConcepts, useConstraint, useCreatePlan, useExtract, usePlans, usePreviewCapacity,
   useSaveConstraint,
@@ -32,6 +32,7 @@ export function ConstraintPage() {
   const [cells, setCells] = useState<Set<string>>(new Set());
   const [excludedText, setExcludedText] = useState("");
   const [mastered, setMastered] = useState<number[]>([]);
+  const [scope, setScope] = useState<"target" | "course">("target");
   const [questions, setQuestions] = useState<string[]>([]);
   const [candidates, setCandidates] = useState<{ concept_id: number; name: string }[]>([]);
   const [dailyLimit, setDailyLimit] = useState<number | null>(null);
@@ -50,16 +51,32 @@ export function ConstraintPage() {
     setMastered(data.mastered_concept_ids ?? []);
   }, [saved.data]);
 
+  const enabledConcepts = useMemo(
+    () => (concepts.data?.items ?? []).filter((item) => item.status === "enabled"),
+    [concepts.data],
+  );
+  const enabledMinutes = useMemo(
+    () => enabledConcepts.reduce((sum, item) => sum + item.reference_minutes, 0),
+    [enabledConcepts],
+  );
+
   const payload = useMemo(() => {
     const excluded = excludedText.split(",").map((s) => s.trim()).filter(Boolean);
+    const enabledIds = (concepts.data?.items ?? [])
+      .filter((c) => c.status === "enabled")
+      .map((c) => c.concept_id);
+    const targetId = target === "" ? 0 : Number(target);
     return {
-      target_concept_id: target === "" ? 0 : Number(target),
+      target_concept_id: targetId,
+      // 「整门课」= 把其余启用知识点都作为附加目标，后端闭包会自动带上先修
+      extra_concept_ids:
+        scope === "course" ? enabledIds.filter((id) => id !== targetId) : [],
       deadline,
       availability: cellsToRanges(cells),
       excluded_dates: excluded,
       mastered_concept_ids: mastered,
     };
-  }, [target, deadline, cells, excludedText, mastered]);
+  }, [target, deadline, cells, excludedText, mastered, scope, concepts.data]);
 
   function toggle(day: string, hour: number) {
     setCells((prev) => {
@@ -160,6 +177,11 @@ export function ConstraintPage() {
               />
               <div className="card-body">
                 <p className="row-title" style={{ fontSize: 15 }}>{plan.course_name}</p>
+                {enabledConcepts.length ? (
+                  <p className="row-sub" style={{ marginTop: 2 }}>
+                    共 {enabledConcepts.length} 个知识点 · 参考时长 {formatMinutes(enabledMinutes)}
+                  </p>
+                ) : null}
                 {plan.course_description ? (
                   <p className="faint" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6 }}>
                     {plan.course_description}
@@ -255,6 +277,24 @@ export function ConstraintPage() {
                     </option>
                   ))}
                 </select>
+              </Field>
+              <Field label="范围">
+                <Segmented
+                  value={scope}
+                  onChange={setScope}
+                  options={[
+                    { value: "target", label: "只学这个目标（含先修）" },
+                    {
+                      value: "course",
+                      label: `整门课（${enabledConcepts.length} 个知识点）`,
+                    },
+                  ]}
+                />
+                <p className="faint" style={{ marginTop: 6, fontSize: 12 }}>
+                  {scope === "target"
+                    ? "只排「目标 + 它的先修链」，其余知识点不进计划——所以任务会比课程总量少。"
+                    : "把整门课都排进来：全部启用知识点 + 先修，任务量接近课程总量。"}
+                </p>
               </Field>
               <div className="grid-3" style={{ gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <Field label="截止日期">

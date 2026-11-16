@@ -82,6 +82,14 @@ def generate_draft(plan_id: int, request: Request,
                       edges, [by_id[c] for c in selected], selected, cfg,
                       course_total_hours=total_hours)
     names = {c.concept_id: c.name for c in concepts}
+    enabled = [c for c in concepts if c.status == "enabled"]
+    covered = [c for c in enabled if c.concept_id in selected]
+    coverage = {
+        "covered_concepts": len(covered),
+        "total_concepts": len(enabled),
+        "covered_minutes": sum(c.reference_minutes for c in covered),
+        "course_minutes": sum(c.reference_minutes for c in enabled),
+    }
     proposal_diff = _diff_against_current(db, plan_id, draft)
 
     return envelope("OK", "ok", {
@@ -92,6 +100,7 @@ def generate_draft(plan_id: int, request: Request,
                     "kind": s.kind, "slice_no": s.slice_no,
                     "start": s.start.strftime("%Y-%m-%dT%H:%M"),
                     "end": s.end.strftime("%Y-%m-%dT%H:%M")} for s in draft.slices],
+        "coverage": coverage,
         "unscheduled": [{"concept_id": u.concept_id, "kind": u.kind, "reason": u.reason}
                         for u in draft.unscheduled],
         "metrics": {
@@ -161,8 +170,21 @@ def override_tasks(plan_id: int, revision: int, body: OverridesIn, request: Requ
                    claims: Claims = Depends(current_claims)):
     """覆盖任务时长并重新装箱，返回新一版草案（对应 D02 AT-17）。"""
     overrides = {(item.concept_id, item.kind): item.minutes for item in body.items}
-    draft = PlannerService(get_db(request), request.app.state.config).apply_overrides(
+    db = get_db(request)
+    draft = PlannerService(db, request.app.state.config).apply_overrides(
         plan_id, claims.sub, revision, overrides, now_utc())
+    all_concepts = [Concept(int(r["concept_id"]), r["name"], r["chapter"],
+                            int(r["sort_order"]), int(r["reference_minutes"]), r["status"])
+                    for r in graph.load_concepts(db, 1, only_enabled=False)]
+    enabled = [c for c in all_concepts if c.status == "enabled"]
+    touched = {t.concept_id for t in draft.tasks}
+    covered = [c for c in enabled if c.concept_id in touched]
+    coverage = {
+        "covered_concepts": len(covered),
+        "total_concepts": len(enabled),
+        "covered_minutes": sum(c.reference_minutes for c in covered),
+        "course_minutes": sum(c.reference_minutes for c in enabled),
+    }
     return envelope("OK", "ok", {
         "revision": draft.revision,
         "tasks": [{"concept_id": t.concept_id, "kind": t.kind, "minutes": t.minutes}
@@ -170,6 +192,7 @@ def override_tasks(plan_id: int, revision: int, body: OverridesIn, request: Requ
         "slices": [{"concept_id": s.concept_id, "kind": s.kind, "slice_no": s.slice_no,
                     "start": s.start.strftime("%Y-%m-%dT%H:%M"),
                     "end": s.end.strftime("%Y-%m-%dT%H:%M")} for s in draft.slices],
+        "coverage": coverage,
         "unscheduled": [{"concept_id": u.concept_id, "kind": u.kind, "reason": u.reason}
                         for u in draft.unscheduled],
         "metrics": {

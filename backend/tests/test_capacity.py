@@ -182,8 +182,9 @@ def test_goals_deduped():
 
 
 def test_too_many_goals():
+    from app.services.capacity import MAX_GOAL_CONCEPTS
     with pytest.raises(ValidationError):
-        normalize(make_input(extra_concept_ids=list(range(2, 13))), TODAY)
+        normalize(make_input(extra_concept_ids=list(range(2, MAX_GOAL_CONCEPTS + 2))), TODAY)
 
 
 def test_excluded_dates_limit():
@@ -222,3 +223,19 @@ def test_summary_keeps_unmastered_goals():
     n = normalize(make_input(extra_concept_ids=[2], mastered_concept_ids=[2]), TODAY)
     s = summarize(n, BASE, 0.10)
     assert s.goals == [1] and s.reject_reason is None
+
+
+def test_whole_course_targets_allowed():
+    """整门课：主目标 + 11 个附加（12 个知识点）不应被上限拒绝。"""
+    ids = [2] + [c for c in range(1, 13) if c != 2]
+    assert len(ids) == 12
+    n = normalize(make_input(target_concept_id=2, extra_concept_ids=ids[1:]), TODAY)
+    assert len(n.extra_concept_ids) == 11
+
+
+def test_too_many_targets_rejected():
+    from app.services.capacity import MAX_GOAL_CONCEPTS
+    ids = list(range(1, MAX_GOAL_CONCEPTS + 2))
+    with pytest.raises(ValidationError) as e:
+        normalize(make_input(target_concept_id=1, extra_concept_ids=ids[1:]), TODAY)
+    assert "目标数量过多" in str(e.value)
