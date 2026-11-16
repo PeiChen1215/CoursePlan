@@ -106,6 +106,11 @@ class BoardService:
             if r["start_epoch"] is not None:
                 totals[int(r["task_id"])] = totals.get(int(r["task_id"]), 0) + 1
 
+        course_rows = self.db.query(
+            "SELECT name, semester, total_hours, description FROM course WHERE course_id = ?",
+            (int(plan["course_id"]),))
+        course_info = dict(course_rows[0]) if course_rows else {}
+
         now_epoch = int(now.timestamp())
         tasks: List[dict] = []
         unscheduled: List[dict] = []
@@ -163,6 +168,7 @@ class BoardService:
         planned = sum(t["minutes"] for t in tasks)
         return {
             "plan_id": plan_id, "version_no": int(version_no), "readonly": readonly,
+            "course": course_info,
             "tasks": tasks, "unscheduled": unscheduled, "issues": issues,
             "adjust_hint": adjust_hint,
             "progress": {

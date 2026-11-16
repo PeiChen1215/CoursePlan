@@ -155,3 +155,23 @@ def test_issue_has_suggestion():
               [slot(21, 8, 12)], usable=50, raw=60)
     d = rep.errors()[0].as_dict()
     assert d["suggestion"] and d["code"] == CAP_EXCEEDED
+
+
+# ---------------- 课程学时预算（管理员设置的 total_hours 要真的起作用）
+def test_course_budget_rule_warns_when_over():
+    from app.services.validation import COURSE_BUDGET_EXCEEDED, check_course_budget
+    issues = check_course_budget(3180, 48)      # 3180 分钟 vs 48 学时=2880
+    assert len(issues) == 1
+    assert issues[0].code == COURSE_BUDGET_EXCEEDED and issues[0].level == "WARN"
+    assert "超过课程总学时" in issues[0].message
+
+
+def test_course_budget_rule_silent_within_budget():
+    from app.services.validation import check_course_budget
+    assert check_course_budget(1180, 48) == []
+
+
+def test_course_budget_rule_skips_without_hours():
+    from app.services.validation import check_course_budget
+    assert check_course_budget(9999, None) == []
+    assert check_course_budget(9999, 0) == []

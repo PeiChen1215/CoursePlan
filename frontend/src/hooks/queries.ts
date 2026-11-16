@@ -14,6 +14,9 @@ export interface PlanRow {
   progress_revision: number;
   updated_at: string;
   course_name: string;
+  course_semester?: string | null;
+  course_total_hours?: number | null;
+  course_description?: string | null;
 }
 
 export interface BoardTask {

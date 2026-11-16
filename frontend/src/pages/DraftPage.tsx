@@ -23,6 +23,7 @@ export function DraftPage() {
   const draft = generate.data ?? null;
   const keyOf = (conceptId: number, kind: string) => conceptId + "-" + kind;
   const blocked = draft ? draft.report.issues.some((issue) => issue.level === "ERROR") : true;
+  const warnCount = draft ? draft.report.issues.filter((issue) => issue.level === "WARN").length : 0;
 
   return (
     <Layout>
@@ -77,10 +78,16 @@ export function DraftPage() {
             <Card>
               <CardHead
                 title="校验"
-                hint={blocked ? "有错误项，先改约束再确认" : "全部通过"}
+                hint={
+                  blocked
+                    ? "有错误项，先改约束再确认"
+                    : warnCount > 0
+                      ? `有 ${warnCount} 项提醒，不影响确认`
+                      : "全部通过"
+                }
                 action={
-                  <span className="chip" data-tone={blocked ? "danger" : "done"}>
-                    {blocked ? "未通过" : "通过"}
+                  <span className="chip" data-tone={blocked ? "danger" : warnCount > 0 ? "warn" : "done"}>
+                    {blocked ? "未通过" : warnCount > 0 ? "通过（有提醒）" : "通过"}
                   </span>
                 }
               />

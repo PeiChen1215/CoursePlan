@@ -357,3 +357,35 @@ def test_board_no_hint_within_threshold(client):
     h, uid, pid = confirmed(client)
     data = svc(client).build(pid, uid, BASE)
     assert data["adjust_hint"] is None
+
+
+def test_board_returns_course_info(client):
+    """管理员设置的课程信息要随看板下发，否则学生端无从引用。"""
+    h, uid, pid = confirmed(client)
+    data = svc(client).build(pid, uid, BASE)
+    course = data["course"]
+    assert course["name"] and course["semester"]
+    assert int(course["total_hours"]) > 0
+
+
+def test_http_plans_include_course_fields(client):
+    h, uid = login(client)
+    pid = make_plan(client, h)
+    items = client.get("/api/plans", headers=h).json()["data"]["items"]
+    row = [i for i in items if i["plan_id"] == pid][0]
+    assert row["course_name"] and row["course_semester"]
+    assert int(row["course_total_hours"]) > 0
+
+
+def test_draft_warns_when_plan_exceeds_course_hours(client):
+    """计划总时长超过课程总学时，草案校验应给出 WARN（不阻断确认）。"""
+    h, uid = login(client)
+    pid = make_plan(client, h)
+    set_constraint(client, h, pid)
+    from app.db.uow import UnitOfWork
+    with UnitOfWork(client.app.state.db) as uow:
+        uow.execute("UPDATE course SET total_hours = 1 WHERE course_id = 1")
+    data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
+    codes = [i["code"] for i in data["report"]["issues"]]
+    assert "COURSE_BUDGET_EXCEEDED" in codes
+    assert data["report"]["passed"] is True    # WARN 不阻断

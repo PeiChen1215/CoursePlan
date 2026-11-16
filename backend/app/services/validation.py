@@ -23,6 +23,7 @@ PREREQ_VIOLATED = "PREREQ_VIOLATED"
 DEADLINE_UNREACHABLE = "DEADLINE_UNREACHABLE"
 CAP_TIGHT = "CAP_TIGHT"
 ISOLATED_CONCEPT = "ISOLATED_CONCEPT"
+COURSE_BUDGET_EXCEEDED = "COURSE_BUDGET_EXCEEDED"
 
 SUGGESTIONS = {
     CAP_EXCEEDED: "延后截止日期、减少附加目标，或增加每周可用时段",
@@ -32,6 +33,7 @@ SUGGESTIONS = {
     SLOT_INVALID: "检查排除日期与可用时间是否覆盖了该时段",
     CAP_TIGHT: "余量不足 20%，建议预留一两天缓冲",
     ISOLATED_CONCEPT: "该知识点既无先修也无后继，确认是否遗漏关联",
+    COURSE_BUDGET_EXCEEDED: "减少附加目标，或与课程管理员确认学时是否足够",
 }
 
 
@@ -170,6 +172,21 @@ def check_tight(tasks: Sequence[Task], raw_minutes: int,
     return []
 
 
+def check_course_budget(total_minutes: int,
+                        course_total_hours: Optional[int]) -> List[Issue]:
+    """课程学时预算：计划总时长超过课程总学时，给 WARN（不阻断）。"""
+    if not course_total_hours or course_total_hours <= 0:
+        return []
+    budget = int(course_total_hours) * 60
+    if total_minutes <= budget:
+        return []
+    return [Issue(
+        COURSE_BUDGET_EXCEEDED, WARN,
+        "计划需要 %d 分钟（约 %.1f 学时），超过课程总学时 %d 学时（%d 分钟）"
+        % (total_minutes, total_minutes / 60, course_total_hours, budget),
+        None, None, SUGGESTIONS[COURSE_BUDGET_EXCEEDED])]
+
+
 def check_isolated(concepts: Sequence[Concept], edges: Iterable[Tuple[int, int]],
                    selected: Set[int]) -> List[Issue]:
     linked = {u for u, _ in edges} | {v for _, v in edges}
@@ -186,7 +203,8 @@ def validate(tasks: Sequence[Task], slices: Sequence[Slice],
              slots: Sequence[Interval], usable_minutes: int, raw_minutes: int,
              deadline: date, edges: Iterable[Tuple[int, int]],
              concepts: Sequence[Concept], selected: Set[int],
-             config) -> Report:
+             config,
+             course_total_hours: Optional[int] = None) -> Report:
     edges = list(edges)
     metrics = {
         "T": sum(t.minutes for t in tasks),
@@ -203,6 +221,7 @@ def validate(tasks: Sequence[Task], slices: Sequence[Slice],
         ("overlap", lambda: check_overlap(slices)),
         ("prereq", lambda: check_prereq(tasks, slices, edges)),
         ("deadline", lambda: check_deadline(slices, deadline)),
+        ("budget", lambda: check_course_budget(metrics["T"], course_total_hours)),
     ]
     issues: List[Issue] = []
     for _, fn in checks:

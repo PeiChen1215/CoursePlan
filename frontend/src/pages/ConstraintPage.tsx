@@ -144,6 +144,34 @@ export function ConstraintPage() {
 
       <div className="grid-2">
         <div className="stack">
+          {plan ? (
+            <Card>
+              <CardHead
+                title="这门课"
+                hint={
+                  [
+                    plan.course_semester,
+                    plan.course_total_hours ? `${plan.course_total_hours} 学时` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "由课程管理员维护"
+                }
+                action={<span className="chip">管理员设置</span>}
+              />
+              <div className="card-body">
+                <p className="row-title" style={{ fontSize: 15 }}>{plan.course_name}</p>
+                {plan.course_description ? (
+                  <p className="faint" style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.6 }}>
+                    {plan.course_description}
+                  </p>
+                ) : (
+                  <p className="faint" style={{ marginTop: 6, fontSize: 12.5 }}>
+                    课程总学时决定"这份计划会不会超纲"：计划总时长超过总学时，草案校验会给出提醒。
+                  </p>
+                )}
+              </div>
+            </Card>
+          ) : null}
           <Card>
             <CardHead
               title="用一句话描述"

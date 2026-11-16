@@ -35,7 +35,9 @@ def list_plans(request: Request, claims: Claims = Depends(current_claims)):
     db = get_db(request)
     rows = db.query(
         "SELECT p.plan_id, p.course_id, p.status, p.current_version, p.progress_revision,"
-        " p.updated_at, c.name AS course_name FROM study_plan p"
+        " p.updated_at, c.name AS course_name, c.semester AS course_semester,"
+        " c.total_hours AS course_total_hours, c.description AS course_description"
+        " FROM study_plan p"
         " JOIN course c ON c.course_id = p.course_id"
         " WHERE p.student_id = ? ORDER BY p.plan_id", (claims.sub,))
     return envelope("OK", "ok", {"items": [dict(r) for r in rows]},
@@ -72,8 +74,13 @@ def generate_draft(plan_id: int, request: Request,
     raw = sum(s.minutes for s in slots)
     buffer = math.ceil(cfg.BUFFER_RATIO * raw)
     selected = {c for c in draft.order if c in by_id}
+    plan_row = db.query("SELECT course_id FROM study_plan WHERE plan_id = ?", (plan_id,))[0]
+    course_row = db.query("SELECT total_hours FROM course WHERE course_id = ?",
+                          (int(plan_row["course_id"]),))
+    total_hours = int(course_row[0]["total_hours"]) if course_row else None
     report = validate(draft.tasks, draft.slices, slots, raw - buffer, raw, deadline,
-                      edges, [by_id[c] for c in selected], selected, cfg)
+                      edges, [by_id[c] for c in selected], selected, cfg,
+                      course_total_hours=total_hours)
     names = {c.concept_id: c.name for c in concepts}
     proposal_diff = _diff_against_current(db, plan_id, draft)
 

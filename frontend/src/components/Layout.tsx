@@ -84,6 +84,8 @@ export function Layout({ children }: { children: ReactNode }) {
           {plan ? (
             <p className="faint" style={{ fontSize: 11, padding: "0 6px 8px" }}>
               {plan.course_name}
+              {plan.course_semester ? <> · {plan.course_semester}</> : null}
+              {plan.course_total_hours ? <> · {plan.course_total_hours} 学时</> : null}
               <span style={{ display: "block" }}>当前 v{plan.current_version ?? "—"}</span>
             </p>
           ) : null}
