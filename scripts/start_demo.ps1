@@ -40,18 +40,28 @@ function Wait-Health([int]$seconds = 40) {
     return $null
 }
 
+function Test-Python($exe) {
+    if (-not $exe -or -not (Test-Path $exe)) { return $false }
+    & $exe -c "import fastapi, uvicorn" 2>$null
+    return ($LASTEXITCODE -eq 0)
+}
+
 function Find-Python {
-    # 优先用 PATH 里的 python（能 import fastapi 才算可用）
+    # 1) 显式指定优先：$env:DEMO_PYTHON
+    if (Test-Python $env:DEMO_PYTHON) { return $env:DEMO_PYTHON }
+
+    # 2) 本机已验证的 3.12 运行时（后端与 482 项测试都跑在这个解释器上）
+    $bundled = "D:\DSH\dsh-home\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
+    if (Test-Python $bundled) { return $bundled }
+
+    # 3) PATH 里的 python（版本可能不同，仅作兜底）
     foreach ($candidate in @("python", "python3")) {
         $cmd = Get-Command $candidate -ErrorAction SilentlyContinue
         if (-not $cmd) { continue }
-        & $cmd.Source -c "import fastapi" 2>$null
-        if ($LASTEXITCODE -eq 0) { return $cmd.Source }
+        if (Test-Python $cmd.Source) { return $cmd.Source }
     }
-    # 回退到本机 DSH 运行时的解释器
-    $bundled = "D:\DSH\dsh-home\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe"
-    if (Test-Path $bundled) { return $bundled }
-    throw "找不到可用的 Python（需要 fastapi）。请先 pip install -r backend\requirements.txt"
+
+    throw "找不到可用的 Python（需要 fastapi 与 uvicorn）。可设置 `$env:DEMO_PYTHON 指向解释器，或 pip install -r backend\requirements.txt"
 }
 
 $python = Find-Python
