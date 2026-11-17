@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
@@ -14,8 +15,8 @@ from ..services.planner import PlannerService
 from ..services.progress import ProgressService
 from ..services.validation import validate
 from ..services import graph
-from ..services.capacity import (compute_capacity, expand_slots, normalize_availability,
-                                 normalize_dates)
+from ..services.capacity import (Interval, compute_capacity, expand_slots,
+                                 normalize_availability, normalize_dates, subtract_busy)
 from ..services.planner import Concept, Slice, Task
 from .deps import current_claims, get_db, now_utc
 
@@ -57,7 +58,8 @@ def generate_draft(plan_id: int, request: Request,
                    claims: Claims = Depends(current_claims)):
     db = get_db(request)
     cfg = request.app.state.config
-    draft = PlannerService(db, cfg).generate(plan_id, claims.sub, now_utc())
+    busy = busy_intervals(db, claims.sub, plan_id)
+    draft = PlannerService(db, cfg).generate(plan_id, claims.sub, now_utc(), busy)
 
     plan_row = db.query("SELECT course_id FROM study_plan WHERE plan_id = ?", (plan_id,))[0]
     course_id = int(plan_row["course_id"])
@@ -73,6 +75,7 @@ def generate_draft(plan_id: int, request: Request,
     deadline = datetime.strptime(row["deadline"], "%Y-%m-%d").date()
     import math
     slots = expand_slots(availability, excluded, draft.base_time, deadline)
+    slots = subtract_busy(slots, busy)
     raw = sum(s.minutes for s in slots)
     buffer = math.ceil(cfg.BUFFER_RATIO * raw)
     selected = {c for c in draft.order if c in by_id}
@@ -102,6 +105,7 @@ def generate_draft(plan_id: int, request: Request,
                     "start": s.start.strftime("%Y-%m-%dT%H:%M"),
                     "end": s.end.strftime("%Y-%m-%dT%H:%M")} for s in draft.slices],
         "coverage": coverage,
+        "busy_minutes": sum(i.minutes for i in busy),
         "unscheduled": [{"concept_id": u.concept_id, "kind": u.kind, "reason": u.reason}
                         for u in draft.unscheduled],
         "metrics": {
@@ -118,6 +122,24 @@ def generate_draft(plan_id: int, request: Request,
                    "issues": [i.as_dict() for i in report.issues]},
         "diff": proposal_diff,
     }, request_id=_rid(request))
+
+
+def busy_intervals(db, student_id: int, plan_id: int):
+    """本学生「其他计划」当前版本已占用的时间片（跨课程占位）。"""
+    rows = db.query(
+        "SELECT ts.start_epoch, ts.end_epoch FROM task_slice ts"
+        " JOIN plan_version pv ON pv.version_id = ts.version_id"
+        " JOIN study_plan p ON p.plan_id = pv.plan_id"
+        " WHERE p.student_id = ? AND p.plan_id <> ?"
+        "   AND p.status IN ('active', 'completed')"
+        "   AND p.current_version IS NOT NULL"
+        "   AND pv.version_no = p.current_version", (student_id, plan_id))
+    out = []
+    for row in rows:
+        out.append(Interval(
+            datetime.fromtimestamp(int(row["start_epoch"])),
+            datetime.fromtimestamp(int(row["end_epoch"]))))
+    return out
 
 
 def _diff_against_current(db, plan_id: int, draft) -> dict:
@@ -172,8 +194,9 @@ def override_tasks(plan_id: int, revision: int, body: OverridesIn, request: Requ
     """覆盖任务时长并重新装箱，返回新一版草案（对应 D02 AT-17）。"""
     overrides = {(item.concept_id, item.kind): item.minutes for item in body.items}
     db = get_db(request)
+    busy = busy_intervals(db, claims.sub, plan_id)
     draft = PlannerService(db, request.app.state.config).apply_overrides(
-        plan_id, claims.sub, revision, overrides, now_utc())
+        plan_id, claims.sub, revision, overrides, now_utc(), busy)
     plan_course = db.query("SELECT course_id FROM study_plan WHERE plan_id = ?",
                            (plan_id,))[0]
     all_concepts = [Concept(int(r["concept_id"]), r["name"], r["chapter"],
@@ -197,6 +220,7 @@ def override_tasks(plan_id: int, revision: int, body: OverridesIn, request: Requ
                     "start": s.start.strftime("%Y-%m-%dT%H:%M"),
                     "end": s.end.strftime("%Y-%m-%dT%H:%M")} for s in draft.slices],
         "coverage": coverage,
+        "busy_minutes": sum(i.minutes for i in busy),
         "unscheduled": [{"concept_id": u.concept_id, "kind": u.kind, "reason": u.reason}
                         for u in draft.unscheduled],
         "metrics": {

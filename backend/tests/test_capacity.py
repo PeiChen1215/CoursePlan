@@ -239,3 +239,39 @@ def test_too_many_targets_rejected():
     with pytest.raises(ValidationError) as e:
         normalize(make_input(target_concept_id=1, extra_concept_ids=ids[1:]), TODAY)
     assert "目标数量过多" in str(e.value)
+
+
+# ---------------- 跨课程占位：从可用时段里扣掉别的时间片
+def test_subtract_busy_cuts_middle():
+    from datetime import datetime as dt
+
+    from app.services.capacity import Interval, subtract_busy
+    slot = Interval(dt(2026, 11, 17, 19, 0), dt(2026, 11, 17, 21, 0))
+    busy = Interval(dt(2026, 11, 17, 19, 30), dt(2026, 11, 17, 20, 0))
+    pieces = subtract_busy([slot], [busy])
+    assert [(p.start.hour, p.start.minute, p.end.hour, p.end.minute) for p in pieces] == [
+        (19, 0, 19, 30), (20, 0, 21, 0)]
+
+
+def test_subtract_busy_full_cover_and_no_overlap():
+    from datetime import datetime as dt
+
+    from app.services.capacity import Interval, subtract_busy
+    slot = Interval(dt(2026, 11, 17, 19, 0), dt(2026, 11, 17, 21, 0))
+    assert subtract_busy([slot], [Interval(dt(2026, 11, 17, 18, 0),
+                                           dt(2026, 11, 17, 22, 0))]) == []
+    assert subtract_busy([slot], [Interval(dt(2026, 11, 18, 18, 0),
+                                           dt(2026, 11, 18, 22, 0))]) == [slot]
+    assert subtract_busy([slot], []) == [slot]
+
+
+def test_subtract_busy_ignores_busy_inside_gap():
+    """忙碌段落在已切出的空隙里时，不应再次切分。"""
+    from datetime import datetime as dt
+
+    from app.services.capacity import Interval, subtract_busy
+    slot = Interval(dt(2026, 11, 17, 19, 0), dt(2026, 11, 17, 21, 0))
+    busy = [Interval(dt(2026, 11, 17, 19, 30), dt(2026, 11, 17, 19, 40)),
+            Interval(dt(2026, 11, 17, 19, 33), dt(2026, 11, 17, 19, 37))]
+    pieces = subtract_busy([slot], busy)
+    assert [(p.start.minute, p.end.minute) for p in pieces] == [(0, 30), (40, 0)]

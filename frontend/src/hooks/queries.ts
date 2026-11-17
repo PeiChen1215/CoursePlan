@@ -20,6 +20,10 @@ export interface PlanRow {
   course_status?: string | null;
 }
 
+export interface BoardBusy {
+  busy_minutes?: number;
+}
+
 export interface BoardTask {
   task_id: number;
   concept_id: number;

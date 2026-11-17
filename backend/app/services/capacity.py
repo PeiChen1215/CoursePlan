@@ -117,6 +117,44 @@ def as_naive_utc(dt: datetime) -> datetime:
     return dt
 
 
+def subtract_busy(slots: Sequence[Interval],
+                  busy: Sequence[Interval]) -> List[Interval]:
+    """从可用时段中剔除被其他课程占用的区间（跨课程占位）。
+
+    同一名学生同一时段只能学一门课：其他计划已确认的时间片视为忙，
+    剩余部分才允许本计划使用。区间半开 [start, end)。
+    """
+    if not busy:
+        return list(slots)
+    import bisect
+
+    busy_sorted = sorted(busy, key=lambda i: i.start)
+    starts = [i.start for i in busy_sorted]
+    out: List[Interval] = []
+    for slot in slots:
+        pieces = [(slot.start, slot.end)]
+        left = bisect.bisect_left(starts, slot.start - timedelta(days=1))
+        for b in busy_sorted[left:]:
+            if b.start >= slot.end:
+                break
+            nxt: List[Tuple[datetime, datetime]] = []
+            for p_start, p_end in pieces:
+                if b.end <= p_start or b.start >= p_end:
+                    nxt.append((p_start, p_end))
+                    continue
+                if b.start > p_start:
+                    nxt.append((p_start, b.start))
+                if b.end < p_end:
+                    nxt.append((b.end, p_end))
+            pieces = nxt
+            if not pieces:
+                break
+        for p_start, p_end in pieces:
+            if p_end > p_start:
+                out.append(Interval(p_start, p_end))
+    return out
+
+
 def expand_slots(availability: Dict[int, List[Tuple[time, time]]],
                  excluded: Sequence[date], base_time: datetime,
                  deadline: date) -> List[Interval]:

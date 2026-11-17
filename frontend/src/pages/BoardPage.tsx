@@ -185,6 +185,13 @@ export function BoardPage() {
               <span>{progress ? progress.done_tasks + " / " + progress.total_tasks + " 项已完成" : "等待学习进度"}</span>
             </div>
             <progress max={100} value={rate * 100} aria-label="课程完成进度" />
+            {typeof (data as { busy_minutes?: number })?.busy_minutes === "number"
+              && (data as { busy_minutes?: number }).busy_minutes! > 0 ? (
+              <p className="sub" style={{ marginTop: 6 }}>
+                其他课程已占用 {formatMinutes((data as { busy_minutes?: number }).busy_minutes!)}，
+                这部分时间不会被重复排入本课程。
+              </p>
+            ) : null}
             <dl className="course-numbers">
               <div><dt>计划投入</dt><dd>{progress ? formatMinutes(progress.planned_minutes) : "—"}</dd></div>
               <div><dt>实际投入</dt><dd>{progress ? formatMinutes(progress.actual_minutes) : "—"}</dd></div>

@@ -17,7 +17,7 @@ from ..core.errors import NotFound, PrereqCycle, StateError, ValidationError
 from ..db.uow import Database, UnitOfWork
 from . import graph
 from .capacity import (Interval, as_naive_utc, compute_capacity, expand_slots,
-                       normalize_availability, normalize_dates)
+                       normalize_availability, normalize_dates, subtract_busy)
 
 STUDY = "study"
 PRACTICE = "practice"
@@ -217,7 +217,8 @@ class PlannerService:
         self.config = config
 
     def generate(self, plan_id: int, student_id: int,
-                 base_time: datetime) -> Draft:
+                 base_time: datetime,
+                 busy: Sequence[Interval] = ()) -> Draft:
         rows = self.db.query(
             "SELECT p.plan_id, p.student_id, p.course_id, p.status,"
             " c.constraint_id, c.target_concept_id, c.extra_concept_ids_json,"
@@ -256,6 +257,8 @@ class PlannerService:
         availability = normalize_availability(json.loads(row["availability_json"]))
         excluded = normalize_dates(json.loads(row["excluded_dates_json"]))
         slots = expand_slots(availability, excluded, base_time, deadline)
+        # 跨课程占位：其他计划已确认的时间片不能重复使用
+        slots = subtract_busy(slots, busy)
         cap = compute_capacity(slots, self.config.BUFFER_RATIO)
         if cap.raw_minutes <= 0:
             raise StateError("E1003", "容量为零，无法排程")
@@ -291,7 +294,8 @@ class PlannerService:
 
     def apply_overrides(self, plan_id: int, student_id: int, revision: int,
                         overrides: Dict[Tuple[int, str], int],
-                        now: datetime) -> Draft:
+                        now: datetime,
+                        busy: Sequence[Interval] = ()) -> Draft:
         """按 (知识点, 类型) 覆盖任务时长，重新装箱并生成新一版草案。
 
         对应 D02 AT-17：参考 5 分钟的任务被覆盖成 135 分钟时，
@@ -328,6 +332,7 @@ class PlannerService:
         availability = normalize_availability(json.loads(cons["availability_json"]))
         excluded = normalize_dates(json.loads(cons["excluded_dates_json"]))
         slots = expand_slots(availability, excluded, base_time, deadline)
+        slots = subtract_busy(slots, busy)
         cap = compute_capacity(slots, self.config.BUFFER_RATIO)
 
         slices, unscheduled = pack(tasks, slots, self.config)

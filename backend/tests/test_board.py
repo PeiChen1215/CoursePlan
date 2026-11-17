@@ -416,3 +416,40 @@ def test_draft_extra_targets_expand_closure(client):
     data = client.post("/api/plans/%d/drafts" % pid, headers=h).json()["data"]
     cov = data["coverage"]
     assert cov["covered_concepts"] == cov["total_concepts"] == len(ids)
+
+
+def test_second_plan_avoids_confirmed_slices(client):
+    """跨课程占位：另一门课已确认的时间片不能再被本计划排上。"""
+    from app.db.uow import UnitOfWork
+
+    h, uid = login(client)
+    first = make_plan(client, h)
+    set_constraint(client, h, first)
+    draft = PlannerService(client.app.state.db,
+                           client.app.state.config).generate(first, uid, BASE)
+    VersionService(client.app.state.db, client.app.state.config).confirm(
+        first, draft.revision, "k-busy", uid, BASE)
+
+    # 第二门课直接写库（新建课程是管理员权限）
+    with UnitOfWork(client.app.state.db) as uow:
+        course_id = uow.execute(
+            "INSERT INTO course(maintainer_id,name,semester,total_hours,status)"
+            " VALUES(1,'第二门课','2026 秋',32,'enabled')").lastrowid
+        concept_id = uow.execute(
+            "INSERT INTO concept(course_id,name,chapter,difficulty,"
+            "reference_minutes,status) VALUES(?,?,?,?,?,'enabled')",
+            (course_id, "知识点A", "第1章", 2, 60)).lastrowid
+
+    second = client.post("/api/plans", headers=h,
+                         json={"course_id": course_id}).json()["data"]["plan_id"]
+    set_constraint(client, h, second, target_concept_id=concept_id)
+    data = client.post("/api/plans/%d/drafts" % second, headers=h).json()["data"]
+    assert data["busy_minutes"] > 0
+
+    occupied = sorted({(t["start"], t["end"]) for t in
+                       client.get("/api/plans/%d/board" % first,
+                                  headers=h).json()["data"]["tasks"]})
+    for piece in data["slices"]:
+        for start, end in occupied:
+            assert not (piece["start"] < end and start < piece["end"]), \
+                "第二门课排到了第一门课已占用的时段"
