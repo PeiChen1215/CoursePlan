@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAuth } from "./hooks/useAuth";
-import { onUnauthorized, setToken } from "./lib/api";
+import { onForbidden, onUnauthorized, setToken } from "./lib/api";
 import { LoginPage } from "./pages/LoginPage";
 import { BoardPage } from "./pages/BoardPage";
 import { ConstraintPage } from "./pages/ConstraintPage";
@@ -26,6 +26,11 @@ export function App() {
     onUnauthorized(() => {
       setToken(null);
       navigate("/login", { replace: true });
+    });
+    onForbidden((message) => {
+      setToken(null);
+      navigate("/login", { replace: true });
+      window.setTimeout(() => window.alert(message), 50);
     });
   }, [navigate]);
 

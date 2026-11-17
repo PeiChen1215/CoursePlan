@@ -42,10 +42,16 @@ export function setToken(token: string | null): void {
 const BASE = "";
 
 let unauthorizedHandler: (() => void) | null = null;
+let forbiddenHandler: ((message: string) => void) | null = null;
 
 /** 401 统一处理：清凭证并回登录页（避免每个页面各写一遍）。 */
 export function onUnauthorized(handler: () => void): void {
   unauthorizedHandler = handler;
+}
+
+/** 403：当前令牌的角色不满足，通常是另一个标签页换了账号。 */
+export function onForbidden(handler: (message: string) => void): void {
+  forbiddenHandler = handler;
 }
 
 
@@ -71,6 +77,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError("空响应", { code: "E9000", status: response.status });
   }
   if (!response.ok || body.code !== "OK") {
+    if (response.status === 403 && body.code === "E4003" && forbiddenHandler) {
+      forbiddenHandler("登录身份已变化（可能是另一个标签页换了账号），请重新登录后重试");
+    }
     throw new ApiError(body.message || "请求失败", {
       code: body.code,
       field: body.field,

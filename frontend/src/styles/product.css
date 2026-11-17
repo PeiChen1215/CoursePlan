@@ -422,3 +422,11 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .ask-answer { border-left: 2px solid var(--brand); padding: 6px 0 6px 10px; }
 .ask-answer p { font-size: 12.5px; line-height: 1.65; }
 .ask-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--ink-3); }
+
+/* 测评报告逐题详情 */
+.report-item { border-top: 1px solid var(--line); padding: 12px 0; }
+.report-item:first-of-type { border-top: 0; }
+.report-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.report-stem { font-size: 13px; font-weight: 600; line-height: 1.55; margin-bottom: 6px; }
+.report-line { font-size: 12.5px; line-height: 1.7; color: var(--ink-2); }
+.report-item[data-level="WARN"] .report-stem { color: var(--ink); }

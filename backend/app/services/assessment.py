@@ -157,8 +157,17 @@ def _grade_single(item: Dict[str, Any], answer: str) -> Dict[str, Any]:
     key = str(item.get("answer") or "").upper()
     picked = str(answer or "").strip().upper()[:1]
     correct = picked == key
+    options = item.get("options") or []
+    letters = "ABCD"
     return {
         "no": item["no"], "type": "single", "points": item["points"],
+        "stem": item["stem"], "options": options,
+        "chosen": picked, "answer": key,
+        "chosen_text": (options[letters.index(picked)] if picked in letters
+                        and letters.index(picked) < len(options) else ""),
+        "answer_text": (options[letters.index(key)] if key in letters
+                        and letters.index(key) < len(options) else ""),
+        "rubric": item.get("rubric") or [],
         "got": item["points"] if correct else 0,
         "hits": item["rubric"][:1] if correct else [],
         "misses": [] if correct else item["rubric"][:1],
@@ -171,6 +180,8 @@ def _grade_short(provider: Optional[BaseProvider], item: Dict[str, Any],
                  answer: str, max_tokens: int = DEFAULT_GRADE_TOKENS) -> Dict[str, Any]:
     """简答题：直接采用模型给分（0–满分），保留理由与原话引用。"""
     base = {"no": item["no"], "type": "short", "points": item["points"],
+            "stem": item["stem"], "rubric": item.get("rubric") or [],
+            "chosen": (answer or "").strip(),
             "hits": [], "misses": [], "quotes": [], "confidence": None,
             "reason": ""}
     if provider is None or getattr(provider, "name", "") != "real":

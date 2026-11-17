@@ -39,6 +39,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // 另一个标签页登录/登出时，localStorage 会变；这里同步一次身份，避免
+  // "界面显示管理员、请求却用着学生令牌"的错位。
+  useEffect(() => {
+    const sync = () => {
+      const token = getToken();
+      if (!token) {
+        setMe(null);
+        return;
+      }
+      api.get<Me>("/api/auth/me").then((data) => setMe(data)).catch(() => setMe(null));
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "studypath.token") sync();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const login = useCallback(async (username: string, password: string) => {
     const result = await api.post<LoginResult>("/api/auth/login", { username, password });
     setToken(result.token);

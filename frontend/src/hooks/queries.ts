@@ -434,6 +434,9 @@ export interface AssessmentReport {
   weak_points: string[];
   items: {
     no: number; type: string; points: number; got: number;
+    stem?: string; rubric?: string[];
+    chosen?: string; answer?: string;
+    chosen_text?: string; answer_text?: string;
     hits: string[]; misses: string[]; quotes: string[];
     reason?: string; confidence?: number | null; review_flag: number;
   }[];
