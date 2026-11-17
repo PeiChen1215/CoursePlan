@@ -206,7 +206,7 @@ export function AssessmentPage() {
                     <textarea
                       className="input"
                       style={{ marginTop: 8, minHeight: 72 }}
-                      placeholder="用几句话写清你的理解（按采分点给分）"
+                      placeholder="用几句话写清你的理解（模型按理解是否正确判分）"
                       value={answers[String(item.no)] ?? ""}
                       onChange={(event) =>
                         setAnswers((prev) => ({ ...prev, [String(item.no)]: event.target.value }))}
@@ -235,8 +235,8 @@ export function AssessmentPage() {
             <CardHead
               title="测评报告"
               hint={submitted.status === "manual_review"
-                ? "部分题目待人工复核，分数暂按程序重算"
-                : "分数由程序重算，解释由模型生成"}
+                ? "部分题目待人工复核，分数暂按已判出的结果"
+                : "选择题程序判分 · 简答题模型判分（附理由）"}
               action={
                 <span className="chip" data-tone={submitted.score / submitted.max_score >= 0.8 ? "done" : "warn"}>
                   {submitted.score} / {submitted.max_score}
@@ -251,12 +251,13 @@ export function AssessmentPage() {
                     Q{detail.no} {detail.got}/{detail.points}
                   </span>
                   <span>
-                    {detail.hits.length ? <>命中：{detail.hits.join("；")}</> : "未命中采分点"}
-                    {detail.misses.length ? (
-                      <span className="row-sub" style={{ display: "block" }}>
-                        还缺：{detail.misses.join("；")}
-                      </span>
-                    ) : null}
+                    {detail.reason ? (
+                      <>{detail.reason}</>
+                    ) : detail.type === "single" ? (
+                      detail.got === detail.points ? "选择正确" : "选择错误"
+                    ) : (
+                      "未作答或未给出得分"
+                    )}
                     {detail.quotes.length ? (
                       <span className="row-sub" style={{ display: "block" }}>
                         依据原文：{detail.quotes.join(" / ")}

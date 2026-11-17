@@ -45,11 +45,13 @@ AUTHOR_PROMPT = """你是课程测评出题助手。依据给定知识点信息�
 5. 题干用中文、面向学生。
 知识点信息：{context}"""
 
-GRADE_PROMPT = """你是阅卷助手。请按采分点判断学生简答题的作答，只输出 JSON：
-{"hits":[命中采分点的序号，从0开始],"misses":[未命中的序号],"quotes":["学生原话片段"],"score":学生应得分数(整数),"confidence":0到1的小数,"reason":"一句话理由"}
-要求：只依据采分点判断；引用学生原话作为依据；score 不得超过题目满分 {points}。
+GRADE_PROMPT = """你是阅卷助手。请给下面这道简答题打分（0–{points} 分），只输出 JSON：
+{"score": 整数, "reason": "一句话判分理由（说明扣在哪里）", "quotes": ["学生原话片段"]}
+要求：
+1. score 必须是 0 到 {points} 之间的整数；
+2. 判分依据是学生对关键概念的理解是否正确、是否说清区别；
+3. 只依据题目与作答判断，不要引入题目之外的知识点要求。
 题目：{stem}
-采分点：{rubric}
 学生作答：{answer}"""
 
 
@@ -125,8 +127,6 @@ def _normalize_items(raw: Any) -> List[Dict[str, Any]]:
                 return []
             entry["options"] = options
             entry["answer"] = answer
-        if not entry["rubric"]:
-            return []
         items.append(entry)
     return items
 
@@ -153,10 +153,6 @@ def generate_items(provider: Optional[BaseProvider], concept: sqlite3.Row,
 
 
 # ---------------------------------------------------------------- 判分
-def _norm_text(value: str) -> str:
-    return "".join(str(value).split()).lower()
-
-
 def _grade_single(item: Dict[str, Any], answer: str) -> Dict[str, Any]:
     key = str(item.get("answer") or "").upper()
     picked = str(answer or "").strip().upper()[:1]
@@ -173,35 +169,31 @@ def _grade_single(item: Dict[str, Any], answer: str) -> Dict[str, Any]:
 
 def _grade_short(provider: Optional[BaseProvider], item: Dict[str, Any],
                  answer: str, max_tokens: int = DEFAULT_GRADE_TOKENS) -> Dict[str, Any]:
-    rubric = item.get("rubric") or []
-    base = {"no": item["no"], "type": "short", "points": item["points"]}
+    """简答题：直接采用模型给分（0–满分），保留理由与原话引用。"""
+    base = {"no": item["no"], "type": "short", "points": item["points"],
+            "hits": [], "misses": [], "quotes": [], "confidence": None,
+            "reason": ""}
     if provider is None or getattr(provider, "name", "") != "real":
-        return {**base, "got": 0, "hits": [], "misses": rubric,
-                "quotes": [], "confidence": None, "review_flag": 1}
+        return {**base, "got": 0, "review_flag": 1}
     prompt = (GRADE_PROMPT.replace("{points}", str(item["points"]))
               .replace("{stem}", item["stem"])
-              .replace("{rubric}", json.dumps(rubric, ensure_ascii=False))
-              .replace("{answer}", answer or "（未作答）"))
+              .replace("{answer}", (answer or "（未作答）").strip()))
     try:
         data = _complete_json(provider, prompt, max_tokens=max_tokens)
     except (ProviderTimeout, ProviderError):
         data = None
-    if not isinstance(data, dict) or not rubric:
-        return {**base, "got": 0, "hits": [], "misses": rubric,
-                "quotes": [], "confidence": None, "review_flag": 1}
-    hits_idx = [int(i) for i in data.get("hits") or [] if isinstance(i, int) and 0 <= i < len(rubric)]
-    hits = [rubric[i] for i in sorted(set(hits_idx))]
-    misses = [r for i, r in enumerate(rubric) if i not in hits_idx]
-    got = int(round(item["points"] * len(hits) / len(rubric)))
-    review = 0
-    # 模型自报分数与重算分数偏差过大 → 转人工复核
-    reported = data.get("score")
-    if isinstance(reported, (int, float)) and abs(int(reported) - got) > DEVIATION_LIMIT:
-        review = 1
-    return {**base, "got": got, "hits": hits, "misses": misses,
+    if not isinstance(data, dict):
+        return {**base, "got": 0, "review_flag": 1}
+    try:
+        score = int(data.get("score"))
+    except (TypeError, ValueError):
+        return {**base, "got": 0, "review_flag": 1}
+    got = max(0, min(score, int(item["points"])))
+    return {**base, "got": got,
             "quotes": [str(q)[:120] for q in (data.get("quotes") or [])][:3],
             "confidence": float(data.get("confidence") or 0) or None,
-            "review_flag": review}
+            "reason": str(data.get("reason") or "")[:200],
+            "review_flag": 1 if score != got else 0}
 
 
 def grade(provider: Optional[BaseProvider], items: Sequence[Dict[str, Any]],
@@ -309,11 +301,12 @@ def save_attempt(db: Database, paper: sqlite3.Row, student_id: int,
         for detail in details:
             uow.execute(
                 "INSERT INTO assessment_item(attempt_id,no,type,points,got,"
-                "hits_json,misses_json,quotes_json,confidence,review_flag)"
-                " VALUES(?,?,?,?,?,?,?,?,?,?)",
+                "hits_json,misses_json,quotes_json,reason,confidence,review_flag)"
+                " VALUES(?,?,?,?,?,?,?,?,?,?,?)",
                 (attempt_id, detail["no"], detail["type"], detail["points"],
                  detail["got"], json.dumps(detail["hits"], ensure_ascii=False),
                  json.dumps(detail["misses"], ensure_ascii=False),
                  json.dumps(detail["quotes"], ensure_ascii=False),
+                 detail.get("reason", ""),
                  detail["confidence"], detail["review_flag"]))
     return attempt_id

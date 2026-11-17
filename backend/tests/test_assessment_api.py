@@ -104,8 +104,7 @@ def test_admin_generate_publish_and_student_flow(client, patched):
                        headers=student).json()["data"]["items"]
     assert "answer" not in items[0] and "rubric" not in items[0]
 
-    patched(FakeReal([json.dumps({"hits": [0, 1], "misses": [], "quotes": ["零个或多个"],
-                                  "score": 50, "confidence": 0.9, "reason": "ok"})]))
+    patched(FakeReal([json.dumps({"score": 50, "reason": "答得好", "quotes": ["零个或多个"]})]))
     submitted = client.post("/api/papers/%d/attempts" % paper["paper_id"],
                             headers=student,
                             json={"answers": {"1": "B", "2": "零个或多个，用在集合上"}})
@@ -192,8 +191,7 @@ def test_apply_requires_plan(client, patched):
                            headers=admin, json={}).json()["data"]["paper_id"]
     client.post("/api/papers/%d/publish" % paper_id, headers=admin)
     student = auth(client, "alice")
-    patched(FakeReal([json.dumps({"hits": [0], "misses": [1], "quotes": [],
-                                  "score": 25, "confidence": 0.5, "reason": "ok"})]))
+    patched(FakeReal([json.dumps({"score": 25, "reason": "部分正确", "quotes": []})]))
     attempt = client.post("/api/papers/%d/attempts" % paper_id, headers=student,
                           json={"answers": {"1": "A", "2": "不知道"}}).json()["data"]
     response = client.post("/api/attempts/%d/apply" % attempt["attempt_id"],

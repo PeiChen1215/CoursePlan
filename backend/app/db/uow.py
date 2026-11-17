@@ -45,6 +45,9 @@ class Database:
         columns = {row[1] for row in conn.execute("PRAGMA table_info(concept)")}
         if "outline" not in columns:
             conn.execute("ALTER TABLE concept ADD COLUMN outline TEXT NOT NULL DEFAULT ''")
+        item_columns = {row[1] for row in conn.execute("PRAGMA table_info(assessment_item)")}
+        if item_columns and "reason" not in item_columns:
+            conn.execute("ALTER TABLE assessment_item ADD COLUMN reason TEXT NOT NULL DEFAULT ''")
         conn.commit()
 
     def query(self, sql: str, params: Sequence[Any] = ()) -> list[sqlite3.Row]:

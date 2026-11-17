@@ -435,7 +435,7 @@ export interface AssessmentReport {
   items: {
     no: number; type: string; points: number; got: number;
     hits: string[]; misses: string[]; quotes: string[];
-    confidence?: number | null; review_flag: number;
+    reason?: string; confidence?: number | null; review_flag: number;
   }[];
 }
 

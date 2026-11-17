@@ -313,6 +313,7 @@ CREATE TABLE IF NOT EXISTS assessment_item (
    hits_json        TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(hits_json)),
    misses_json      TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(misses_json)),
    quotes_json      TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(quotes_json)),
+   reason           TEXT    NOT NULL DEFAULT '' CHECK (length(reason) <= 500),
    confidence       REAL,
    review_flag      INTEGER NOT NULL DEFAULT 0 CHECK (review_flag IN (0, 1))
 );

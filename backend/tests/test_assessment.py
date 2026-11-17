@@ -33,20 +33,20 @@ def test_grade_single_is_deterministic():
     assert wrong["got"] == 0 and wrong["misses"]
 
 
-def test_grade_short_recomputes_by_rubric():
-    reply = json.dumps({"hits": [0], "misses": [1], "quotes": ["零个或多个"],
-                        "score": 12, "confidence": 0.9, "reason": "只命中一条"})
+def test_grade_short_takes_model_score():
+    reply = json.dumps({"score": 18, "reason": "说清了零个或多个，但没提集合",
+                        "quotes": ["零个或多个"], "confidence": 0.9})
     detail = svc._grade_short(FakeProvider([reply]), ITEMS[1], "零个或多个")
-    assert detail["got"] == 12        # 25 * 1/2 取整
+    assert detail["got"] == 18
+    assert detail["reason"].startswith("说清了")
     assert detail["review_flag"] == 0
 
 
-def test_grade_short_flags_deviation():
-    reply = json.dumps({"hits": [0], "misses": [1], "quotes": [], "score": 25,
-                        "confidence": 0.9, "reason": "自报满分"})
-    detail = svc._grade_short(FakeProvider([reply]), ITEMS[1], "零个或多个")
-    assert detail["got"] == 12
-    assert detail["review_flag"] == 1     # 自报 25 与重算 12 偏差 > 5
+def test_grade_short_clamps_out_of_range():
+    reply = json.dumps({"score": 40, "reason": "超范围", "quotes": []})
+    detail = svc._grade_short(FakeProvider([reply]), ITEMS[1], "作答")
+    assert detail["got"] == 25          # 夹到满分
+    assert detail["review_flag"] == 1   # 原始分越界 → 待复核
 
 
 def test_grade_short_without_provider_goes_manual():
@@ -54,9 +54,14 @@ def test_grade_short_without_provider_goes_manual():
     assert detail["review_flag"] == 1 and detail["got"] == 0
 
 
+def test_grade_short_bad_output_goes_manual():
+    # _complete_json 会重试一次，所以准备两条非法回复
+    detail = svc._grade_short(FakeProvider(["不是 JSON", "仍然不是 JSON"]), ITEMS[1], "作答")
+    assert detail["review_flag"] == 1 and detail["got"] == 0
+
+
 def test_grade_status_and_total():
-    provider = FakeProvider([json.dumps({"hits": [0, 1], "misses": [], "quotes": [],
-                                         "score": 25, "confidence": 0.8, "reason": "ok"})])
+    provider = FakeProvider([json.dumps({"score": 25, "reason": "答得好", "quotes": []})])
     score, max_score, details, status = svc.grade(
         provider, ITEMS, {"1": "B", "2": "零个或多个，通常用在集合"})
     assert (score, max_score, status) == (50, 50, "graded")
@@ -78,8 +83,9 @@ def test_normalize_rejects_bad_items():
     assert svc._normalize_items({"items": [{"type": "single", "stem": "x",
                                             "options": ["A"], "answer": "A",
                                             "rubric": ["r"], "points": 10}]}) == []
-    assert svc._normalize_items({"items": [{"type": "short", "stem": "x",
-                                            "rubric": [], "points": 10}]}) == []
+    # 采分点自 v1.5 起可选（判分改为直接打分），只剩题干与分值也是合法题目
+    assert len(svc._normalize_items({"items": [{"type": "short", "stem": "x",
+                                                "points": 10}]})) == 1
 
 
 def test_public_items_hides_answer_and_rubric():
