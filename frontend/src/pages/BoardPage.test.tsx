@@ -10,6 +10,7 @@ const { mutate, state } = vi.hoisted(() => ({ mutate: vi.fn(), state: { readonly
 vi.mock("../components/Layout", () => ({ Layout: ({ children }: { children: ReactNode }) => <main>{children}</main> }));
 vi.mock("../components/Toast", () => ({ useToast: () => ({ push: vi.fn() }) }));
 vi.mock("../hooks/queries", () => ({
+  useAdvise: () => ({ data: null, isPending: false, mutate: vi.fn() }),
   useCurrentPlan: () => ({
     plan: { plan_id: 1, current_version: 1, course_name: "软件工程" },
     items: [{ plan_id: 1, current_version: 1, course_name: "软件工程" }],

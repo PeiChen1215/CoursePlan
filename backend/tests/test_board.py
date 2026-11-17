@@ -22,7 +22,10 @@ def make_plan(client, headers):
 
 
 def set_constraint(client, headers, pid, **kw):
-    body = {"target_concept_id": 2, "deadline": "2026-11-20",
+    # 截止日期用相对日期：写死日期会随真实日期推进而排不下（时间相关的测试腐化）
+    from datetime import date as _date, timedelta as _td
+    body = {"target_concept_id": 2,
+            "deadline": (_date.today() + _td(days=14)).isoformat(),
             "availability": {"mon": [["19:00", "21:00"]], "wed": [["19:00", "21:00"]]},
             "base_time": "2026-11-09T09:00:00Z"}
     body.update(kw)

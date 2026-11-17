@@ -384,6 +384,21 @@ export function useEvents(planId: number | null) {
   });
 }
 
+export interface AdviseResult {
+  answer: string;
+  mode: "llm" | "local" | "mock";
+  degraded_reason?: string | null;
+  question: string;
+  facts: Record<string, unknown>;
+}
+
+export function useAdvise(planId: number) {
+  return useMutation({
+    mutationFn: (question: string) =>
+      api.post<AdviseResult>("/api/plans/" + planId + "/advise", { question }),
+  });
+}
+
 export function useExplain(planId: number) {
   return useMutation({
     mutationFn: (codes: string[]) =>

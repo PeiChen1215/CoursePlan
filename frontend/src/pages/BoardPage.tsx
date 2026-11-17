@@ -8,7 +8,7 @@ import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
 import { EmptyState, Icon, Segmented } from "../components/ui";
 import { StatusBadge } from "../components/StatusBadge";
-import { useBoard, useConstraint, useSubmitEvent, useCurrentPlan } from "../hooks/queries";
+import { useAdvise, useBoard, useConstraint, useCurrentPlan, useSubmitEvent } from "../hooks/queries";
 import type { BoardTask } from "../hooks/queries";
 import { formatClock, formatMinutes } from "../lib/format";
 import { addDays, toISODate, weekStartOf } from "../lib/timetable";
@@ -24,6 +24,13 @@ export function BoardPage() {
   const toast = useToast();
   const currentPlan = useCurrentPlan();
   const plan = currentPlan.plan;
+  const advise = useAdvise(plan?.plan_id ?? 0);
+  const [question, setQuestion] = useState("");
+  const askFacts = advise.data?.facts;
+  const askPlanned = typeof askFacts?.["计划总时长T"] === "number"
+    ? (askFacts["计划总时长T"] as number) : null;
+  const askCap = typeof askFacts?.["可排上限C_prime"] === "number"
+    ? (askFacts["可排上限C_prime"] as number) : null;
   const board = useBoard(plan?.plan_id ?? null);
   const submit = useSubmitEvent(plan?.plan_id ?? 0);
   const constraint = useConstraint(plan?.plan_id ?? null);
@@ -183,6 +190,57 @@ export function BoardPage() {
               <div><dt>实际投入</dt><dd>{progress ? formatMinutes(progress.actual_minutes) : "—"}</dd></div>
             </dl>
             <Link className="rail-link" to="/versions">计划版本 <span>{plan?.current_version ? "v" + plan.current_version : "未确认"}<Icon name="chevron" /></span></Link>
+          </section>
+
+          <section className="rail-section ask-section">
+            <div className="rail-heading"><h2>问一句</h2><span>基于当前计划的数据</span></div>
+            <div className="ask-chips">
+              {[
+                "我落后了，现在该怎么办？",
+                "为什么计划只有这么多任务？",
+                "这份计划排得下吗？",
+              ].map((preset) => (
+                <button key={preset} type="button" className="ask-chip"
+                        onClick={() => {
+                          setQuestion(preset);
+                          advise.mutate(preset);
+                        }}>
+                  {preset}
+                </button>
+              ))}
+            </div>
+            <div className="ask-input">
+              <input
+                className="input"
+                name="ask_question"
+                aria-label="就当前计划提问"
+                placeholder="例如：为什么这周只有 3 个任务？"
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && question.trim() && !advise.isPending) {
+                    advise.mutate(question.trim());
+                  }
+                }}
+              />
+              <button className="btn btn-sm" disabled={!question.trim() || advise.isPending}
+                      onClick={() => advise.mutate(question.trim())}>
+                {advise.isPending ? "思考中…" : "问"}
+              </button>
+            </div>
+            {advise.data ? (
+              <div className="ask-answer">
+                <p>{advise.data.answer}</p>
+                <p className="ask-meta">
+                  <span className="chip" data-tone={advise.data.mode === "llm" ? "brand" : "warn"}>
+                    {advise.data.mode === "llm" ? "模型作答" : "按数据作答"}
+                  </span>
+                  {askPlanned !== null && askCap !== null ? (
+                    <span>依据：计划 {askPlanned} 分钟 / 可排 {askCap} 分钟</span>
+                  ) : null}
+                </p>
+              </div>
+            ) : null}
           </section>
 
           {milestones.length ? <section className="rail-section">

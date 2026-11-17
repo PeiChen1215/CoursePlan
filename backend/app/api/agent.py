@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from ..core.errors import envelope
 from ..core.security import Claims
 from ..services import graph
+from ..services import advisor
 from ..services.agent import extract
 from ..services.progress import ProgressService
 from ..services.timeline import TimelineService
@@ -100,6 +101,33 @@ def list_events(plan_id: int, request: Request,
 
 class ExplainIn(BaseModel):
     codes: List[str] = []
+
+
+class AdviseIn(BaseModel):
+    question: str = Field(default="", max_length=200)
+
+
+@router.post("/plans/{plan_id}/advise")
+def advise(plan_id: int, body: AdviseIn, request: Request,
+           claims: Claims = Depends(current_claims)):
+    """计划问答：事实由程序算，模型只负责组织语言（对应 D02 F-07 延伸）。"""
+    db = get_db(request)
+    cfg = request.app.state.config
+    question = body.question.strip() or "这份计划有什么问题，我下一步该做什么？"
+    facts = advisor.build_facts(db, plan_id, claims.sub, now_utc(), cfg)
+    # 真实模式才建 provider；mock 传 MockProvider，便于离线演示与测试
+    provider = build_provider(cfg.PROVIDER_MODE, cfg.PROVIDER_KEY,
+                              cfg.MODEL_TIMEOUT_SECONDS, None,
+                              cfg.PROVIDER_BASE, cfg.PROVIDER_MODEL,
+                              cfg.PROVIDER_THINKING)
+    answer, mode, reason = advisor.advise(provider, facts, question)
+    return envelope("OK", "ok", {
+        "answer": answer,
+        "mode": mode,
+        "degraded_reason": reason,
+        "question": question,
+        "facts": facts,
+    }, request_id=_rid(request))
 
 
 @router.post("/plans/{plan_id}/explain")
