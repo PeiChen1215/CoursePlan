@@ -171,7 +171,8 @@ def _grade_single(item: Dict[str, Any], answer: str) -> Dict[str, Any]:
         "got": item["points"] if correct else 0,
         "hits": item["rubric"][:1] if correct else [],
         "misses": [] if correct else item["rubric"][:1],
-        "quotes": [] if correct else [picked or "（未作答）"],
+        # 选择题没有"原话"可引：你的选择已经单独展示，这里保持空列表
+        "quotes": [],
         "confidence": 1.0, "review_flag": 0,
     }
 

@@ -384,7 +384,7 @@ export function AssessmentPage() {
                       </p>
                     ) : null}
 
-                    {detail.quotes && detail.quotes.length ? (
+                    {detail.type !== "single" && detail.quotes && detail.quotes.length ? (
                       <p className="report-line">
                         <span className="row-sub">引用原话：</span>
                         {detail.quotes.join(" / ")}
