@@ -259,6 +259,16 @@ export function usePatchCourse() {
   });
 }
 
+export function useUpdateOutline(courseId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { conceptId: number; outline: string }) =>
+      api.patch<{ concept_id: number; outline: string }>(
+        "/api/concepts/" + args.conceptId, { outline: args.outline }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.concepts(courseId) }),
+  });
+}
+
 export function useCreateCourse() {
   const qc = useQueryClient();
   return useMutation({
@@ -394,6 +404,102 @@ export interface AdviseResult {
   degraded_reason?: string | null;
   question: string;
   facts: Record<string, unknown>;
+}
+
+export interface PaperRow {
+  paper_id: number;
+  concept_id: number | null;
+  title: string;
+  status: string;
+  count: number;
+  published_at?: string | null;
+}
+
+export interface PaperItem {
+  no: number;
+  type: "single" | "short";
+  stem: string;
+  points: number;
+  options?: string[];
+}
+
+export interface AssessmentReport {
+  concept: string;
+  score: number;
+  max_score: number;
+  ratio: number;
+  status: string;
+  suggestion: string;
+  action: "mark_mastered" | "add_practice" | "keep";
+  weak_points: string[];
+  items: {
+    no: number; type: string; points: number; got: number;
+    hits: string[]; misses: string[]; quotes: string[];
+    confidence?: number | null; review_flag: number;
+  }[];
+}
+
+export function useAssessments(courseId: number) {
+  return useQuery({
+    queryKey: ["assessments", courseId],
+    enabled: courseId > 0,
+    queryFn: () => api.get<{ items: PaperRow[] }>("/api/courses/" + courseId + "/assessments"),
+  });
+}
+
+export function useAssessmentItems(paperId: number) {
+  return useQuery({
+    queryKey: ["assessment-items", paperId],
+    enabled: paperId > 0,
+    queryFn: () =>
+      api.get<{ paper_id: number; title: string; items: PaperItem[] }>(
+        "/api/papers/" + paperId + "/items"),
+  });
+}
+
+export function useSubmitAssessment(paperId: number) {
+  return useMutation({
+    mutationFn: (answers: Record<string, string>) =>
+      api.post<{
+        attempt_id: number; score: number; max_score: number;
+        status: string; report: AssessmentReport;
+      }>("/api/papers/" + paperId + "/attempts", { answers }),
+  });
+}
+
+export function useApplyAssessment(planId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (attemptId: number) =>
+      api.post<{ mastered_concept_ids: number[] }>(
+        "/api/attempts/" + attemptId + "/apply", { action: "mark_mastered" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["constraint", planId] }),
+  });
+}
+
+export function useGenerateAssessment() {
+  return useMutation({
+    mutationFn: (conceptId: number) =>
+      api.post<{ paper_id: number; title: string; mode: string; items: PaperItem[] }>(
+        "/api/concepts/" + conceptId + "/assessments/generate", {}),
+  });
+}
+
+export function usePublishAssessment(conceptId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (paperId: number) =>
+      api.post<{ paper_id: number; status: string }>("/api/papers/" + paperId + "/publish"),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["assessments", conceptId] }),
+  });
+}
+
+export function useConceptAssessments(courseId: number) {
+  return useQuery({
+    queryKey: ["assessments", courseId],
+    enabled: courseId > 0,
+    queryFn: () => api.get<{ items: PaperRow[] }>("/api/courses/" + courseId + "/assessments"),
+  });
 }
 
 export function useAdvise(planId: number) {

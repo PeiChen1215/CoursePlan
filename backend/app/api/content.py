@@ -190,6 +190,18 @@ def submit_prereqs(course_id: int, body: PrereqBatchIn, request: Request,
     return envelope("OK", "ok", {"saved": n}, request_id=_rid(request))
 
 
+class OutlineIn(BaseModel):
+    outline: str = Field(default="", max_length=1000)
+
+
+@router.patch("/concepts/{concept_id}")
+def update_concept(concept_id: int, body: OutlineIn, request: Request,
+                   claims: Claims = Depends(_admin),
+                   svc: ContentService = Depends(get_content)):
+    data = svc.update_concept_outline(concept_id, body.outline)
+    return envelope("OK", "ok", dict(data), request_id=_rid(request))
+
+
 @router.get("/concepts/{concept_id}/impact")
 def concept_impact(concept_id: int, request: Request,
                    svc: ContentService = Depends(get_content)):

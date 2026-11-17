@@ -88,4 +88,6 @@ export const api = {
     request<T>(path, { method: "POST", body: JSON.stringify(payload ?? {}), headers }),
   put: <T>(path: string, payload?: unknown) =>
     request<T>(path, { method: "PUT", body: JSON.stringify(payload ?? {}) }),
+  patch: <T>(path: string, payload?: unknown) =>
+    request<T>(path, { method: "PATCH", body: JSON.stringify(payload ?? {}) }),
 };

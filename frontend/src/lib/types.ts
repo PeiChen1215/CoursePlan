@@ -17,6 +17,7 @@ export interface Concept {
   chapter: string;
   difficulty: number;
   reference_minutes: number;
+  outline?: string;
   status: string;
 }
 

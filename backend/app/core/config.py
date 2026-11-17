@@ -24,6 +24,11 @@ DEFAULTS: Dict[str, Any] = {
     "BACKUP_KEEP": 7,
     "BACKUP_DIR": "backups",
     "MODEL_TIMEOUT_SECONDS": 10,
+    # 生成类任务的 token 预算：思考模式会占用 completion 预算，
+    # 出题/判分这类长输出必须给足，否则 JSON 会被截断。
+    "MAX_TOKENS_EXTRACT": 320,
+    "MAX_TOKENS_GRADE": 1024,
+    "MAX_TOKENS_AUTHOR": 3000,
     "MIN_TASK_MINUTES": 1,
     "MAX_DEADLINE_DAYS": 180,
     "LOCK_FAIL_LIMIT": 5,
@@ -49,6 +54,9 @@ SPECS = {
     "CAP_TIGHT_THRESHOLD": (0.5, 0.99),
     "DELAY_THRESHOLD_HOURS": (1, 720),
     "MODEL_TIMEOUT_SECONDS": (1, 60),
+    "MAX_TOKENS_EXTRACT": (128, 2048),
+    "MAX_TOKENS_GRADE": (256, 4096),
+    "MAX_TOKENS_AUTHOR": (512, 8192),
     "MIN_TASK_MINUTES": (1, 60),
     "MAX_DEADLINE_DAYS": (7, 365),
     "LOCK_FAIL_LIMIT": (1, 20),
@@ -75,6 +83,9 @@ class EngineConfig:
     CAP_TIGHT_THRESHOLD: float
     DELAY_THRESHOLD_HOURS: int
     MODEL_TIMEOUT_SECONDS: int
+    MAX_TOKENS_EXTRACT: int
+    MAX_TOKENS_GRADE: int
+    MAX_TOKENS_AUTHOR: int
     MIN_TASK_MINUTES: int
     MAX_DEADLINE_DAYS: int
     LOCK_FAIL_LIMIT: int
@@ -113,6 +124,12 @@ class EngineConfig:
             "CAP_TIGHT_THRESHOLD": self.CAP_TIGHT_THRESHOLD,
             "DELAY_THRESHOLD_HOURS": self.DELAY_THRESHOLD_HOURS,
             "MODEL_TIMEOUT_SECONDS": self.MODEL_TIMEOUT_SECONDS,
+            "MAX_TOKENS_EXTRACT": self.MAX_TOKENS_EXTRACT,
+            "MAX_TOKENS_GRADE": self.MAX_TOKENS_GRADE,
+            "MAX_TOKENS_AUTHOR": self.MAX_TOKENS_AUTHOR,
+        "MAX_TOKENS_EXTRACT": self.MAX_TOKENS_EXTRACT,
+        "MAX_TOKENS_GRADE": self.MAX_TOKENS_GRADE,
+        "MAX_TOKENS_AUTHOR": self.MAX_TOKENS_AUTHOR,
             "MIN_TASK_MINUTES": self.MIN_TASK_MINUTES,
             "MAX_DEADLINE_DAYS": self.MAX_DEADLINE_DAYS,
             "LOCK_FAIL_LIMIT": self.LOCK_FAIL_LIMIT,

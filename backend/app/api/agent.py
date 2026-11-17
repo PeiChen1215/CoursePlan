@@ -44,7 +44,8 @@ def agent_extract(body: ExtractIn, request: Request,
                  "aliases": []} for r in rows]
     provider = build_provider(cfg.PROVIDER_MODE, cfg.PROVIDER_KEY,
                               cfg.MODEL_TIMEOUT_SECONDS, None,
-                              cfg.PROVIDER_BASE, cfg.PROVIDER_MODEL, cfg.PROVIDER_THINKING)
+                              cfg.PROVIDER_BASE, cfg.PROVIDER_MODEL, cfg.PROVIDER_THINKING,
+                              default_max_tokens=cfg.MAX_TOKENS_EXTRACT)
     result = extract(body.utterance, body.filled, concepts, provider, base,
                      int(body.filled.get("daily_limit") or 480))
     return envelope("OK", "ok", {

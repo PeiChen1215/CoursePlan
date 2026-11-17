@@ -138,11 +138,27 @@ class ContentService:
 
     # ---------------- 知识点
     def list_concepts(self, course_id: int, include_disabled: bool = False):
-        sql = ("SELECT concept_id, name, chapter, difficulty, reference_minutes, status"
-               " FROM concept WHERE course_id = ?")
+        sql = ("SELECT concept_id, name, chapter, difficulty, reference_minutes,"
+               " outline, status FROM concept WHERE course_id = ?")
         if not include_disabled:
             sql += " AND status = 'enabled'"
         return self.db.query(sql + " ORDER BY concept_id", (course_id,))
+
+    def update_concept_outline(self, concept_id: int, outline: str) -> sqlite3.Row:
+        """更新知识点要点（测评出题依据）。"""
+        rows = self.db.query("SELECT concept_id FROM concept WHERE concept_id = ?",
+                             (concept_id,))
+        if not rows:
+            raise NotFound("E1002", "知识点不存在")
+        outline = (outline or "").strip()
+        if len(outline) > 1000:
+            raise ValidationError("E1001", "要点最长 1000 字", field="outline")
+        with UnitOfWork(self.db) as uow:
+            uow.execute("UPDATE concept SET outline = ? WHERE concept_id = ?",
+                        (outline, concept_id))
+        return self.db.query("SELECT concept_id, name, chapter, difficulty,"
+                            " reference_minutes, outline, status FROM concept"
+                            " WHERE concept_id = ?", (concept_id,))[0]
 
     def save_concept(self, course_id: int, data: ConceptInput) -> int:
         self._validate_concept(data)

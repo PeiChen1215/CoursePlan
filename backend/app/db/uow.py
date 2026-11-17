@@ -31,8 +31,21 @@ class Database:
         conn = self.connect()
         try:
             conn.executescript(schema_sql)
+            self._migrate(conn)
         finally:
             conn.close()
+
+    @staticmethod
+    def _migrate(conn: sqlite3.Connection) -> None:
+        """轻量迁移：SQLite 的 ADD COLUMN 没有 IF NOT EXISTS，这里按列判断。"""
+        tables = {row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'")}
+        if "concept" not in tables:
+            return
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(concept)")}
+        if "outline" not in columns:
+            conn.execute("ALTER TABLE concept ADD COLUMN outline TEXT NOT NULL DEFAULT ''")
+        conn.commit()
 
     def query(self, sql: str, params: Sequence[Any] = ()) -> list[sqlite3.Row]:
         conn = self.connect()

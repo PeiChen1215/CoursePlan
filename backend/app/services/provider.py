@@ -23,10 +23,14 @@ class ProviderTimeout(ProviderError):
     pass
 
 
+class ProviderTruncated(ProviderError):
+    """模型输出被 max_tokens 截断（finish_reason=length）。"""
+
+
 class BaseProvider:
     name = "base"
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, max_tokens: int = 200) -> str:
         raise NotImplementedError
 
     def probe(self) -> bool:
@@ -42,7 +46,7 @@ class MockProvider(BaseProvider):
     candidates: List[dict] = field(default_factory=list)
     supported_ids: Optional[set] = None
 
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, max_tokens: int = 200) -> str:
         if self.fail_mode == "timeout":
             raise ProviderTimeout("mock timeout")
         if self.fail_mode == "unavailable":
@@ -69,7 +73,8 @@ class RealProvider(BaseProvider):
 
     def __init__(self, key: str = "", timeout: int = 10,
                  base: str = DEFAULT_BASE, model: str = DEFAULT_MODEL,
-                 thinking: str = "disabled"):
+                 thinking: str = "disabled",
+                 default_max_tokens: int = 320):
         self.key = key
         self.timeout = timeout
         self.base = (base or DEFAULT_BASE).rstrip("/")
@@ -77,6 +82,7 @@ class RealProvider(BaseProvider):
         # 目标映射是分类任务，不需要思维链；开着思考会把 max_tokens 全耗在
         # reasoning_content 上，content 返空（deepseek-flash 实测如此）。
         self.thinking = (thinking or "disabled").lower()
+        self.default_max_tokens = int(default_max_tokens)
 
     # ---------------------------------------------------------------- HTTP
     def _request(self, path: str, payload: Optional[dict], method: str = "POST") -> dict:
@@ -122,24 +128,27 @@ class RealProvider(BaseProvider):
         return parsed
 
     # ---------------------------------------------------------------- 接口
-    def complete(self, prompt: str) -> str:
+    def complete(self, prompt: str, max_tokens: int = 0) -> str:
+        max_tokens = int(max_tokens) or self.default_max_tokens
         payload = {
             "model": self.model,
             "thinking": {"type": "enabled" if self.thinking == "enabled" else "disabled"},
             "messages": [
                 {"role": "system",
-                 "content": "你是课程学习规划系统的抽取器。只输出 JSON，不要解释、不要代码块。"},
+                 "content": "你是课程学习规划系统的模型组件。严格按用户要求输出，默认只输出 JSON，不要解释、不要代码块。"},
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0,
-            "max_tokens": 200,
+            "max_tokens": max_tokens,
             "stream": False,
         }
         data = self._request("/chat/completions", payload)
         try:
-            content = data["choices"][0]["message"]["content"]
+            choice = data["choices"][0]
+            content = choice["message"]["content"]
         except (KeyError, IndexError, TypeError):
             raise ProviderError("响应缺少 choices")
+        truncated = str(choice.get("finish_reason") or "") == "length"
         if not isinstance(content, str) or not content.strip():
             reasoning = 0
             try:
@@ -151,6 +160,9 @@ class RealProvider(BaseProvider):
             if reasoning:
                 raise ProviderError("模型把 token 全用在思考上（%d 个），content 为空" % reasoning)
             raise ProviderError("模型返回空内容")
+        if truncated:
+            raise ProviderTruncated(
+                "输出被截断（max_tokens=%d），请提高 token 预算或精简输入" % max_tokens)
         return content.strip()
 
     def probe(self) -> bool:
@@ -168,12 +180,13 @@ def build_provider(mode: str, key: str = "", timeout: int = 10,
                    mock: Optional[MockProvider] = None,
                    base: str = DEFAULT_BASE,
                    model: str = DEFAULT_MODEL,
-                   thinking: str = "disabled") -> BaseProvider:
+                   thinking: str = "disabled",
+                   default_max_tokens: int = 320) -> BaseProvider:
     """mock / real / auto；auto 探测失败即降级为 mock（D06 §14.6.5）。"""
     if mode == "mock":
         return mock or MockProvider()
     if mode == "real":
-        return RealProvider(key, timeout, base, model, thinking)
+        return RealProvider(key, timeout, base, model, thinking, default_max_tokens)
     provider = RealProvider(key, timeout, base, model, thinking)
     try:
         if provider.probe():

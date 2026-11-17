@@ -13,6 +13,7 @@ const LEARN = [
   { to: "/draft", label: "计划草案", icon: "draft" as const },
   { to: "/adjust", label: "计划调整", icon: "adjust" as const },
   { to: "/timeline", label: "学习记录", icon: "history" as const },
+  { to: "/assessments", label: "课程测评", icon: "spark" as const },
   { to: "/versions", label: "版本历史", icon: "version" as const },
 ];
 

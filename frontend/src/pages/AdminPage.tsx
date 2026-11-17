@@ -6,6 +6,7 @@ import { Card, CardHead, Field, VisuallyHidden } from "../components/ui";
 import {
   useConcepts, useCourses, useCreateConcept, useCreateCourse, useCreateResource,
   useDisableCourse, useDisableResource, useEnableCourse, usePatchCourse, usePrereqs,
+  useUpdateOutline,
   useResources, useSetConceptResources, useSubmitPrereqs,
 } from "../hooks/queries";
 
@@ -18,6 +19,9 @@ export function AdminPage() {
     selectedCourseId ?? courseList.find((item) => item.status === "enabled")?.course_id
     ?? courseList[0]?.course_id ?? 0;
   const createCourse = useCreateCourse();
+  const updateOutline = useUpdateOutline(courseId);
+  const [outlineTarget, setOutlineTarget] = useState<number | null>(null);
+  const [outlineText, setOutlineText] = useState("");
   const enableCourse = useEnableCourse();
   const [newName, setNewName] = useState("");
   const [newSemester, setNewSemester] = useState("2027 春");
@@ -248,6 +252,41 @@ export function AdminPage() {
 
         <ErrorBox error={patchCourse.error ?? disableCourse.error} />
 
+        {outlineTarget !== null ? (
+          <Card>
+            <CardHead
+              title="知识点要点"
+              hint="测评出题的依据；写得越具体，题目越贴课"
+              action={<button className="link-btn" onClick={() => setOutlineTarget(null)}>关闭</button>}
+            />
+            <div className="card-body stack" style={{ gap: 10 }}>
+              <textarea
+                className="input"
+                style={{ minHeight: 110 }}
+                placeholder={"例如：\n• 聚合是整体-部分，部分可独立存在\n• 组合的生命周期与整体一致"}
+                value={outlineText}
+                onChange={(event) => setOutlineText(event.target.value)}
+              />
+              <div className="admin-inline">
+                <button className="btn"
+                        disabled={updateOutline.isPending}
+                        onClick={() =>
+                          updateOutline.mutate({ conceptId: outlineTarget, outline: outlineText }, {
+                            onSuccess: () => {
+                              toast.push("要点已保存", "success");
+                              setOutlineTarget(null);
+                            },
+                            onError: (error) =>
+                              toast.push(error instanceof Error ? error.message : "保存失败", "error"),
+                          })}>
+                  保存要点
+                </button>
+                <span className="row-sub">保存后即可在「AI 出题」里使用该知识点</span>
+              </div>
+            </div>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHead title={"知识点（" + list.length + "）"} hint="按章节顺序排列" />
           <div className="card-body" style={{ paddingTop: 0, paddingLeft: 8, paddingRight: 8 }}>
@@ -255,7 +294,8 @@ export function AdminPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>ID</th><th>名称</th><th>章节</th><th>难度</th><th>时长</th><th>状态</th>
+                  <th>ID</th><th>名称</th><th>章节</th><th>难度</th><th>时长</th>
+                  <th>要点</th><th>状态</th>
                 </tr>
               </thead>
               <tbody>
@@ -266,6 +306,15 @@ export function AdminPage() {
                     <td className="row-sub">{item.chapter}</td>
                     <td className="num">{item.difficulty}</td>
                     <td className="num">{item.reference_minutes} 分</td>
+                    <td>
+                      <button className="link-btn"
+                              onClick={() => {
+                                setOutlineTarget(item.concept_id);
+                                setOutlineText(item.outline ?? "");
+                              }}>
+                        {item.outline ? "已填 · 编辑" : "未填 · 填写"}
+                      </button>
+                    </td>
                     <td>
                       <span className="chip" data-tone={item.status === "enabled" ? "done" : "warn"}>
                         {item.status === "enabled" ? "启用" : "停用"}

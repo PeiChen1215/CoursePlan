@@ -261,6 +261,64 @@ CREATE TABLE IF NOT EXISTS plan_draft (
 DROP INDEX IF EXISTS ux_single_course;
 CREATE INDEX IF NOT EXISTS ix_course_status ON course (status, course_id);
 
+-- =====================================================================
+-- 测评（v1.4）：发布制试卷 → 学生作答 → 判分 → 可解释报告
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS assessment_paper (
+   paper_id         INTEGER PRIMARY KEY,
+   course_id        INTEGER NOT NULL
+   REFERENCES course(course_id) ON DELETE RESTRICT,
+   concept_id       INTEGER REFERENCES concept(concept_id) ON DELETE RESTRICT,
+   title            TEXT    NOT NULL CHECK (length(title) BETWEEN 1 AND 120),
+   items_json       TEXT    NOT NULL CHECK (json_valid(items_json)),
+   status           TEXT    NOT NULL DEFAULT 'draft'
+   CHECK (status IN ('draft', 'published', 'archived')),
+   created_by       INTEGER NOT NULL
+   REFERENCES app_user(user_id) ON DELETE RESTRICT,
+   created_at       TEXT    NOT NULL,
+   published_at     TEXT,
+   model            TEXT    NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS ix_paper_course ON assessment_paper (course_id, status, paper_id);
+
+CREATE TABLE IF NOT EXISTS assessment_attempt (
+   attempt_id       INTEGER PRIMARY KEY,
+   paper_id         INTEGER NOT NULL
+   REFERENCES assessment_paper(paper_id) ON DELETE RESTRICT,
+   student_id       INTEGER NOT NULL
+   REFERENCES app_user(user_id) ON DELETE RESTRICT,
+   answers_json     TEXT    NOT NULL CHECK (json_valid(answers_json)),
+   score            INTEGER NOT NULL DEFAULT 0 CHECK (score >= 0),
+   max_score        INTEGER NOT NULL DEFAULT 0 CHECK (max_score >= 0),
+   status           TEXT    NOT NULL DEFAULT 'graded'
+   CHECK (status IN ('graded', 'manual_review')),
+   report_json      TEXT    NOT NULL DEFAULT '{}'
+   CHECK (json_valid(report_json)),
+   created_at       TEXT    NOT NULL,
+   graded_at        TEXT,
+   model            TEXT    NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS ix_attempt_paper ON assessment_attempt (paper_id, student_id, attempt_id);
+
+CREATE TABLE IF NOT EXISTS assessment_item (
+   item_id          INTEGER PRIMARY KEY,
+   attempt_id       INTEGER NOT NULL
+   REFERENCES assessment_attempt(attempt_id) ON DELETE RESTRICT,
+   no               INTEGER NOT NULL CHECK (no >= 1),
+   type             TEXT    NOT NULL CHECK (type IN ('single', 'short')),
+   points           INTEGER NOT NULL CHECK (points > 0),
+   got              INTEGER NOT NULL DEFAULT 0 CHECK (got >= 0),
+   hits_json        TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(hits_json)),
+   misses_json      TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(misses_json)),
+   quotes_json      TEXT    NOT NULL DEFAULT '[]' CHECK (json_valid(quotes_json)),
+   confidence       REAL,
+   review_flag      INTEGER NOT NULL DEFAULT 0 CHECK (review_flag IN (0, 1))
+);
+
+CREATE INDEX IF NOT EXISTS ix_item_attempt ON assessment_item (attempt_id, no);
+
 CREATE UNIQUE INDEX IF NOT EXISTS ux_current_plan
   ON study_plan (student_id, course_id) WHERE status IN ('active', 'completed');
 
