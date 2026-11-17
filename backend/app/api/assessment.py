@@ -144,6 +144,25 @@ def list_papers(course_id: int, request: Request,
     return envelope("OK", "ok", {"items": items}, request_id=_rid(request))
 
 
+@router.get("/papers/{paper_id}/stats")
+def paper_stats(paper_id: int, request: Request, claims: Claims = Depends(_admin)):
+    """单套试卷的班级学情（仅管理员）。"""
+    db = get_db(request)
+    rows = db.query("SELECT paper_id FROM assessment_paper WHERE paper_id = ?",
+                    (paper_id,))
+    if not rows:
+        raise NotFound("E1002", "试卷不存在")
+    data = svc.paper_stats(db, paper_id)
+    return envelope("OK", "ok", data, request_id=_rid(request))
+
+
+@router.get("/courses/{course_id}/assessment-stats")
+def course_stats(course_id: int, request: Request, claims: Claims = Depends(_admin)):
+    db = get_db(request)
+    return envelope("OK", "ok", {"items": svc.course_stats(db, course_id)},
+                    request_id=_rid(request))
+
+
 @router.get("/papers/{paper_id}/items")
 def paper_items(paper_id: int, request: Request,
                 claims: Claims = Depends(current_claims)):

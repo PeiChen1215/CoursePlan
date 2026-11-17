@@ -236,6 +236,88 @@ def build_report(concept_name: str, score: int, max_score: int,
     }
 
 
+# ---------------------------------------------------------------- 学情统计
+PASS_RATIO = 0.6
+
+
+def paper_stats(db: Database, paper_id: int) -> Dict[str, Any]:
+    """单套试卷的班级学情：作答人数、平均分、及格率、分数分布、逐题得分率。"""
+    papers = db.query("SELECT paper_id, title, concept_id, max_score FROM"
+                      " (SELECT paper_id, title, concept_id, 0 AS max_score"
+                      "  FROM assessment_paper WHERE paper_id = ?)", (paper_id,))
+    rows = db.query(
+        "SELECT a.attempt_id, a.score, a.max_score, a.status, a.created_at,"
+        "       u.username FROM assessment_attempt a"
+        " JOIN app_user u ON u.user_id = a.student_id"
+        " WHERE a.paper_id = ? ORDER BY a.attempt_id DESC", (paper_id,))
+    attempts = [dict(r) for r in rows]
+    count = len(attempts)
+    max_score = int(attempts[0]["max_score"]) if attempts else 0
+    scores = [int(a["score"]) for a in attempts]
+    average = round(sum(scores) / count, 1) if count else 0.0
+    pass_line = int(round(max_score * PASS_RATIO))
+    passed = sum(1 for s in scores if s >= pass_line)
+    buckets = {"<50%": 0, "50-70%": 0, "70-85%": 0, ">=85%": 0}
+    for s in scores:
+        ratio = s / max_score if max_score else 0
+        if ratio < 0.5:
+            buckets["<50%"] += 1
+        elif ratio < 0.7:
+            buckets["50-70%"] += 1
+        elif ratio < 0.85:
+            buckets["70-85%"] += 1
+        else:
+            buckets[">=85%"] += 1
+
+    item_rows = db.query(
+        "SELECT i.no, i.type, i.points, AVG(i.got) AS avg_got, COUNT(*) AS n,"
+        "       SUM(CASE WHEN i.review_flag = 1 THEN 1 ELSE 0 END) AS reviews"
+        " FROM assessment_item i JOIN assessment_attempt a"
+        "   ON a.attempt_id = i.attempt_id"
+        " WHERE a.paper_id = ? GROUP BY i.no, i.type, i.points ORDER BY i.no",
+        (paper_id,))
+    items = [{
+        "no": int(r["no"]), "type": r["type"], "points": int(r["points"]),
+        "avg_got": round(float(r["avg_got"] or 0), 1),
+        "rate": round(float(r["avg_got"] or 0) / int(r["points"]), 3) if r["points"] else 0,
+        "attempts": int(r["n"]), "review_flags": int(r["reviews"] or 0),
+    } for r in item_rows]
+
+    return {
+        "paper_id": paper_id,
+        "title": papers[0]["title"] if papers else "",
+        "concept_id": int(papers[0]["concept_id"]) if papers and papers[0]["concept_id"] else None,
+        "attempts": count,
+        "max_score": max_score,
+        "average": average,
+        "highest": max(scores) if scores else 0,
+        "lowest": min(scores) if scores else 0,
+        "pass_line": pass_line,
+        "pass_rate": round(passed / count, 3) if count else 0.0,
+        "distribution": buckets,
+        "items": items,
+        "recent": attempts[:10],
+    }
+
+
+def course_stats(db: Database, course_id: int) -> List[Dict[str, Any]]:
+    """课程下每套已发布试卷的学情摘要。"""
+    rows = db.query(
+        "SELECT p.paper_id, p.title, COUNT(a.attempt_id) AS attempts,"
+        "       COALESCE(AVG(a.score), 0) AS average, COALESCE(MAX(a.score), 0) AS highest"
+        " FROM assessment_paper p LEFT JOIN assessment_attempt a ON a.paper_id = p.paper_id"
+        " WHERE p.course_id = ? AND p.status = 'published'"
+        " GROUP BY p.paper_id, p.title ORDER BY p.paper_id DESC", (course_id,))
+    out = []
+    for row in rows:
+        out.append({
+            "paper_id": int(row["paper_id"]), "title": row["title"],
+            "attempts": int(row["attempts"]),
+            "average": round(float(row["average"]), 1),
+            "highest": int(row["highest"]),
+        })
+    return out
+
 # ---------------------------------------------------------------- 存取
 def _now() -> str:
     return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")

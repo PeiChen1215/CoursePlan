@@ -439,6 +439,35 @@ export interface AssessmentReport {
   }[];
 }
 
+export interface PaperStats {
+  paper_id: number;
+  title: string;
+  attempts: number;
+  max_score: number;
+  average: number;
+  highest: number;
+  lowest: number;
+  pass_line: number;
+  pass_rate: number;
+  distribution: Record<string, number>;
+  items: {
+    no: number; type: string; points: number; avg_got: number;
+    rate: number; attempts: number; review_flags: number;
+  }[];
+  recent: {
+    attempt_id: number; username: string; score: number;
+    max_score: number; created_at: string;
+  }[];
+}
+
+export function usePaperStats(paperId: number) {
+  return useQuery({
+    queryKey: ["paper-stats", paperId],
+    enabled: paperId > 0,
+    queryFn: () => api.get<PaperStats>("/api/papers/" + paperId + "/stats"),
+  });
+}
+
 export function useAssessments(courseId: number) {
   return useQuery({
     queryKey: ["assessments", courseId],

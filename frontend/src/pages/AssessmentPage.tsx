@@ -4,23 +4,16 @@ import { Layout } from "../components/Layout";
 import { useAuth } from "../hooks/useAuth";
 import { ErrorBox } from "../components/ErrorBox";
 import { useToast } from "../components/Toast";
-import { Card, CardHead, Icon } from "../components/ui";
+import { Card, CardHead, Icon, Stat } from "../components/ui";
 import {
   useApplyAssessment, useAssessmentItems, useAssessments, useConcepts, useCourses, useCurrentPlan,
-  useGenerateAssessment, usePublishAssessment, useSubmitAssessment,
+  useGenerateAssessment, usePaperStats, usePublishAssessment, useSubmitAssessment,
 } from "../hooks/queries";
 
 export function AssessmentPage() {
   const toast = useToast();
   const plan = useCurrentPlan().plan;
   const planId = plan?.plan_id ?? 0;
-  const list = useAssessments(plan?.course_id ?? 0);
-  const [active, setActive] = useState<{ paperId: number; title: string } | null>(null);
-  const items = useAssessmentItems(active?.paperId ?? 0);
-  const submit = useSubmitAssessment(active?.paperId ?? 0);
-  const apply = useApplyAssessment(planId);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [genConceptId, setGenConceptId] = useState(0);
   const { me } = useAuth();
   const isAdmin = me?.role === "admin";
   const courses = useCourses().data?.items ?? [];
@@ -28,9 +21,18 @@ export function AssessmentPage() {
   const courseId = isAdmin
     ? adminCourseId || courses.find((item) => item.status === "enabled")?.course_id || 0
     : plan?.course_id ?? 0;
+  const list = useAssessments(courseId);
+  const [active, setActive] = useState<{ paperId: number; title: string } | null>(null);
+  const items = useAssessmentItems(active?.paperId ?? 0);
+  const submit = useSubmitAssessment(active?.paperId ?? 0);
+  const apply = useApplyAssessment(planId);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [genConceptId, setGenConceptId] = useState(0);
   const concepts = useConcepts(courseId).data?.items ?? [];
   const generate = useGenerateAssessment();
   const publish = usePublishAssessment(courseId);
+  const [statsFor, setStatsFor] = useState(0);
+  const stats = usePaperStats(statsFor);
 
   const papers = list.data?.items ?? [];
   const submitted = submit.data;
@@ -89,7 +91,7 @@ export function AssessmentPage() {
       <div className="stack">
         <ErrorBox error={list.error ?? items.error ?? submit.error} />
 
-        {!plan ? (
+        {!isAdmin && !plan ? (
           <Card>
             <div className="card-body">
               <p className="sub">还没有学习计划，先去「学习偏好」选一门课。</p>
@@ -100,9 +102,76 @@ export function AssessmentPage() {
           </Card>
         ) : null}
 
-        {plan && !papers.length ? (
+        {(isAdmin || plan) && !papers.length ? (
           <Card>
             <CardHead title="暂无已发布的测评" hint="等管理员发布后即可在这里作答" />
+          </Card>
+        ) : null}
+
+        {isAdmin && papers.length ? (
+          <Card>
+            <CardHead
+              title="班级学情"
+              hint="按试卷统计作答人数、平均分与逐题得分率"
+              action={
+                <select className="select" value={statsFor}
+                        onChange={(event) => setStatsFor(Number(event.target.value))}>
+                  <option value={0}>选择试卷</option>
+                  {papers.map((paper) => (
+                    <option key={paper.paper_id} value={paper.paper_id}>{paper.title}</option>
+                  ))}
+                </select>
+              }
+            />
+            <div className="card-body stack" style={{ gap: 12 }}>
+              {!statsFor ? <p className="sub">选择一套试卷查看学情。</p> : null}
+              {stats.data ? (
+                <>
+                  <div className="stat-strip">
+                    <Stat label="作答人数" value={String(stats.data.attempts)} />
+                    <Stat label="平均分" value={String(stats.data.average)} unit={" / " + stats.data.max_score} />
+                    <Stat label="及格率" value={(stats.data.pass_rate * 100).toFixed(0) + "%"} />
+                    <Stat label="最高 / 最低" value={stats.data.highest + " / " + stats.data.lowest} />
+                  </div>
+                  <div className="table-scroll">
+                    <table className="table">
+                      <thead>
+                        <tr><th>题号</th><th>题型</th><th>平均得分</th><th>得分率</th><th>作答数</th><th>待复核</th></tr>
+                      </thead>
+                      <tbody>
+                        {stats.data.items.map((item) => (
+                          <tr key={item.no}>
+                            <td className="num">{item.no}</td>
+                            <td>{item.type === "single" ? "单选" : "简答"}</td>
+                            <td className="num">{item.avg_got} / {item.points}</td>
+                            <td className="num" data-low={item.rate < 0.6}>
+                              {(item.rate * 100).toFixed(0)}%
+                            </td>
+                            <td className="num">{item.attempts}</td>
+                            <td className="num">{item.review_flags}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="row-sub">
+                    分数分布：{[0, 1, 2, 3].map((index) => {
+                      const keys = ["<50%", "50-70%", "70-85%", ">=85%"];
+                      return keys[index] + " " + (stats.data!.distribution[keys[index]] ?? 0) + " 人";
+                    }).join(" · ")}
+                  </p>
+                  {stats.data.recent.length ? (
+                    <p className="row-sub">
+                      最近提交：
+                      {stats.data.recent.slice(0, 5).map((row) =>
+                        row.username + " " + row.score + "/" + row.max_score).join(" · ")}
+                    </p>
+                  ) : (
+                    <p className="row-sub">还没有人作答。</p>
+                  )}
+                </>
+              ) : null}
+            </div>
           </Card>
         ) : null}
 
